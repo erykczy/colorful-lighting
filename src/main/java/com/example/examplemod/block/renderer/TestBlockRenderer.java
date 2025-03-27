@@ -1,8 +1,7 @@
 package com.example.examplemod.block.renderer;
 
-import com.example.examplemod.Color3;
+import com.example.examplemod.util.Color3;
 import com.example.examplemod.client.ModRenderTypes;
-import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.block.entity.TestBlockEntity;
 import com.example.examplemod.util.BufferUtils;
 import com.mojang.blaze3d.vertex.BufferBuilder;

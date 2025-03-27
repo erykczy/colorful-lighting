@@ -1,7 +1,11 @@
-package com.example.examplemod;
+package com.example.examplemod.util;
 
 public class Color3 {
     public int red, green, blue;
+
+    public Color3(FastColor3 fastColor) {
+        this(Byte.toUnsignedInt(fastColor.red()), Byte.toUnsignedInt(fastColor.green()), Byte.toUnsignedInt(fastColor.blue()));
+    }
 
     public Color3() {
         this(0, 0, 0);

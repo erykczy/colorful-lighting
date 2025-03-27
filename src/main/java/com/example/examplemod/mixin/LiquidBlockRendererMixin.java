@@ -36,6 +36,6 @@ public class LiquidBlockRendererMixin {
                 .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
         // TODO is blockPos correct?
-        BufferUtils.setLightColor((BufferBuilder) buffer, ColoredLightManager.getLightColor(new BlockPos((int)x, (int)y, (int)z)));
+        BufferUtils.setLightColor((BufferBuilder) buffer, ColoredLightManager.getInstance().sampleLightColor(new BlockPos((int)x, (int)y, (int)z)));
     }
 }
