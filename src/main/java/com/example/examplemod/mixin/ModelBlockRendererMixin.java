@@ -52,10 +52,7 @@ public class ModelBlockRendererMixin {
             f2 = 1.0F;
         }
 
-        double sin = Math.sin(pos.getX()/3.0);
-        int blue = (int)(255 * Math.abs(sin));
-
-        BufferUtils.putBulkData(
+        BufferUtils.putQuadWithColoredLighting(
                 (BufferBuilder) consumer,
                 pose,
                 quad,
@@ -67,9 +64,8 @@ public class ModelBlockRendererMixin {
                 new int[]{lightmap0, lightmap1, lightmap2, lightmap3},
                 packedOverlay,
                 true,
-                255 - blue,
-                20,
-                blue
+                pos
+                //ColoredLightManager.getLightColor(pos)
         );
     }
 }

@@ -1,9 +1,11 @@
 package com.example.examplemod.mixin;
 
+import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.BufferUtils;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
+import net.minecraft.core.BlockPos;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,24 +17,25 @@ public class LiquidBlockRendererMixin {
     @Inject(at = @At("HEAD"), method = "vertex(Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFFFFFI)V", cancellable = true)
     private void vertex(
             VertexConsumer buffer,
-            float p_110989_,
-            float p_110990_,
-            float p_110991_,
-            float p_110992_,
-            float p_110993_,
-            float p_350595_,
+            float x,
+            float y,
+            float z,
+            float red,
+            float green,
+            float blue,
             float alpha,
-            float p_350459_,
-            float p_350437_,
-            int p_110994_,
+            float u,
+            float v,
+            int packedLight,
             CallbackInfo ci
     ) {
         ci.cancel();
-        buffer.addVertex(p_110989_, p_110990_, p_110991_)
-                .setColor(p_110992_, p_110993_, p_350595_, alpha)
-                .setUv(p_350459_, p_350437_)
-                .setLight(p_110994_)
+        buffer.addVertex(x, y, z)
+                .setColor(red, green, blue, alpha)
+                .setUv(u, v)
+                .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
-        BufferUtils.setLightColor((BufferBuilder) buffer, 20, 20, 255);
+        // TODO is blockPos correct?
+        BufferUtils.setLightColor((BufferBuilder) buffer, ColoredLightManager.getLightColor(new BlockPos((int)x, (int)y, (int)z)));
     }
 }
