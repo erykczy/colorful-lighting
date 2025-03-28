@@ -3,11 +3,17 @@ package com.example.examplemod;
 import com.example.examplemod.util.Color3;
 import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LightChunk;
+import net.minecraft.world.level.lighting.BlockLightEngine;
+import net.minecraft.world.level.lighting.LightEngine;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -15,6 +21,7 @@ public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
     public Queue<FastColor3> increaseQueue = new ConcurrentLinkedQueue<>();
     public Queue<FastColor3> decreaseQueue = new ConcurrentLinkedQueue<>();
+    public List<ChunkPos> newChunks = new ArrayList<>();
 
     private static ColoredLightManager instance = new ColoredLightManager();
     public static ColoredLightManager getInstance() {
@@ -66,5 +73,16 @@ public class ColoredLightManager {
             }
         }
         return finalColor.intDivide(8);
+    }
+
+    public void propagateLight(BlockLightEngine blockEngine, int chunkX, int chunkZ) {
+        LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkX, chunkZ);
+        chunk.findBlockLightSources(((blockPos, blockState) -> {
+            // remove light
+            blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
+            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+            // revert light
+            blockEngine.checkBlock(blockPos);
+        }));
     }
 }

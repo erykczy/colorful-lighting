@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Mixin(ThreadedLevelLightEngine.class)
 public class ThreadedLevelLightEngineMixin {
-    @Inject(at = @At("TAIL"), method = "initializeLight")
+    //@Inject(at = @At("TAIL"), method = "initializeLight")
     public void initializeLight(ChunkAccess chunk, boolean lightEnabled, CallbackInfoReturnable<CompletableFuture<ChunkAccess>> ci) {
         ThreadedLevelLightEngine engine = (ThreadedLevelLightEngine) (Object)this;
 
@@ -26,12 +26,12 @@ public class ThreadedLevelLightEngineMixin {
         engine.addTask(chunkPos.x, chunkPos.z, ThreadedLevelLightEngine.TaskType.PRE_UPDATE, Util.name(() -> {
             for (int i = 0; i < chunk.getSectionsCount(); i++) {
                 int y = engine.levelHeightAccessor.getSectionYFromSectionIndex(i);
-                ColoredLightManager.getInstance().storage.initializeSection(SectionPos.of(chunkPos, y).asLong(), engine);
+                ColoredLightManager.getInstance().storage.initializeSection(SectionPos.of(chunkPos, y).asLong());
             }
         }, () -> "initializeColoredLight: " + chunkPos));
     }
 
-    @Inject(at = @At("TAIL"), method = "lightChunk")
+    //@Inject(at = @At("TAIL"), method = "lightChunk")
     public void propagateLightSources(ChunkAccess chunk, boolean isLighted, CallbackInfoReturnable<CompletableFuture<ChunkAccess>> ci) {
         ChunkPos chunkPos = chunk.getPos();
         ThreadedLevelLightEngine engine = (ThreadedLevelLightEngine) (Object)this;
@@ -45,17 +45,11 @@ public class ThreadedLevelLightEngineMixin {
                 Util.name(() -> {
 
                     chunk.findBlockLightSources(((blockPos, blockState) -> {
-                        //blockEngine.enqueueIncrease(blockPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(blockState.getLightEmission(chunk, blockPos), LightEngine.isEmptyShape(blockState)));
-                        //ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getBlockStateColor(blockState));
-                        if(blockState.is(Blocks.GLOWSTONE)) {
-                            // colored light recalculation on chunk load:
-
-                            // remove light
-                            blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
-                            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
-                            // revert light
-                            blockEngine.checkBlock(blockPos);
-                        }
+                        // remove light
+                        blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
+                        blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+                        // revert light
+                        blockEngine.checkBlock(blockPos);
                     }));
 
                 }, () -> "propagateColoredLight " + chunkPos)

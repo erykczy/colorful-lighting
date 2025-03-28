@@ -8,8 +8,10 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,6 +29,7 @@ public class LightEngineMixin {
         cir.setReturnValue(0);
 
         synchronized (LightEngineMixin.class) {
+            handleNewChunks(blockEngine);
             LongIterator longiterator = engine.blockNodesToCheck.iterator();
 
             while (longiterator.hasNext()) {
@@ -43,6 +46,27 @@ public class LightEngineMixin {
             blockEngine.storage.markNewInconsistencies(blockEngine);
             blockEngine.storage.swapSectionMap();
             cir.setReturnValue(i);
+        }
+    }
+
+    @Unique
+    private void handleNewChunks(BlockLightEngine engine) {
+        for(int i = ColoredLightManager.getInstance().newChunks.size() - 1; i >= 0; i--) {
+            ChunkPos chunkPos = ColoredLightManager.getInstance().newChunks.get(i);
+            if(chunkPos.x == -1 && chunkPos.z == 0) {
+                //System.out.println("test2");
+            }
+            LightChunk chunk = engine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
+            if(chunk == null) continue;
+            //if(!engine.storage.storingLightForSection(SectionPos.of(chunkPos.x, 0, chunkPos.z).asLong())) continue;
+
+            for(int j = 0; j < chunk.getSectionsCount(); j++) {
+                int y = chunk.getMinSection() + j;
+                ColoredLightManager.getInstance().storage.initializeSection(SectionPos.of(chunkPos, y).asLong());
+            }
+
+            ColoredLightManager.getInstance().propagateLight(engine, chunkPos.x, chunkPos.z);
+            ColoredLightManager.getInstance().newChunks.remove(i);
         }
     }
 
@@ -86,6 +110,7 @@ public class LightEngineMixin {
                 long neighbourPos = BlockPos.offset(thisBlockPos, direction);
                 // if no light data for the section, continue
                 if (!engine.storage.storingLightForSection(SectionPos.blockToSection(neighbourPos))) continue;
+                if (!ColoredLightManager.getInstance().storage.containsLayer(SectionPos.blockToSection(neighbourPos))) continue; // added
 
                 int neighbourLightLevel = engine.storage.getStoredLevel(neighbourPos);
                 // if neighbour has more light than proposed (condition duplication?, see mc code)
@@ -149,6 +174,7 @@ public class LightEngineMixin {
 
             // if no light data for the section, continue
             if (!engine.storage.storingLightForSection(SectionPos.blockToSection(neighbourPos))) continue;
+            if (!ColoredLightManager.getInstance().storage.containsLayer(SectionPos.blockToSection(neighbourPos))) continue; // added
 
             int neighbourLightLevel = engine.storage.getStoredLevel(neighbourPos);
             if (neighbourLightLevel == 0) continue; // can't decrease more

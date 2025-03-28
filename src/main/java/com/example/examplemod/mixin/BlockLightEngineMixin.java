@@ -40,6 +40,7 @@ public class BlockLightEngineMixin {
         long sectionPos = SectionPos.blockToSection(blockPos);
         // if no light data for the section, return
         if (!engine.storage.storingLightForSection(sectionPos)) return;
+        if (!ColoredLightManager.getInstance().storage.containsLayer(sectionPos)) return; // added
 
         BlockState blockState = engine.getState(BlockPos.of(blockPos));
         int blockEmission = engine.getEmission(blockPos, blockState);
@@ -55,7 +56,7 @@ public class BlockLightEngineMixin {
             engine.enqueueDecrease(blockPos, LightEngine.QueueEntry.decreaseAllDirections(lightLevel));
         } else {
             // executed if block emits more or equal light than it has
-            // TODO: why? probably this decrease request doesn't take effect on neighbours
+            // pull light from nearby blocks
             engine.enqueueDecrease(blockPos, BlockLightEngine.PULL_LIGHT_IN_ENTRY);
         }
 

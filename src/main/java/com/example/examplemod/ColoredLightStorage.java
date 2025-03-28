@@ -3,12 +3,11 @@ package com.example.examplemod;
 import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ColoredLightStorage {
-    private ConcurrentHashMap<Long, ColoredLightLayer>  map = new ConcurrentHashMap<>(); //Long2ObjectOpenHashMap<ColoredLightLayer>
+    private ConcurrentHashMap<Long, ColoredLightLayer> map = new ConcurrentHashMap<>(); //Long2ObjectOpenHashMap<ColoredLightLayer>
 
     public ColoredLightLayer getLayer(long sectionPos) {
         return map.get(sectionPos);
@@ -20,7 +19,12 @@ public class ColoredLightStorage {
 
     public FastColor3 getLightColor(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        return getLayer(sectionPos).get(
+        ColoredLightLayer layer = getLayer(sectionPos);
+        if(layer == null) {
+            // System.err.println("null");
+            return new FastColor3();
+        }
+        return layer.get(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
                 SectionPos.sectionRelative(z)
@@ -37,7 +41,7 @@ public class ColoredLightStorage {
         );
     }
 
-    public void initializeSection(long sectionPos, LevelLightEngine engine) {
+    public void initializeSection(long sectionPos) {
         if(!containsLayer(sectionPos)) {
             ColoredLightLayer layer = new ColoredLightLayer();
             map.put(sectionPos, layer);
