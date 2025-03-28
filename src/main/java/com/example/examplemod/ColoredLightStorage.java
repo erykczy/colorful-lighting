@@ -33,7 +33,12 @@ public class ColoredLightStorage {
 
     public void updateSection(long sectionPos, boolean isEmpty) {
         if(!map.containsKey(sectionPos)) {
-            map.put(sectionPos, new ColoredLightLayer());
+            try {
+                map.put(sectionPos, new ColoredLightLayer());
+            }
+            catch (ArrayIndexOutOfBoundsException exception) {
+                System.err.println(exception.getMessage());
+            }
         }
         ColoredLightLayer layer = map.get(sectionPos);
         layer.clear();

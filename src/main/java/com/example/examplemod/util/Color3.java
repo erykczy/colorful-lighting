@@ -21,8 +21,12 @@ public class Color3 {
         return new Color3(red + other.red, green + other.green, blue + other.blue);
     }
 
-    public Color3 divide(int scalar) {
+    public Color3 intDivide(int scalar) {
         return new Color3(red / scalar, green / scalar, blue / scalar);
+    }
+
+    public Color3 mul(float scalar) {
+        return new Color3((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
     }
 
     public byte redByte() { return (byte)red; }

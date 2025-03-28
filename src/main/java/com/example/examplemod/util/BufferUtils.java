@@ -92,7 +92,7 @@ public class BufferUtils {
                 if(Minecraft.useAmbientOcclusion())
                     lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
                 else
-                    lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos);
+                     lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
                 setLightColor(buffer, lightColor);
             }
         }

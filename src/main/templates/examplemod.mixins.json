@@ -8,7 +8,9 @@
     "ModelBlockRendererMixin",
     "LiquidBlockRendererMixin",
     "SectionCompilerMixin",
-    "LevelLightEngineMixin"
+    "LevelLightEngineMixin",
+    "BlockLightEngineMixin",
+    "LightEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1
