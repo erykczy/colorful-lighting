@@ -1,7 +1,6 @@
 package com.example.examplemod.mixin;
 
 import com.example.examplemod.client.ModRenderTypes;
-import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.client.ModVertexFormats;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;

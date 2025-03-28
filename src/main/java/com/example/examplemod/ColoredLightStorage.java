@@ -1,15 +1,21 @@
 package com.example.examplemod;
 
 import com.example.examplemod.util.FastColor3;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.lighting.LevelLightEngine;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ColoredLightStorage {
-    private Long2ObjectOpenHashMap<ColoredLightLayer> map = new Long2ObjectOpenHashMap<>();
+    private ConcurrentHashMap<Long, ColoredLightLayer>  map = new ConcurrentHashMap<>(); //Long2ObjectOpenHashMap<ColoredLightLayer>
 
     public ColoredLightLayer getLayer(long sectionPos) {
         return map.get(sectionPos);
+    }
+
+    public boolean containsLayer(long sectionPos) {
+        return map.containsKey(sectionPos);
     }
 
     public FastColor3 getLightColor(int x, int y, int z) {
@@ -31,33 +37,16 @@ public class ColoredLightStorage {
         );
     }
 
-    public void updateSection(long sectionPos, boolean isEmpty) {
-        if(!map.containsKey(sectionPos)) {
-            try {
-                map.put(sectionPos, new ColoredLightLayer());
-            }
-            catch (ArrayIndexOutOfBoundsException exception) {
-                System.err.println(exception.getMessage());
-            }
+    public void initializeSection(long sectionPos, LevelLightEngine engine) {
+        if(!containsLayer(sectionPos)) {
+            ColoredLightLayer layer = new ColoredLightLayer();
+            map.put(sectionPos, layer);
         }
-        ColoredLightLayer layer = map.get(sectionPos);
-        layer.clear();
-        /*if(isEmpty) {
-            layer.clear();
-        }
-        else {
-            BlockPos sectionOrigin = SectionPos.of(sectionPos).origin();
-            for(int y = 0; y < 16; ++y) {
-                boolean even = y % 2 == 0;
-                for(int x = 0; x < 16; ++x) {
-                    for(int z = 0; z < 16; ++z) {
-                        setLightColor(sectionOrigin.getX() + x, sectionOrigin.getY() + y, sectionOrigin.getZ() + z, even ?
-                                new FastColor3((byte)255, (byte)0, (byte)0) :
-                                new FastColor3((byte)0, (byte)255,(byte)0)
-                        );
-                    }
-                }
-            }
-        }*/
+    }
+
+    public void removeSection(long sectionPos) {
+        //map.remove(sectionPos);
+        if(containsLayer(sectionPos))
+            getLayer(sectionPos).clear();
     }
 }

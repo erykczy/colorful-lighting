@@ -3,6 +3,7 @@ package com.example.examplemod;
 import com.example.examplemod.block.ModBlocks;
 import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModShaders;
+import com.example.examplemod.client.debug.ModKeyBinds;
 import com.mojang.logging.LogUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -26,6 +27,7 @@ public class ExampleMod
     {
         ModBlocks.register(modEventBus);
         ModShaders.register(modEventBus);
+        ModKeyBinds.register(modEventBus);
         ModRenderTypes.register();
     }
 

@@ -35,6 +35,7 @@ public class ModelBlockRendererMixin {
             int packedOverlay,
             CallbackInfo ci)
     {
+        if(!(consumer instanceof BufferBuilder bufferBuilder)) return;
         ci.cancel();
         ModelBlockRenderer renderer = (ModelBlockRenderer) (Object)this;
 
@@ -53,7 +54,7 @@ public class ModelBlockRendererMixin {
         }
 
         BufferUtils.putQuadWithColoredLighting(
-                (BufferBuilder) consumer,
+                bufferBuilder,
                 pose,
                 quad,
                 new float[]{brightness0, brightness1, brightness2, brightness3},

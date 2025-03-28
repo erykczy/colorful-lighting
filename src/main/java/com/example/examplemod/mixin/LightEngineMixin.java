@@ -1,8 +1,10 @@
 package com.example.examplemod.mixin;
 
 import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.util.Color3;
 import com.example.examplemod.util.FastColor3;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -18,6 +20,32 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LightEngine.class)
 public class LightEngineMixin {
+    @Inject(at = @At("HEAD"), method = "runLightUpdates", cancellable = true)
+    public void runLightUpdates(CallbackInfoReturnable<Integer> cir) {
+        LightEngine engine = (LightEngine)(Object)this;
+        if(!(engine instanceof BlockLightEngine blockEngine)) return;
+        cir.setReturnValue(0);
+
+        synchronized (LightEngineMixin.class) {
+            LongIterator longiterator = engine.blockNodesToCheck.iterator();
+
+            while (longiterator.hasNext()) {
+                blockEngine.checkNode(longiterator.nextLong());
+            }
+
+            blockEngine.blockNodesToCheck.clear();
+            blockEngine.blockNodesToCheck.trim(512);
+            int i = 0;
+            i += blockEngine.propagateDecreases();
+            if(ModKeyBinds.debug_test2)
+                i += blockEngine.propagateIncreases();
+            blockEngine.clearChunkCache();
+            blockEngine.storage.markNewInconsistencies(blockEngine);
+            blockEngine.storage.swapSectionMap();
+            cir.setReturnValue(i);
+        }
+    }
+
     @Inject(at = @At("HEAD"), method = "propagateIncreases", cancellable = true)
     private void propagateIncreases(CallbackInfoReturnable<Integer> cir) {
         LightEngine engine = (LightEngine)(Object)this;
@@ -66,7 +94,7 @@ public class LightEngineMixin {
                 BlockState neighbourState = engine.getState(BlockPos.of(neighbourPos));
                 int neighbourOpacity = engine.getOpacity(neighbourState, BlockPos.of(neighbourPos));
                 int neighbourNewLightLevel = thisLightLevel - neighbourOpacity;
-                // if neighbour has more light than proposed
+                // if neighbour has more or equal light than proposed
                 if (neighbourNewLightLevel <= neighbourLightLevel) continue;
 
                 // get this block state
@@ -80,6 +108,8 @@ public class LightEngineMixin {
 
                 // set new light for neighbour
                 FastColor3 neighbourNewLightColor = new FastColor3(new Color3(lightColor).mul(1.0f - neighbourOpacity/15.0f)); // added
+                if(BlockPos.getY(neighbourPos) == 1 && BlockPos.getZ(neighbourPos) == 0) // TODO
+                    System.out.println(BlockPos.getX(neighbourPos)+": "+Byte.toUnsignedInt(neighbourNewLightColor.red())+" | from: " + Byte.toUnsignedInt(lightColor.red()));
                 ColoredLightManager.getInstance().storage.setLightColor(BlockPos.getX(neighbourPos), BlockPos.getY(neighbourPos), BlockPos.getZ(neighbourPos), neighbourNewLightColor); // added
                 engine.storage.setStoredLevel(neighbourPos, neighbourNewLightLevel);
 
@@ -123,7 +153,7 @@ public class LightEngineMixin {
             int neighbourLightLevel = engine.storage.getStoredLevel(neighbourPos);
             if (neighbourLightLevel == 0) continue; // can't decrease more
 
-            // if neighbour has less or equal light than requested to remove
+            // if neighbour has less or equal light than requested to remove (less than thisBlock had)
             if (neighbourLightLevel <= queueEntryLightLevel - 1) {
                 BlockState neighbourState = engine.getState(BlockPos.of(neighbourPos));
                 int neighbourEmission = engine.getEmission(neighbourPos, neighbourState);
@@ -133,7 +163,7 @@ public class LightEngineMixin {
                 engine.storage.setStoredLevel(neighbourPos, 0);
                 ColoredLightManager.getInstance().storage.setLightColor(BlockPos.getX(neighbourPos), BlockPos.getY(neighbourPos), BlockPos.getZ(neighbourPos), new FastColor3()); // added
 
-                // if neighbour emits less light than it had
+                // if neighbour emits less light than it has (had)
                 if (neighbourEmission < neighbourLightLevel) {
                     engine.enqueueDecrease(neighbourPos, LightEngine.QueueEntry.decreaseSkipOneDirection(neighbourLightLevel, direction.getOpposite()));
                     //ColoredLightManager.getInstance().enqueueDecrease(neighbourLightColor); // added
@@ -144,6 +174,7 @@ public class LightEngineMixin {
                     ColoredLightManager.getInstance().enqueueIncrease(neighbourEmissionColor); // added
                 }
             } else {
+                // if neighbour has more light than thisBlock had
                 engine.enqueueIncrease(neighbourPos, LightEngine.QueueEntry.increaseOnlyOneDirection(neighbourLightLevel, false, direction.getOpposite()));
                 FastColor3 neighbourLightColor = ColoredLightManager.getInstance().storage.getLightColor(BlockPos.getX(neighbourPos), BlockPos.getY(neighbourPos), BlockPos.getZ(neighbourPos)); // added
                 ColoredLightManager.getInstance().enqueueIncrease(neighbourLightColor); // added

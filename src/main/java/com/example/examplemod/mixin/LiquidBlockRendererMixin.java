@@ -29,6 +29,7 @@ public class LiquidBlockRendererMixin {
             int packedLight,
             CallbackInfo ci
     ) {
+        if(!(buffer instanceof BufferBuilder bufferBuilder)) return;
         ci.cancel();
         buffer.addVertex(x, y, z)
                 .setColor(red, green, blue, alpha)
@@ -36,6 +37,6 @@ public class LiquidBlockRendererMixin {
                 .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
         // TODO is blockPos correct?
-        BufferUtils.setLightColor((BufferBuilder) buffer, ColoredLightManager.getInstance().sampleLightColor(new BlockPos((int)x, (int)y, (int)z)));
+        BufferUtils.setLightColor(bufferBuilder, ColoredLightManager.getInstance().sampleLightColor(new BlockPos((int)x, (int)y, (int)z)));
     }
 }

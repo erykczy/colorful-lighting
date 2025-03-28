@@ -4,13 +4,13 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "LeverRendererMixin",
-    "DebugRendererMixin",
     "ModelBlockRendererMixin",
     "LiquidBlockRendererMixin",
     "SectionCompilerMixin",
-    "LevelLightEngineMixin",
     "BlockLightEngineMixin",
-    "LightEngineMixin"
+    "LightEngineMixin",
+    "ThreadedLevelLightEngineMixin",
+    "LevelLightEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

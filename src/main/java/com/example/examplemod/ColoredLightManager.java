@@ -3,13 +3,11 @@ package com.example.examplemod;
 import com.example.examplemod.util.Color3;
 import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,9 +21,9 @@ public class ColoredLightManager {
         return instance;
     }
 
-    public void updateSection(SectionPos pos, boolean isEmpty) {
-        storage.updateSection(pos.asLong(), isEmpty);
-    }
+    /*public void updateSection(SectionPos pos, boolean isEmpty) {
+        storage.updateSection(pos.asLong());
+    }*/
 
     public void enqueueIncrease(FastColor3 color) {
         assert color != null;
@@ -50,8 +48,8 @@ public class ColoredLightManager {
 
     public Color3 sampleLightColor(int x, int y, int z) {
         Color3 sampledColor = new Color3(storage.getLightColor(x, y, z));
-        int test = sampledColor.red + sampledColor.green + sampledColor.blue;
-        return sampledColor;//new Color3(test, 0, 0);
+        int test = sampledColor.red + sampledColor.green + sampledColor.blue; // TODO
+        return sampledColor;//new Color3(255, 255, 255); //sampledColor;//new Color3(test, 0, 0);
     }
     public Color3 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
 

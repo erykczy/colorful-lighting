@@ -95,15 +95,15 @@ public class LeverRendererMixin {
         profilerfiller.popPush("compile_sections");
         renderer.compileSections(camera);
         profilerfiller.popPush("terrain");
-        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_SOLID, d0, d1, d2, frustumMatrix, projectionMatrix);
+        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_SOLID, d0, d1, d2, frustumMatrix, projectionMatrix); // added
         renderer.renderSectionLayer(RenderType.solid(), d0, d1, d2, frustumMatrix, projectionMatrix);
 
         renderer.minecraft.getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).setBlurMipmap(false, renderer.minecraft.options.mipmapLevels().get() > 0); // Neo: fix flickering leaves when mods mess up the blurMipmap settings
-        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_CUTOUT_MIPPED, d0, d1, d2, frustumMatrix, projectionMatrix);
+        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_CUTOUT_MIPPED, d0, d1, d2, frustumMatrix, projectionMatrix); // added
         renderer.renderSectionLayer(RenderType.cutoutMipped(), d0, d1, d2, frustumMatrix, projectionMatrix);
 
         renderer.minecraft.getModelManager().getAtlas(TextureAtlas.LOCATION_BLOCKS).restoreLastBlurMipmap();
-        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_CUTOUT, d0, d1, d2, frustumMatrix, projectionMatrix);
+        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_CUTOUT, d0, d1, d2, frustumMatrix, projectionMatrix); // added
         renderer.renderSectionLayer(RenderType.cutout(), d0, d1, d2, frustumMatrix, projectionMatrix);
 
         if (renderer.level.effects().constantAmbientLight()) {

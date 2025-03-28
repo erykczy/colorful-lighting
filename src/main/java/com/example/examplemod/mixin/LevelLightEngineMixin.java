@@ -12,6 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class LevelLightEngineMixin {
     @Inject(at = @At("HEAD"), method = "updateSectionStatus")
     public void updateSectionStatus(SectionPos pos, boolean isEmpty, CallbackInfo ci) {
-        ColoredLightManager.getInstance().updateSection(pos, isEmpty);
+        // chunk probably unloads
+        //if(isEmpty)
+        //    ColoredLightManager.getInstance().storage.removeSection(pos.asLong());
     }
 }

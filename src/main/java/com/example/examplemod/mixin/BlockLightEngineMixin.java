@@ -48,11 +48,13 @@ public class BlockLightEngineMixin {
 
         // THEORY: checkNode function executes only when block pos changes its light properties
         // if the new block lets light through, then lightLevel (that hasn't been updated yet) is 0 and the condition is false
+        // if block emits less light than it has
         if (blockEmission < lightLevel) {
             engine.storage.setStoredLevel(blockPos, 0);
             ColoredLightManager.getInstance().storage.setLightColor(BlockPos.getX(blockPos), BlockPos.getY(blockPos), BlockPos.getZ(blockPos), new FastColor3()); // added
             engine.enqueueDecrease(blockPos, LightEngine.QueueEntry.decreaseAllDirections(lightLevel));
         } else {
+            // executed if block emits more or equal light than it has
             // TODO: why? probably this decrease request doesn't take effect on neighbours
             engine.enqueueDecrease(blockPos, BlockLightEngine.PULL_LIGHT_IN_ENTRY);
         }
