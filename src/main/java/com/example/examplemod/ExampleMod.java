@@ -45,7 +45,7 @@ public class ExampleMod
             if(event.getChunk().getPos().x == -1 && event.getChunk().getPos().z == 0) {
                 System.out.println("test");
             }
-            ColoredLightManager.getInstance().newChunks.add(event.getChunk().getPos());
+            ColoredLightManager.getInstance().newChunks.add(event.getChunk().getPos()); // TODO element duplication
 /*
             for(int i = 0; i < event.getChunk().getSectionsCount(); i++) {
                 int y = event.getChunk().getMinSection() + i;

@@ -80,7 +80,12 @@ public class ColoredLightManager {
         chunk.findBlockLightSources(((blockPos, blockState) -> {
             // remove light
             blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
-            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+            try {
+                blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+            }
+            catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
             // revert light
             blockEngine.checkBlock(blockPos);
         }));

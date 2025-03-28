@@ -21,7 +21,7 @@ public class ColoredLightStorage {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         ColoredLightLayer layer = getLayer(sectionPos);
         if(layer == null) {
-            // System.err.println("null");
+            //System.err.println("null");
             return new FastColor3();
         }
         return layer.get(

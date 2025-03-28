@@ -53,12 +53,9 @@ public class LightEngineMixin {
     private void handleNewChunks(BlockLightEngine engine) {
         for(int i = ColoredLightManager.getInstance().newChunks.size() - 1; i >= 0; i--) {
             ChunkPos chunkPos = ColoredLightManager.getInstance().newChunks.get(i);
-            if(chunkPos.x == -1 && chunkPos.z == 0) {
-                //System.out.println("test2");
-            }
             LightChunk chunk = engine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
             if(chunk == null) continue;
-            //if(!engine.storage.storingLightForSection(SectionPos.of(chunkPos.x, 0, chunkPos.z).asLong())) continue;
+            //if(engine.storage.)
 
             for(int j = 0; j < chunk.getSectionsCount(); j++) {
                 int y = chunk.getMinSection() + j;
