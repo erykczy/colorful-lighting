@@ -17,6 +17,10 @@ public class Color3 {
         this.blue = blue;
     }
 
+    public Color3(float red, float green, float blue) {
+        this((int)(red * 255), (int)(green * 255), (int)(blue * 255));
+    }
+
     public Color3 add(Color3 other) {
         return new Color3(red + other.red, green + other.green, blue + other.blue);
     }
