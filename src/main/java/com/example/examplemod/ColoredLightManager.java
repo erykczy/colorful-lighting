@@ -31,7 +31,6 @@ public class ColoredLightManager {
     }
 
     public void enqueueIncrease(FastColor3 color) {
-        assert color != null;
         increaseQueue.add(color);
     }
 

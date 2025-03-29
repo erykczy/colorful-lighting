@@ -1,6 +1,5 @@
 package com.example.examplemod.mixin;
 
-import com.example.examplemod.ColoredLightManager;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Mixin;

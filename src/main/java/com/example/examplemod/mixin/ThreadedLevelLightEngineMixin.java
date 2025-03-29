@@ -1,20 +1,7 @@
 package com.example.examplemod.mixin;
 
-import com.example.examplemod.ColoredLightManager;
-import net.minecraft.Util;
-import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ThreadedLevelLightEngine;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.lighting.BlockLightEngine;
-import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import java.util.concurrent.CompletableFuture;
 
 @Mixin(ThreadedLevelLightEngine.class)
 public class ThreadedLevelLightEngineMixin {

@@ -22,12 +22,12 @@ public class BlockLightEngineMixin {
         ci.cancel();
 
         engine.setLightEnabled(chunkPos, true);
-        LightChunk lightChunk = engine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
+        LightChunk lightChunk = engine.getChunk(chunkPos.x, chunkPos.z);
         if (lightChunk != null) {
             lightChunk.findBlockLightSources((blockPos, blockState) -> {
                 int blockEmission = blockState.getLightEmission(engine.chunkSource.getLevel(), blockPos);
                 engine.enqueueIncrease(blockPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(blockEmission, engine.isEmptyShape(blockState)));
-                ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), blockPos)); // added
+                ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getEmissionColor(lightChunk, blockPos)); // added
             });
         }
     }
@@ -44,7 +44,7 @@ public class BlockLightEngineMixin {
 
         BlockState blockState = engine.getState(BlockPos.of(blockPos));
         int blockEmission = engine.getEmission(blockPos, blockState);
-        FastColor3 blockEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), BlockPos.of(blockPos)); // added
+        FastColor3 blockEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.getChunk(SectionPos.x(sectionPos), SectionPos.z(sectionPos)), BlockPos.of(blockPos)); // added
         int lightLevel = engine.storage.getStoredLevel(blockPos);
 
         // THEORY: checkNode function executes only when block pos changes its light properties

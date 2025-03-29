@@ -2,7 +2,6 @@ package com.example.examplemod.mixin;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.client.debug.ModKeyBinds;
-import com.example.examplemod.util.Color3;
 import com.example.examplemod.util.FastColor3;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
@@ -167,6 +166,7 @@ public class LightEngineMixin {
             if (!LightEngine.QueueEntry.shouldPropagateInDirection(thisLightLevel, direction)) continue;
 
             long neighbourPos = BlockPos.offset(thisBlockPos, direction);
+            long neighbourSectionPos = SectionPos.blockToSection(neighbourPos);
 
             // if no light data for the section, continue
             if (!engine.storage.storingLightForSection(SectionPos.blockToSection(neighbourPos))) continue;
@@ -179,7 +179,7 @@ public class LightEngineMixin {
             if (neighbourLightLevel <= queueEntryLightLevel - 1) {
                 BlockState neighbourState = engine.getState(BlockPos.of(neighbourPos));
                 int neighbourEmission = engine.getEmission(neighbourPos, neighbourState);
-                FastColor3 neighbourEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), BlockPos.of(neighbourPos)); // added
+                FastColor3 neighbourEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.getChunk(SectionPos.x(neighbourSectionPos), SectionPos.z(neighbourSectionPos)), BlockPos.of(neighbourPos)); // added
 
                 // set neighbour's light level to 0 | THEORY: light level will be restored by 2 enqueueIncrease function calls below
                 engine.storage.setStoredLevel(neighbourPos, 0);
