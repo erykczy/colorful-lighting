@@ -11,7 +11,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.BlockLightEngine;
-import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -131,7 +130,7 @@ public class LightEngineMixin {
                 if (engine.shapeOccludes(thisBlockPos, thisBlockState, neighbourPos, neighbourState, direction)) continue;
 
                 // set new light for neighbour
-                FastColor3 neighbourNewLightColor = new FastColor3(new Color3(lightColor).mul(1.0f - neighbourOpacity/15.0f)); // added
+                FastColor3 neighbourNewLightColor = lightColor; //new FastColor3(new Color3(lightColor).mul(1.0f - neighbourOpacity/15.0f)); // added
                 ColoredLightManager.getInstance().storage.setLightColor(BlockPos.getX(neighbourPos), BlockPos.getY(neighbourPos), BlockPos.getZ(neighbourPos), neighbourNewLightColor); // added
                 engine.storage.setStoredLevel(neighbourPos, neighbourNewLightLevel);
 
@@ -180,7 +179,7 @@ public class LightEngineMixin {
             if (neighbourLightLevel <= queueEntryLightLevel - 1) {
                 BlockState neighbourState = engine.getState(BlockPos.of(neighbourPos));
                 int neighbourEmission = engine.getEmission(neighbourPos, neighbourState);
-                FastColor3 neighbourEmissionColor = ColoredLightManager.getInstance().getBlockStateColor(neighbourState); // added
+                FastColor3 neighbourEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), BlockPos.of(neighbourPos)); // added
 
                 // set neighbour's light level to 0 | THEORY: light level will be restored by 2 enqueueIncrease function calls below
                 engine.storage.setStoredLevel(neighbourPos, 0);

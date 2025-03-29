@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,7 +35,9 @@ public class ColoredLightManager {
         increaseQueue.add(color);
     }
 
-    public FastColor3 getBlockStateColor(BlockState state) {
+    public FastColor3 getEmissionColor(BlockGetter level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+
         if(state.is(Blocks.GLOWSTONE) || state.is(Blocks.REDSTONE_LAMP))
             return new FastColor3((byte)255, (byte)0, (byte)0);
         else if(state.is(Blocks.VERDANT_FROGLIGHT))
@@ -60,17 +63,19 @@ public class ColoredLightManager {
 
     public Color3 sampleMixedLightColor(Vector3f pos) {
         Vector3i cornerPos = new Vector3i((int)pos.x, (int)pos.y, (int)pos.z); // reject fraction
-
+        int d = 0;
         Color3 finalColor = new Color3();
         for(int ox = -1; ox < 1; ++ox) {
             for(int oy = -1; oy < 1; ++oy) {
                 for(int oz = -1; oz < 1; ++oz) {
                     Color3 c = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
+                    if(c.red == 0 && c.green == 0 && c.blue == 0) continue;;
                     finalColor = finalColor.add(c);
+                    ++d;
                 }
             }
         }
-        return finalColor.intDivide(8);
+        return d == 0 ? finalColor : finalColor.intDivide(d);
     }
 
     // should be called on light thread

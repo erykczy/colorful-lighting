@@ -10,7 +10,7 @@ public class ModVertexFormats {
             .add("UV0", VertexFormatElement.UV0)
             .add("UV2", VertexFormatElement.UV2)
             .add("Normal", VertexFormatElement.NORMAL)
-            .add("LightColor", ModVertexFormatElements.LIGHT_COLOR)
+            .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR)
             .padding(2)
             .build();
 }

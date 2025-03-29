@@ -8,7 +8,7 @@ in vec4 Color;
 in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
-in vec3 LightColor;
+in vec3 BlockLightColor;
 
 uniform sampler2D Sampler2;
 
@@ -26,6 +26,12 @@ void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 
     vertexDistance = fog_distance(pos, FogShape);
-    vertexColor = mix(minecraft_sample_lightmap(Sampler2, UV2), vec4(LightColor, 1.0), UV2.x/256.0) * Color;
+    //vec4 colorFromLightMap = minecraft_sample_lightmap(Sampler2, UV2);
+    float blockLight = UV2.x/256.0;
+    //float skyLight = UV2.y/256.0;
+    vec4 skyLightColor = minecraft_sample_lightmap(Sampler2, ivec2(0, UV2.y));
+    vec3 blockLightColor = BlockLightColor * blockLight;
+    vec4 lightColor = skyLightColor + vec4(blockLightColor, 1.0);//mix(colorFromLightMap, vec4(BlockLightColor + , 1.0), blockLight);
+    vertexColor = lightColor * Color;
     texCoord0 = UV0;
 }

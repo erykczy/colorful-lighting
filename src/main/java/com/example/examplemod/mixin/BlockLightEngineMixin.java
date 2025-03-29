@@ -27,7 +27,7 @@ public class BlockLightEngineMixin {
             lightChunk.findBlockLightSources((blockPos, blockState) -> {
                 int blockEmission = blockState.getLightEmission(engine.chunkSource.getLevel(), blockPos);
                 engine.enqueueIncrease(blockPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(blockEmission, engine.isEmptyShape(blockState)));
-                ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getBlockStateColor(blockState)); // added
+                ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), blockPos)); // added
             });
         }
     }
@@ -44,7 +44,7 @@ public class BlockLightEngineMixin {
 
         BlockState blockState = engine.getState(BlockPos.of(blockPos));
         int blockEmission = engine.getEmission(blockPos, blockState);
-        FastColor3 blockEmissionColor = ColoredLightManager.getInstance().getBlockStateColor(blockState); // added
+        FastColor3 blockEmissionColor = ColoredLightManager.getInstance().getEmissionColor(engine.chunkSource.getLevel(), BlockPos.of(blockPos)); // added
         int lightLevel = engine.storage.getStoredLevel(blockPos);
 
         // THEORY: checkNode function executes only when block pos changes its light properties
