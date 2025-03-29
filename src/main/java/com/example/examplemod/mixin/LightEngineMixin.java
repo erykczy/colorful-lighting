@@ -131,8 +131,6 @@ public class LightEngineMixin {
 
                 // set new light for neighbour
                 FastColor3 neighbourNewLightColor = new FastColor3(new Color3(lightColor).mul(1.0f - neighbourOpacity/15.0f)); // added
-                if(BlockPos.getY(neighbourPos) == 1 && BlockPos.getZ(neighbourPos) == 0) // TODO
-                    System.out.println(BlockPos.getX(neighbourPos)+": "+Byte.toUnsignedInt(neighbourNewLightColor.red())+" | from: " + Byte.toUnsignedInt(lightColor.red()));
                 ColoredLightManager.getInstance().storage.setLightColor(BlockPos.getX(neighbourPos), BlockPos.getY(neighbourPos), BlockPos.getZ(neighbourPos), neighbourNewLightColor); // added
                 engine.storage.setStoredLevel(neighbourPos, neighbourNewLightLevel);
 

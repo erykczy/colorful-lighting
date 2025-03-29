@@ -75,37 +75,47 @@ public class ColoredLightManager {
     // should be called on light thread
     public void propagateLight(BlockLightEngine blockEngine, int chunkX, int chunkZ) {
         // also pull in light from neighbour chunks (TODO not ideal solution)
-        for(int x = -1; x <= 1; ++x) {
-            for(int z = -1; z <= 1; ++z) {
-                LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkX + x, chunkZ + z);
-                if(chunk == null) continue;
+        //for(int x = -1; x <= 1; ++x) {
+        //    for(int z = -1; z <= 1; ++z) {
+        LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkX, chunkZ); // + x  + z
+        if(chunk == null) return; //continue;
 
-                chunk.findBlockLightSources(((blockPos, blockState) -> {
-                    // neighbour chunk might not have light data
-                    if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) return;
+        chunk.findBlockLightSources(((blockPos, blockState) -> {
+            // neighbour chunk might not have light data
+            if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) return;
 
-                    // remove light
-                    blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
-                    blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
-                    // revert light
-                    blockEngine.checkBlock(blockPos);
-                }));
-            }
-        }
+            // queue light removal
+            blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
+            // queue light revert
+            blockEngine.checkBlock(blockPos);
+
+            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+        }));
+        //    }
+        //}
     }
 
     // should be called on light thread
-    public void handleSectionUpdate(BlockLightEngine engine, SectionPos pos, LayerLightSectionStorage.SectionType sectionStatus) {
-        LightChunk chunk = engine.chunkSource.getChunkForLighting(pos.x(), pos.z());
-        if(chunk == null) return;
-        if(sectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
-            ColoredLightManager.getInstance().storage.removeSection(pos.asLong());
-        }
-        else {
-            ColoredLightManager.getInstance().storage.initializeSection(pos.asLong());
-            if(sectionStatus == LayerLightSectionStorage.SectionType.LIGHT_AND_DATA)
-                ColoredLightManager.getInstance().propagateLight(engine, pos.x(), pos.z());
-        }
+    public void handleSectionUpdate(BlockLightEngine engine, SectionPos pos, LayerLightSectionStorage.SectionType ss) {
+        for(int x = -1; x <= 1; ++x) {
+            for(int z = -1; z <= 1; ++z) {
+                LightChunk chunk = engine.chunkSource.getChunkForLighting(pos.x(), pos.z());
+                if(chunk == null) continue;
 
+                for(int y = -1; y <= 1; ++y) {
+                    long sectionPos = pos.offset(x, y, z).asLong();
+                    LayerLightSectionStorage.SectionType sectionStatus = engine.storage.getDebugSectionType(sectionPos);
+
+                    if(sectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
+                        ColoredLightManager.getInstance().storage.removeSection(sectionPos);
+                    }
+                    else {
+                        ColoredLightManager.getInstance().storage.initializeSection(sectionPos);
+                        if(sectionStatus == LayerLightSectionStorage.SectionType.LIGHT_AND_DATA)
+                            ColoredLightManager.getInstance().propagateLight(engine, pos.x() + x, pos.z() + z);
+                    }
+                }
+            }
+        }
     }
 }

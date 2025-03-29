@@ -12,6 +12,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.IEventBus;
@@ -99,6 +100,8 @@ public class ModKeyBinds {
                 FastColor3 color = ColoredLightManager.getInstance().storage.getLightColor(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
                 player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
             }
+            LayerLightSectionStorage.SectionType type = level.getLightEngine().blockEngine.getDebugSectionType(sectionPos.asLong());
+            player.sendSystemMessage(Component.literal(type.toString()).withColor(CommonColors.WHITE));
         }
 
         HitResult result = Minecraft.getInstance().hitResult;

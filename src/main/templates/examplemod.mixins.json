@@ -10,7 +10,8 @@
     "BlockLightEngineMixin",
     "LightEngineMixin",
     "ThreadedLevelLightEngineMixin",
-    "LevelLightEngineMixin"
+    "LevelLightEngineMixin",
+    "DebugRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
