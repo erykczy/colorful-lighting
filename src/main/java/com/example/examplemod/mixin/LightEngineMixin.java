@@ -11,6 +11,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.BlockLightEngine;
+import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -55,7 +56,7 @@ public class LightEngineMixin {
         LightEngine engine = (LightEngine)(Object)this;
         if(!(engine instanceof BlockLightEngine blockEngine)) return;
 
-        ColoredLightManager.getInstance().handleNewChunks(blockEngine);
+        ColoredLightManager.getInstance().handleSectionUpdate(blockEngine, pos, engine.storage.getDebugSectionType(pos.asLong()));
     }
 
     //@Inject(at = @At("TAIL"), method = "setLightEnabled")

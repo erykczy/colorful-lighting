@@ -1,6 +1,7 @@
 package com.example.examplemod.client.debug;
 
 import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.util.FastColor3;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -70,7 +71,8 @@ public class ModKeyBinds {
             for (int z = -1; z <= 1; z++) {
                 for (int x = -1; x <= 1; x++) {
                     for (int y = -1; y <= 1; y++) {
-                        ColoredLightManager.getInstance().storage.getLayer(sectionPos.offset(x, y, z).asLong()).clear();
+                        if(ColoredLightManager.getInstance().storage.containsLayer(sectionPos.offset(x, y, z).asLong()))
+                            ColoredLightManager.getInstance().storage.getLayer(sectionPos.offset(x, y, z).asLong()).clear();
                     }
                 }
             }
@@ -93,17 +95,27 @@ public class ModKeyBinds {
             SectionPos sectionPos = SectionPos.of(player.blockPosition());
             boolean contains = ColoredLightManager.getInstance().storage.containsLayer(sectionPos.asLong());
             player.sendSystemMessage(Component.literal("CONTAINS DATA: "+contains).withColor(CommonColors.WHITE));
+            if(contains) {
+                FastColor3 color = ColoredLightManager.getInstance().storage.getLightColor(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
+                player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
+            }
         }
 
         HitResult result = Minecraft.getInstance().hitResult;
         if(result != null && result.getType() == HitResult.Type.BLOCK) {
             BlockHitResult blockHitResult = (BlockHitResult) result;
             BlockPos pos = blockHitResult.getBlockPos().offset(blockHitResult.getDirection().getNormal());
+            if(!level.isOutsideBuildHeight(pos)) {
+                if(!ColoredLightManager.getInstance().storage.containsLayer(SectionPos.blockToSection(pos.asLong()))) {
+                    System.out.println("Doesn't contain.");
+                    return;
+                }
+                int red = Byte.toUnsignedInt(ColoredLightManager.getInstance().storage.getLightColor(pos.getX(), pos.getY(), pos.getZ()).red());
+                Minecraft.getInstance().gui.setTimes(0, 1, 0);
+                Minecraft.getInstance().gui.setTitle(Component.literal(""));
+                Minecraft.getInstance().gui.setSubtitle(Component.literal(""+red).withColor(CommonColors.RED));
+            }
             //int red = ColoredLightManager.getInstance().sampleLightColor(pos).red;
-            int red = Byte.toUnsignedInt(ColoredLightManager.getInstance().storage.getLightColor(pos.getX(), pos.getY(), pos.getZ()).red());
-            Minecraft.getInstance().gui.setTimes(0, 1, 0);
-            Minecraft.getInstance().gui.setTitle(Component.literal(""));
-            Minecraft.getInstance().gui.setSubtitle(Component.literal(""+red).withColor(CommonColors.RED));
         }
     }
 }

@@ -50,8 +50,8 @@ public class ColoredLightStorage {
     }
 
     public void removeSection(long sectionPos) {
-        //map.remove(sectionPos);
-        if(containsLayer(sectionPos))
-            getLayer(sectionPos).clear();
+        map.remove(sectionPos);
+        //if(containsLayer(sectionPos))
+        //    getLayer(sectionPos).clear();
     }
 }
