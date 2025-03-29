@@ -30,6 +30,7 @@ public class LightEngineMixin {
 
         synchronized (LightEngineMixin.class) {
             //handleNewChunks(blockEngine);
+            ColoredLightManager.getInstance().propagateLight(blockEngine);
             LongIterator longiterator = engine.blockNodesToCheck.iterator();
 
             while (longiterator.hasNext()) {

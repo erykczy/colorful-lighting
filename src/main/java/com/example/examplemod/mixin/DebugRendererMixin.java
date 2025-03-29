@@ -24,8 +24,6 @@ public class DebugRendererMixin {
 
     @Inject(at = @At("HEAD"), method = "render")
     public void render(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, double camX, double camY, double camZ, CallbackInfo ci) {
-        DebugRenderer renderer = (DebugRenderer) (Object)this;
-
-        blockLightSectionDebugRenderer.render(poseStack, bufferSource, camX, camY, camZ);
+        //blockLightSectionDebugRenderer.render(poseStack, bufferSource, camX, camY, camZ);
     }
 }
