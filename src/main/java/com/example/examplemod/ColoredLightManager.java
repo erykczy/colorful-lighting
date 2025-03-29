@@ -35,7 +35,11 @@ public class ColoredLightManager {
     }
 
     public FastColor3 getEmissionColor(BlockGetter level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
+        BlockState state;
+        if(level == null)
+            state = Blocks.BEDROCK.defaultBlockState();
+        else
+            state = level.getBlockState(pos);
 
         if(state.is(Blocks.GLOWSTONE) || state.is(Blocks.REDSTONE_LAMP))
             return new FastColor3((byte)255, (byte)0, (byte)0);
