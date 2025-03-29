@@ -4,6 +4,7 @@ import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ColoredLightStorage {
@@ -20,10 +21,6 @@ public class ColoredLightStorage {
     public FastColor3 getLightColor(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         ColoredLightLayer layer = getLayer(sectionPos);
-        if(layer == null) {
-            //System.err.println("null");
-            return new FastColor3();
-        }
         return layer.get(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
@@ -33,7 +30,8 @@ public class ColoredLightStorage {
 
     public void setLightColor(int x, int y, int z, FastColor3 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        getLayer(sectionPos).set(
+        ColoredLightLayer layer = getLayer(sectionPos);
+        layer.set(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
                 SectionPos.sectionRelative(z),
@@ -41,11 +39,14 @@ public class ColoredLightStorage {
         );
     }
 
-    public void initializeSection(long sectionPos) {
+    @Nullable
+    public ColoredLightLayer initializeSection(long sectionPos) {
         if(!containsLayer(sectionPos)) {
             ColoredLightLayer layer = new ColoredLightLayer();
             map.put(sectionPos, layer);
+            return layer;
         }
+        return null;
     }
 
     public void removeSection(long sectionPos) {

@@ -1,18 +1,25 @@
 package com.example.examplemod.mixin;
 
+import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModVertexFormats;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexSorting;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.SectionBufferBuilderPack;
+import net.minecraft.client.renderer.chunk.RenderChunkRegion;
 import net.minecraft.client.renderer.chunk.SectionCompiler;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.lighting.BlockLightEngine;
+import net.neoforged.neoforge.client.event.AddSectionGeometryEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
 import java.util.Map;
 
 @Mixin(SectionCompiler.class)
@@ -37,4 +44,9 @@ public class SectionCompilerMixin {
 
         cir.setReturnValue(bufferbuilder);
     }
+
+    //@Inject(at = @At("HEAD"), method="compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;")
+    /*public void compile(SectionPos sectionPos, RenderChunkRegion region, VertexSorting vertexSorting, SectionBufferBuilderPack sectionBufferBuilderPack, List<AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers, CallbackInfoReturnable<SectionCompiler.Results> cir) {
+        //ColoredLightManager.getInstance().handleNewChunks((BlockLightEngine) region.getLightEngine().blockEngine);
+    }*/
 }

@@ -8,16 +8,15 @@ import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LightEngine.class)
@@ -29,7 +28,7 @@ public class LightEngineMixin {
         cir.setReturnValue(0);
 
         synchronized (LightEngineMixin.class) {
-            handleNewChunks(blockEngine);
+            //handleNewChunks(blockEngine);
             LongIterator longiterator = engine.blockNodesToCheck.iterator();
 
             while (longiterator.hasNext()) {
@@ -46,26 +45,27 @@ public class LightEngineMixin {
             blockEngine.storage.markNewInconsistencies(blockEngine);
             blockEngine.storage.swapSectionMap();
             cir.setReturnValue(i);
+
+            //ColoredLightManager.getInstance().handleNewChunks(blockEngine);
         }
     }
 
-    @Unique
-    private void handleNewChunks(BlockLightEngine engine) {
-        for(int i = ColoredLightManager.getInstance().newChunks.size() - 1; i >= 0; i--) {
-            ChunkPos chunkPos = ColoredLightManager.getInstance().newChunks.get(i);
-            LightChunk chunk = engine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
-            if(chunk == null) continue;
-            //if(engine.storage.)
+    @Inject(at = @At("TAIL"), method = "updateSectionStatus")
+    public void updateSectionStatus(SectionPos pos, boolean isQueueEmpty, CallbackInfo ci) {
+        LightEngine engine = (LightEngine)(Object)this;
+        if(!(engine instanceof BlockLightEngine blockEngine)) return;
 
-            for(int j = 0; j < chunk.getSectionsCount(); j++) {
-                int y = chunk.getMinSection() + j;
-                ColoredLightManager.getInstance().storage.initializeSection(SectionPos.of(chunkPos, y).asLong());
-            }
-
-            ColoredLightManager.getInstance().propagateLight(engine, chunkPos.x, chunkPos.z);
-            ColoredLightManager.getInstance().newChunks.remove(i);
-        }
+        ColoredLightManager.getInstance().handleNewChunks(blockEngine);
     }
+
+    //@Inject(at = @At("TAIL"), method = "setLightEnabled")
+    /*public void setLightEnabled(ChunkPos chunkPos, boolean lightEnabled, CallbackInfo ci) {
+        LightEngine lightEngine = (LightEngine) (Object)this;
+        if(!(lightEngine instanceof BlockLightEngine blockLightEngine)) return;
+        if(!lightEnabled) return;
+
+        //handleNewChunks(blockLightEngine);
+    }*/
 
     @Inject(at = @At("HEAD"), method = "propagateIncreases", cancellable = true)
     private void propagateIncreases(CallbackInfoReturnable<Integer> cir) {

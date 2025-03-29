@@ -23,22 +23,28 @@ import org.lwjgl.glfw.GLFW;
 public class ModKeyBinds {
     public static boolean debug_test2 = true;
 
-    public static final Lazy<KeyMapping> TEST_0 = Lazy.of(() -> new KeyMapping(
+    public static final Lazy<KeyMapping> CLEAR_SECTIONS = Lazy.of(() -> new KeyMapping(
             "key.examplemod.test0",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_H,
             "Colored Lights Debug Category"
     ));
-    public static final Lazy<KeyMapping> TEST_1 = Lazy.of(() -> new KeyMapping(
+    public static final Lazy<KeyMapping> SET_SECTIONS_DIRTY = Lazy.of(() -> new KeyMapping(
             "key.examplemod.test1",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_G,
             "Colored Lights Debug Category"
     ));
-    public static final Lazy<KeyMapping> TEST_2 = Lazy.of(() -> new KeyMapping(
+    public static final Lazy<KeyMapping> TOGGLE_LIGHT_PROPAGATION = Lazy.of(() -> new KeyMapping(
             "key.examplemod.test2",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_I,
+            "Colored Lights Debug Category"
+    ));
+    public static final Lazy<KeyMapping> CHECK_STORAGE = Lazy.of(() -> new KeyMapping(
+            "key.examplemod.test3",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_O,
             "Colored Lights Debug Category"
     ));
 
@@ -48,9 +54,10 @@ public class ModKeyBinds {
     }
 
     private static void registerBindings(RegisterKeyMappingsEvent event) {
-        event.register(TEST_0.get());
-        event.register(TEST_1.get());
-        event.register(TEST_2.get());
+        event.register(CLEAR_SECTIONS.get());
+        event.register(SET_SECTIONS_DIRTY.get());
+        event.register(TOGGLE_LIGHT_PROPAGATION.get());
+        event.register(CHECK_STORAGE.get());
     }
 
     private static void onClientTick(ClientTickEvent.Post event) {
@@ -58,7 +65,7 @@ public class ModKeyBinds {
         if(player == null) return;
         Level level = player.level();
 
-        while (TEST_0.get().consumeClick()) {
+        while (CLEAR_SECTIONS.get().consumeClick()) {
             SectionPos sectionPos = SectionPos.of(player.blockPosition());
             for (int z = -1; z <= 1; z++) {
                 for (int x = -1; x <= 1; x++) {
@@ -70,16 +77,22 @@ public class ModKeyBinds {
             //ColoredLightManager.getInstance().storage.getLayer(sectionPos.offset(1, 0, 0).asLong()).clear();
             player.sendSystemMessage(Component.literal("DEBUG: Sections cleared.").withColor(CommonColors.LIGHT_GRAY));
         }
-        while (TEST_1.get().consumeClick()) {
+        while (SET_SECTIONS_DIRTY.get().consumeClick()) {
             SectionPos sectionPos = SectionPos.of(player.blockPosition());
             ClientLevel clientLevel = player.clientLevel;
             clientLevel.setSectionDirtyWithNeighbors(sectionPos.x(), sectionPos.y(), sectionPos.z());
             player.sendSystemMessage(Component.literal("DEBUG: Sections set dirty.").withColor(CommonColors.GRAY));
         }
 
-        while (TEST_2.get().consumeClick()) {
+        while (TOGGLE_LIGHT_PROPAGATION.get().consumeClick()) {
             debug_test2 = !debug_test2;
             player.sendSystemMessage(Component.literal("TEST2: "+debug_test2).withColor(CommonColors.WHITE));
+        }
+
+        while(CHECK_STORAGE.get().consumeClick()) {
+            SectionPos sectionPos = SectionPos.of(player.blockPosition());
+            boolean contains = ColoredLightManager.getInstance().storage.containsLayer(sectionPos.asLong());
+            player.sendSystemMessage(Component.literal("CONTAINS DATA: "+contains).withColor(CommonColors.WHITE));
         }
 
         HitResult result = Minecraft.getInstance().hitResult;

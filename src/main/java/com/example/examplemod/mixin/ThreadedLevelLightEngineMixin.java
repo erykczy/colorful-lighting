@@ -19,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
 @Mixin(ThreadedLevelLightEngine.class)
 public class ThreadedLevelLightEngineMixin {
     //@Inject(at = @At("TAIL"), method = "initializeLight")
-    public void initializeLight(ChunkAccess chunk, boolean lightEnabled, CallbackInfoReturnable<CompletableFuture<ChunkAccess>> ci) {
+    /*public void initializeLight(ChunkAccess chunk, boolean lightEnabled, CallbackInfoReturnable<CompletableFuture<ChunkAccess>> ci) {
         ThreadedLevelLightEngine engine = (ThreadedLevelLightEngine) (Object)this;
 
         ChunkPos chunkPos = chunk.getPos();
@@ -54,5 +54,5 @@ public class ThreadedLevelLightEngineMixin {
 
                 }, () -> "propagateColoredLight " + chunkPos)
         );
-    }
+    }*/
 }
