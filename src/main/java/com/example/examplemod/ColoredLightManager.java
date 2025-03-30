@@ -25,8 +25,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
     public Queue<FastColor3> increaseQueue = new ConcurrentLinkedQueue<>();
-    public ConcurrentLinkedQueue<Long> propagateLightChunks = new ConcurrentLinkedQueue<>();
+    public Queue<Long> propagateLightChunks = new ConcurrentLinkedQueue<>();
+    public Queue<Long> propagateLightBlocks = new ConcurrentLinkedQueue<>();
     public static HashMap<Block, Color3> emissionColors = new HashMap<>();
+    private final Thread thread;
 
     static {
         emissionColors.put(Blocks.BEACON, new Color3(0.1f, 0.1f, 1.0f));
@@ -60,6 +62,28 @@ public class ColoredLightManager {
     private static ColoredLightManager instance = new ColoredLightManager();
     public static ColoredLightManager getInstance() {
         return instance;
+    }
+
+    public ColoredLightManager() {
+        thread = new Thread() {
+            @Override
+            public void run() {
+                while(true) {
+                    try {
+                        Thread.sleep(20);
+                    }
+                    catch (Exception e) {
+                        System.err.println(e.getMessage());
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                    ClientLevel clientLevel = Minecraft.getInstance().level;
+                    if(clientLevel == null) continue;
+                    findBlockLightSources((BlockLightEngine) clientLevel.getLightEngine().blockEngine);
+                }
+            }
+        };
+        thread.start();
     }
 
     public void enqueueIncrease(FastColor3 color) {
@@ -110,52 +134,90 @@ public class ColoredLightManager {
         return d == 0 ? finalColor : finalColor.intDivide(d);
     }
 
-    // should be called on light thread
     public void queuePropagateLight(long chunkPos) {
         if(!propagateLightChunks.contains(chunkPos))
             propagateLightChunks.add(chunkPos);
     }
 
+    public void dequeuePropagateLight(long chunkPos) {
+        propagateLightChunks.remove(chunkPos);
+    }
+
+    public void findBlockLightSources(BlockLightEngine blockEngine) {
+        if(propagateLightChunks.isEmpty()) return;
+        if(!propagateLightBlocks.isEmpty()) return;
+
+        if(Minecraft.getInstance().player == null) return;
+        ChunkPos playerChunkPos = Minecraft.getInstance().player.chunkPosition();
+
+        var iterator = propagateLightChunks.iterator();
+        int minDistance = Integer.MAX_VALUE;
+        ChunkPos nearestChunkPos = new ChunkPos(0, 0);
+        while(iterator.hasNext()) {
+            ChunkPos pos = new ChunkPos(iterator.next());
+            int distance = Math.abs(pos.x - playerChunkPos.x) + Math.abs(pos.z - playerChunkPos.z);
+            if(distance < minDistance) {
+                minDistance = distance;
+                nearestChunkPos = pos;
+            }
+        }
+        propagateLightChunks.remove(nearestChunkPos.toLong());
+        LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(nearestChunkPos.x, nearestChunkPos.z);
+        if(chunk == null) return;
+
+        chunk.findBlockLightSources(((blockPos, blockState) -> {
+            propagateLightBlocks.add(blockPos.asLong());
+        }));
+
+        //}
+    }
+
     public void propagateLight(BlockLightEngine blockEngine) {
-        while(!propagateLightChunks.isEmpty()) {
-            ChunkPos chunkPos = new ChunkPos(propagateLightChunks.poll());
+        int i = 400;
+        while (!propagateLightBlocks.isEmpty()) {
+            if(--i < 0) return;
+            BlockPos blockPos = BlockPos.of(propagateLightBlocks.poll());
+            ChunkPos chunkPos = new ChunkPos(blockPos);
             LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
             if(chunk == null) continue;
+            BlockState blockState = chunk.getBlockState(blockPos);
 
-            chunk.findBlockLightSources(((blockPos, blockState) -> {
-                // chunk might not have light data
-                if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) return;
+            // chunk might not have light data
+            if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) continue;
 
-                // queue light removal
-                blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
-                // queue light revert
-                blockEngine.checkBlock(blockPos);
+            // queue light removal
+            blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
+            // queue light revert
+            blockEngine.checkBlock(blockPos);
 
-                blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
-            }));
+            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
         }
     }
 
-    // should be called on light thread
     public void handleSectionUpdate(BlockLightEngine engine, SectionPos pos, LayerLightSectionStorage.SectionType ss) {
         for(int x = -1; x <= 1; ++x) {
             for(int z = -1; z <= 1; ++z) {
-                LightChunk chunk = engine.chunkSource.getChunkForLighting(pos.x(), pos.z());
-                if(chunk == null) continue;
-
+                boolean anyAlreadyAvailable = false;
                 for(int y = -1; y <= 1; ++y) {
                     long sectionPos = pos.offset(x, y, z).asLong();
                     LayerLightSectionStorage.SectionType sectionStatus = engine.storage.getDebugSectionType(sectionPos);
 
+                    if(storage.containsLayer(SectionPos.blockToSection(sectionPos))) {
+                        anyAlreadyAvailable = true;
+                        continue;
+                    }
+
                     if(sectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
                         ColoredLightManager.getInstance().storage.removeSection(sectionPos);
+                        ColoredLightManager.getInstance().dequeuePropagateLight(sectionPos);
                     }
                     else {
                         ColoredLightManager.getInstance().storage.initializeSection(sectionPos);
                     }
                 }
 
-                ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(pos.x() + x, pos.z() + z));
+                if(!anyAlreadyAvailable)
+                    ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(pos.x() + x, pos.z() + z));
             }
         }
     }

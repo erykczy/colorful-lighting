@@ -1,9 +1,9 @@
 package com.example.examplemod.mixin;
 
 import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.util.FastColor3;
 import it.unimi.dsi.fastutil.longs.LongIterator;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -20,38 +20,36 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LightEngine.class)
 public class LightEngineMixin {
+
     @Inject(at = @At("HEAD"), method = "runLightUpdates", cancellable = true)
     public void runLightUpdates(CallbackInfoReturnable<Integer> cir) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LightEngine engine = (LightEngine)(Object)this;
         if(!(engine instanceof BlockLightEngine blockEngine)) return;
         cir.setReturnValue(0);
 
-        synchronized (LightEngineMixin.class) {
-            //handleNewChunks(blockEngine);
-            ColoredLightManager.getInstance().propagateLight(blockEngine);
-            LongIterator longiterator = engine.blockNodesToCheck.iterator();
+        ColoredLightManager.getInstance().propagateLight(blockEngine);
 
-            while (longiterator.hasNext()) {
-                blockEngine.checkNode(longiterator.nextLong());
-            }
-
-            blockEngine.blockNodesToCheck.clear();
-            blockEngine.blockNodesToCheck.trim(512);
-            int i = 0;
-            i += blockEngine.propagateDecreases();
-            if(ModKeyBinds.debug_test2)
-                i += blockEngine.propagateIncreases();
-            blockEngine.clearChunkCache();
-            blockEngine.storage.markNewInconsistencies(blockEngine);
-            blockEngine.storage.swapSectionMap();
-            cir.setReturnValue(i);
-
-            //ColoredLightManager.getInstance().handleNewChunks(blockEngine);
+        LongIterator longiterator = engine.blockNodesToCheck.iterator();
+        while (longiterator.hasNext()) {
+            blockEngine.checkNode(longiterator.nextLong());
         }
+
+        blockEngine.blockNodesToCheck.clear();
+        blockEngine.blockNodesToCheck.trim(512);
+        int i = 0;
+        i += blockEngine.propagateDecreases();
+        //if(ModKeyBinds.debug_test2)
+        i += blockEngine.propagateIncreases();
+        blockEngine.clearChunkCache();
+        blockEngine.storage.markNewInconsistencies(blockEngine);
+        blockEngine.storage.swapSectionMap();
+        cir.setReturnValue(i);
     }
 
     @Inject(at = @At("TAIL"), method = "updateSectionStatus")
     public void updateSectionStatus(SectionPos pos, boolean isQueueEmpty, CallbackInfo ci) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LightEngine engine = (LightEngine)(Object)this;
         if(!(engine instanceof BlockLightEngine blockEngine)) return;
 
@@ -69,6 +67,7 @@ public class LightEngineMixin {
 
     @Inject(at = @At("HEAD"), method = "propagateIncreases", cancellable = true)
     private void propagateIncreases(CallbackInfoReturnable<Integer> cir) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LightEngine engine = (LightEngine)(Object)this;
         if(!(engine instanceof BlockLightEngine blockEngine)) return;
 
@@ -144,6 +143,7 @@ public class LightEngineMixin {
 
     @Inject(at = @At("HEAD"), method = "propagateDecreases", cancellable = true)
     private void propagateDecreases(CallbackInfoReturnable<Integer> cir) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LightEngine engine = (LightEngine)(Object)this;
         if(!(engine instanceof BlockLightEngine blockEngine)) return;
 

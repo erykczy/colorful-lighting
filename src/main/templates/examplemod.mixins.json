@@ -2,15 +2,14 @@
   "required": true,
   "package": "com.example.examplemod.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [
+  "mixins": [],
+  "client": [
     "LeverRendererMixin",
     "ModelBlockRendererMixin",
     "LiquidBlockRendererMixin",
     "SectionCompilerMixin",
     "BlockLightEngineMixin",
     "LightEngineMixin",
-    "ThreadedLevelLightEngineMixin",
-    "LevelLightEngineMixin",
     "DebugRendererMixin"
   ],
   "injectors": {

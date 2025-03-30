@@ -5,14 +5,17 @@ import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.client.debug.ModKeyBinds;
 import com.mojang.logging.LogUtils;
+import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.slf4j.Logger;
 
@@ -34,6 +37,14 @@ public class ExampleMod
     @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
     public static class ClientModEvents
     {
+        @SubscribeEvent
+        public static void onChunkUnload(ChunkEvent.Unload event) {
+            ChunkAccess chunkAccess = event.getChunk();
+            for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
+                int y = chunkAccess.getSectionYFromSectionIndex(i);
+                ColoredLightManager.getInstance().storage.removeSection(SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z));
+            }
+        }
         
         @SubscribeEvent
         public static void onTick(EntityTickEvent.Post event) {

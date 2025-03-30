@@ -2,11 +2,10 @@ package com.example.examplemod.mixin;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.FastColor3;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LightChunk;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,24 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlockLightEngine.class)
 public class BlockLightEngineMixin {
-    @Inject(at = @At("HEAD"), method = "propagateLightSources", cancellable = true)
-    public void propagateLightSources(ChunkPos chunkPos, CallbackInfo ci) {
-        BlockLightEngine engine = (BlockLightEngine)(Object) this;
-        ci.cancel();
-
-        engine.setLightEnabled(chunkPos, true);
-        LightChunk lightChunk = engine.getChunk(chunkPos.x, chunkPos.z);
-        if (lightChunk != null) {
-            lightChunk.findBlockLightSources((blockPos, blockState) -> {
-                int blockEmission = blockState.getLightEmission(engine.chunkSource.getLevel(), blockPos);
-                engine.enqueueIncrease(blockPos.asLong(), LightEngine.QueueEntry.increaseLightFromEmission(blockEmission, engine.isEmptyShape(blockState)));
-                ColoredLightManager.getInstance().enqueueIncrease(ColoredLightManager.getInstance().getEmissionColor(lightChunk, blockPos)); // added
-            });
-        }
-    }
-
     @Inject(at = @At("HEAD"), method = "checkNode", cancellable = true)
     protected void checkNode(long blockPos, CallbackInfo ci) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
         ci.cancel();
         BlockLightEngine engine = (BlockLightEngine)(Object)this;
 
