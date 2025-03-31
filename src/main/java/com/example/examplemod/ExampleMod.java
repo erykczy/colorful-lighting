@@ -19,7 +19,10 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
+// TODO
+// - check why bug0
+// - disable block light loading
+// - remove vertex attribute, add light color info to overlay, override lightmap
 @Mod(ExampleMod.MOD_ID)
 public class ExampleMod
 {
@@ -44,30 +47,6 @@ public class ExampleMod
                 int y = chunkAccess.getSectionYFromSectionIndex(i);
                 ColoredLightManager.getInstance().storage.removeSection(SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z));
             }
-        }
-        
-        @SubscribeEvent
-        public static void onTick(EntityTickEvent.Post event) {
-//            if(!(event.getEntity() instanceof Player player)) return;
-//            long playerBlockPos = player.blockPosition().asLong();
-//            Level level = event.getEntity().level();
-//            BlockLightEngine blockLightEngine = (BlockLightEngine) level.getLightEngine().getLayerListener(LightLayer.BLOCK);
-//            LayerLightSectionStorage storage = blockLightEngine.storage;
-//            var dataLayer = storage.getDataLayer(SectionPos.blockToSection(playerBlockPos), false);
-//            if(dataLayer == null) {
-//                sendMessage(player, "DataLayer is null");
-//                return;
-//            }
-//            if(dataLayer.data == null) {
-//                sendMessage(player, "DATA is null");
-//                return;
-//            }
-//
-//            sendMessage(player, "DATA length: "+dataLayer.data.length);
-        }
-
-        private static void sendMessage(Player player, String text) {
-            player.sendSystemMessage(Component.literal(text));
         }
     }
 }

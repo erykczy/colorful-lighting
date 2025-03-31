@@ -7,7 +7,6 @@ public class ColoredLightLayer {
     private static final int ENTRY_SIZE = 3;
     private static final int DATA_SIZE = 16 * 16 * 16 * ENTRY_SIZE;
     public byte[] data;
-    //public FastColor3 defaultValue = new FastColor3((byte)0, (byte)0, (byte)0);
 
     public ColoredLightLayer() {
 

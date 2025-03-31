@@ -57,6 +57,7 @@ public class ColoredLightManager {
         emissionColors.put(Blocks.OCHRE_FROGLIGHT, new Color3(1.0f, 1.0f, 0.0f));
         emissionColors.put(Blocks.VERDANT_FROGLIGHT, new Color3(0.0f, 1.0f, 0.0f));
         emissionColors.put(Blocks.PEARLESCENT_FROGLIGHT, new Color3(1.0f, 0.0f, 1.0f));
+        emissionColors.put(Blocks.LIME_CANDLE, new Color3(0.0f, 1.0f, 0.0f));
     }
 
     private static ColoredLightManager instance = new ColoredLightManager();
@@ -173,9 +174,9 @@ public class ColoredLightManager {
     }
 
     public void propagateLight(BlockLightEngine blockEngine) {
-        int i = 400;
+        //int i = 400;
         while (!propagateLightBlocks.isEmpty()) {
-            if(--i < 0) return;
+            //if(--i < 0) return;
             BlockPos blockPos = BlockPos.of(propagateLightBlocks.poll());
             ChunkPos chunkPos = new ChunkPos(blockPos);
             LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);

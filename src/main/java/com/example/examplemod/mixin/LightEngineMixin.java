@@ -1,6 +1,7 @@
 package com.example.examplemod.mixin;
 
 import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.util.FastColor3;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.client.Minecraft;
@@ -39,8 +40,8 @@ public class LightEngineMixin {
         blockEngine.blockNodesToCheck.trim(512);
         int i = 0;
         i += blockEngine.propagateDecreases();
-        //if(ModKeyBinds.debug_test2)
-        i += blockEngine.propagateIncreases();
+        if(ModKeyBinds.debug_test2)
+            i += blockEngine.propagateIncreases();
         blockEngine.clearChunkCache();
         blockEngine.storage.markNewInconsistencies(blockEngine);
         blockEngine.storage.swapSectionMap();
@@ -55,15 +56,6 @@ public class LightEngineMixin {
 
         ColoredLightManager.getInstance().handleSectionUpdate(blockEngine, pos, engine.storage.getDebugSectionType(pos.asLong()));
     }
-
-    //@Inject(at = @At("TAIL"), method = "setLightEnabled")
-    /*public void setLightEnabled(ChunkPos chunkPos, boolean lightEnabled, CallbackInfo ci) {
-        LightEngine lightEngine = (LightEngine) (Object)this;
-        if(!(lightEngine instanceof BlockLightEngine blockLightEngine)) return;
-        if(!lightEnabled) return;
-
-        //handleNewChunks(blockLightEngine);
-    }*/
 
     @Inject(at = @At("HEAD"), method = "propagateIncreases", cancellable = true)
     private void propagateIncreases(CallbackInfoReturnable<Integer> cir) {
@@ -188,7 +180,6 @@ public class LightEngineMixin {
                 // if neighbour emits less light than it has (had)
                 if (neighbourEmission < neighbourLightLevel) {
                     engine.enqueueDecrease(neighbourPos, LightEngine.QueueEntry.decreaseSkipOneDirection(neighbourLightLevel, direction.getOpposite()));
-                    //ColoredLightManager.getInstance().enqueueDecrease(neighbourLightColor); // added
                 }
 
                 if (neighbourEmission > 0) {

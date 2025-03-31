@@ -37,9 +37,4 @@ public class SectionCompilerMixin {
 
         cir.setReturnValue(bufferbuilder);
     }
-
-    //@Inject(at = @At("HEAD"), method="compile(Lnet/minecraft/core/SectionPos;Lnet/minecraft/client/renderer/chunk/RenderChunkRegion;Lcom/mojang/blaze3d/vertex/VertexSorting;Lnet/minecraft/client/renderer/SectionBufferBuilderPack;Ljava/util/List;)Lnet/minecraft/client/renderer/chunk/SectionCompiler$Results;")
-    /*public void compile(SectionPos sectionPos, RenderChunkRegion region, VertexSorting vertexSorting, SectionBufferBuilderPack sectionBufferBuilderPack, List<AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers, CallbackInfoReturnable<SectionCompiler.Results> cir) {
-        //ColoredLightManager.getInstance().handleNewChunks((BlockLightEngine) region.getLightEngine().blockEngine);
-    }*/
 }
