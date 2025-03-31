@@ -1,49 +1,140 @@
 package com.example.examplemod.mixin;
 
 import com.example.examplemod.client.ModRenderTypes;
-import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.shaders.Uniform;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.SheetedDecalTextureGenerator;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexMultiConsumer;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import it.unimi.dsi.fastutil.objects.ObjectListIterator;
 import net.minecraft.client.Camera;
-import net.minecraft.client.CloudStatus;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
-import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.BlockDestructionProgress;
-import net.minecraft.util.FastColor;
-import net.minecraft.util.Mth;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.TickRateManager;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
-import org.joml.Matrix4fStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
-import java.util.SortedSet;
-
 @Mixin(LevelRenderer.class)
 public class LeverRendererMixin {
-    @Inject(at = @At("HEAD"), method = "renderLevel", cancellable = true)
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V", ordinal = 0))
+    private void coloredLights$beforeSolid(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+        LevelRenderer renderer = (LevelRenderer)(Object)this;
+        Vec3 cameraPos = camera.getPosition();
+        coloredLights$renderSectionLayer(renderer, false, ModRenderTypes.COLORED_LIGHT_SOLID, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V", ordinal = 1))
+    private void coloredLights$beforeCutoutMipped(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+        LevelRenderer renderer = (LevelRenderer)(Object)this;
+        Vec3 cameraPos = camera.getPosition();
+        coloredLights$renderSectionLayer(renderer, false, ModRenderTypes.COLORED_LIGHT_CUTOUT_MIPPED, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V", ordinal = 2))
+    private void coloredLights$beforeCutout(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+        LevelRenderer renderer = (LevelRenderer)(Object)this;
+        Vec3 cameraPos = camera.getPosition();
+        coloredLights$renderSectionLayer(renderer, false, ModRenderTypes.COLORED_LIGHT_CUTOUT, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+    }
+
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", args = "ldc=translucent"))
+    private void coloredLights$beforeTranslucent(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+        LevelRenderer renderer = (LevelRenderer)(Object)this;
+        Vec3 cameraPos = camera.getPosition();
+        //renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_TRANSLUCENT, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+        coloredLights$renderSectionLayer(renderer, true, ModRenderTypes.COLORED_LIGHT_TRANSLUCENT, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+    }
+
+    @Unique
+    private void coloredLights$renderSectionLayer(LevelRenderer levelRenderer, boolean translucent, RenderType renderType, double x, double y, double z, Matrix4f frustrumMatrix, Matrix4f projectionMatrix) {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        RenderSystem.assertOnRenderThread();
+        renderType.setupRenderState();
+        if (renderType == RenderType.translucent()) {
+            minecraft.getProfiler().push("translucent_sort");
+            double d0 = x - levelRenderer.xTransparentOld;
+            double d1 = y - levelRenderer.yTransparentOld;
+            double d2 = z - levelRenderer.zTransparentOld;
+            if (d0 * d0 + d1 * d1 + d2 * d2 > 1.0) {
+                int i = SectionPos.posToSectionCoord(x);
+                int j = SectionPos.posToSectionCoord(y);
+                int k = SectionPos.posToSectionCoord(z);
+                boolean flag = i != SectionPos.posToSectionCoord(levelRenderer.xTransparentOld)
+                        || k != SectionPos.posToSectionCoord(levelRenderer.zTransparentOld)
+                        || j != SectionPos.posToSectionCoord(levelRenderer.yTransparentOld);
+                levelRenderer.xTransparentOld = x;
+                levelRenderer.yTransparentOld = y;
+                levelRenderer.zTransparentOld = z;
+                int l = 0;
+
+                for (SectionRenderDispatcher.RenderSection sectionrenderdispatcher$rendersection : levelRenderer.visibleSections) {
+                    if (l < 15
+                            && (flag || sectionrenderdispatcher$rendersection.isAxisAlignedWith(i, j, k))
+                            && sectionrenderdispatcher$rendersection.resortTransparency(renderType, levelRenderer.sectionRenderDispatcher)) {
+                        l++;
+                    }
+                }
+            }
+
+            minecraft.getProfiler().pop();
+        }
+
+        minecraft.getProfiler().push("filterempty");
+        minecraft.getProfiler().popPush(() -> "render_" + renderType);
+        boolean flag1 = renderType != RenderType.translucent();
+        ObjectListIterator<SectionRenderDispatcher.RenderSection> objectlistiterator = levelRenderer.visibleSections
+                .listIterator(flag1 ? 0 : levelRenderer.visibleSections.size());
+        ShaderInstance shaderinstance = RenderSystem.getShader();
+        shaderinstance.setDefaultUniforms(VertexFormat.Mode.QUADS, frustrumMatrix, projectionMatrix, minecraft.getWindow());
+        shaderinstance.apply();
+        Uniform uniform = shaderinstance.CHUNK_OFFSET;
+
+        while (flag1 ? objectlistiterator.hasNext() : objectlistiterator.hasPrevious()) {
+            SectionRenderDispatcher.RenderSection sectionrenderdispatcher$rendersection1 = flag1 ? objectlistiterator.next() : objectlistiterator.previous();
+            if (!sectionrenderdispatcher$rendersection1.getCompiled().isEmpty(renderType)) {
+                VertexBuffer vertexbuffer = sectionrenderdispatcher$rendersection1.getBuffer(renderType);
+                BlockPos blockpos = sectionrenderdispatcher$rendersection1.getOrigin();
+                if (uniform != null) {
+                    uniform.set(
+                            (float)((double)blockpos.getX() - x),
+                            (float)((double)blockpos.getY() - y),
+                            (float)((double)blockpos.getZ() - z)
+                    );
+                    uniform.upload();
+                }
+
+                vertexbuffer.bind();
+                vertexbuffer.draw();
+            }
+        }
+
+        if (uniform != null) {
+            uniform.set(0.0F, 0.0F, 0.0F);
+        }
+
+        shaderinstance.clear();
+        VertexBuffer.unbind();
+        minecraft.getProfiler().pop();
+        net.neoforged.neoforge.client.ClientHooks.dispatchRenderStage(renderType, levelRenderer, frustrumMatrix, projectionMatrix, levelRenderer.ticks, minecraft.gameRenderer.getMainCamera(), levelRenderer.getFrustum());
+        renderType.clearRenderState();
+    }
+
+    /*@Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;renderSectionLayer(Lnet/minecraft/client/renderer/RenderType;DDDLorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V", ordinal = 3))
+    private void coloredLights$beforeTranslucent(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
+        LevelRenderer renderer = (LevelRenderer)(Object)this;
+        Vec3 cameraPos = camera.getPosition();
+        renderer.renderSectionLayer(ModRenderTypes.COLORED_LIGHT_CUTOUT_MIPPED, cameraPos.x, cameraPos.y, cameraPos.z, frustumMatrix, projectionMatrix);
+    }*/
+
+    /*@Inject(at = @At("HEAD"), method = "renderLevel", cancellable = true)
     private void renderLevel(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer, LightTexture lightTexture, Matrix4f frustumMatrix, Matrix4f projectionMatrix, CallbackInfo ci) {
         LevelRenderer renderer = (LevelRenderer)(Object)this;
 
@@ -379,5 +470,5 @@ public class LeverRendererMixin {
         RenderSystem.disableBlend();
         FogRenderer.setupNoFog();
         ci.cancel();
-    }
+    }*/
 }

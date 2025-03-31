@@ -1,13 +1,17 @@
 package com.example.examplemod.client;
 
+import com.example.examplemod.ExampleMod;
 import com.google.common.collect.ImmutableList;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterNamedRenderTypesEvent;
 
 public class ModRenderTypes {
     public static final RenderType COLORED_LIGHT_SOLID = RenderType.create(
-            "colored_light_solid",
+            ExampleMod.MOD_ID+":colored_light_solid",
             ModVertexFormats.COLORED_LIGHT_BLOCK,
             VertexFormat.Mode.QUADS,
             4194304,
@@ -20,7 +24,7 @@ public class ModRenderTypes {
                     .createCompositeState(true)
     );
     public static final RenderType COLORED_LIGHT_CUTOUT_MIPPED = RenderType.create(
-            "colored_light_cutout_mipped",
+            ExampleMod.MOD_ID+":colored_light_cutout_mipped",
             ModVertexFormats.COLORED_LIGHT_BLOCK,
             VertexFormat.Mode.QUADS,
             4194304,
@@ -33,7 +37,7 @@ public class ModRenderTypes {
                     .createCompositeState(true)
     );
     public static final RenderType COLORED_LIGHT_CUTOUT = RenderType.create(
-            "colored_light_cutout",
+            ExampleMod.MOD_ID+":colored_light_cutout",
             ModVertexFormats.COLORED_LIGHT_BLOCK,
             VertexFormat.Mode.QUADS,
             786432,
@@ -46,7 +50,7 @@ public class ModRenderTypes {
                     .createCompositeState(true)
     );
     public static final RenderType COLORED_LIGHT_TRANSLUCENT = RenderType.create(
-            "colored_light_translucent",
+            ExampleMod.MOD_ID+":colored_light_translucent",
             ModVertexFormats.COLORED_LIGHT_BLOCK,
             VertexFormat.Mode.QUADS,
             786432,
@@ -63,6 +67,7 @@ public class ModRenderTypes {
 
 
     public static void register() {
+        //bus.addListener(ModRenderTypes::onRegisterRenderTypes);
         RenderType.CHUNK_BUFFER_LAYERS = ImmutableList.<RenderType>builder()
                 .addAll(RenderType.CHUNK_BUFFER_LAYERS)
                 .add(COLORED_LIGHT_SOLID)
@@ -71,5 +76,9 @@ public class ModRenderTypes {
                 .add(COLORED_LIGHT_TRANSLUCENT)
                 .build();
     }
+
+    /*private static void onRegisterRenderTypes(RegisterNamedRenderTypesEvent event) {
+        event.register(ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, ""), );
+    }*/
 
 }
