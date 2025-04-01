@@ -10,7 +10,8 @@
     "SectionCompilerMixin",
     "BlockLightEngineMixin",
     "LightEngineMixin",
-    "DebugRendererMixin"
+    "DebugRendererMixin",
+    "SectionBufferBuilderPackMixin"
   ],
   "injectors": {
     "defaultRequire": 1

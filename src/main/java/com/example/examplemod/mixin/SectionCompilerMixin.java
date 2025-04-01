@@ -19,15 +19,6 @@ import java.util.Map;
 public class SectionCompilerMixin {
     @Inject(at = @At("HEAD"), method = "getOrBeginLayer", cancellable = true)
     public void getOrBeginLayer(Map<RenderType, BufferBuilder> bufferLayers, SectionBufferBuilderPack sectionBufferBuilderPack, RenderType renderType, CallbackInfoReturnable<BufferBuilder> cir) {
-        if(renderType == RenderType.solid())
-            renderType = ModRenderTypes.COLORED_LIGHT_SOLID;
-        else if(renderType == RenderType.cutoutMipped())
-            renderType = ModRenderTypes.COLORED_LIGHT_CUTOUT_MIPPED;
-        else if(renderType == RenderType.cutout())
-            renderType = ModRenderTypes.COLORED_LIGHT_CUTOUT;
-        else if(renderType == RenderType.translucent())
-            renderType = ModRenderTypes.COLORED_LIGHT_TRANSLUCENT;
-
         BufferBuilder bufferbuilder = bufferLayers.get(renderType);
         if (bufferbuilder == null) {
             ByteBufferBuilder bytebufferbuilder = sectionBufferBuilderPack.buffer(renderType);
