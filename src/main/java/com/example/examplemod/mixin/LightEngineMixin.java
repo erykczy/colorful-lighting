@@ -8,8 +8,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +23,22 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LightEngine.class)
 public class LightEngineMixin {
+
+    @Inject(method = "retainData", at=@At("HEAD"), cancellable = true)
+    private void coloredLights$retainData(ChunkPos chunkPos, boolean retainData, CallbackInfo ci) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
+        LightEngine engine = (LightEngine)(Object)this;
+        if(!(engine instanceof BlockLightEngine)) return;
+        ci.cancel();
+    }
+
+    @Inject(method = "queueSectionData", at=@At("HEAD"), cancellable = true)
+    private void coloredLights$queueSectionData(long sectionPos, DataLayer data, CallbackInfo ci) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
+        LightEngine engine = (LightEngine)(Object)this;
+        if(!(engine instanceof BlockLightEngine)) return;
+        ci.cancel();
+    }
 
     @Inject(at = @At("HEAD"), method = "runLightUpdates", cancellable = true)
     public void runLightUpdates(CallbackInfoReturnable<Integer> cir) {

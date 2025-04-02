@@ -156,6 +156,10 @@ public class ColoredLightManager {
         ChunkPos nearestChunkPos = new ChunkPos(0, 0);
         while(iterator.hasNext()) {
             ChunkPos pos = new ChunkPos(iterator.next());
+            if(blockEngine.chunkSource.getChunkForLighting(pos.x, pos.z) == null) { // TODO temporary (I hope) solution
+                iterator.remove();
+                continue;
+            }
             int distance = Math.abs(pos.x - playerChunkPos.x) + Math.abs(pos.z - playerChunkPos.z);
             if(distance < minDistance) {
                 minDistance = distance;
@@ -164,7 +168,8 @@ public class ColoredLightManager {
         }
         propagateLightChunks.remove(nearestChunkPos.toLong());
         LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(nearestChunkPos.x, nearestChunkPos.z);
-        if(chunk == null) return;
+        if(chunk == null)
+            return;
 
         chunk.findBlockLightSources(((blockPos, blockState) -> {
             propagateLightBlocks.add(blockPos.asLong());
@@ -175,50 +180,56 @@ public class ColoredLightManager {
 
     public void propagateLight(BlockLightEngine blockEngine) {
         //int i = 400;
-        while (!propagateLightBlocks.isEmpty()) {
+        System.out.println("t: "+propagateLightBlocks.size());
+        while (!propagateLightBlocks.isEmpty()){
             //if(--i < 0) return;
             BlockPos blockPos = BlockPos.of(propagateLightBlocks.poll());
             ChunkPos chunkPos = new ChunkPos(blockPos);
             LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
-            if(chunk == null) continue;
+            if(chunk == null)
+                continue;
             BlockState blockState = chunk.getBlockState(blockPos);
 
             // chunk might not have light data
             if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) continue;
 
             // queue light removal
-            blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
+            //blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
             // queue light revert
             blockEngine.checkBlock(blockPos);
 
-            blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
+            ///blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
         }
     }
 
-    public void handleSectionUpdate(BlockLightEngine engine, SectionPos pos, LayerLightSectionStorage.SectionType ss) {
+    public void handleSectionUpdate(BlockLightEngine engine, SectionPos thisSectionPos, LayerLightSectionStorage.SectionType ss) {
+        int minSection = engine.chunkSource.getLevel().getMinSection();
+        int maxSection = engine.chunkSource.getLevel().getMaxSection();
+
         for(int x = -1; x <= 1; ++x) {
             for(int z = -1; z <= 1; ++z) {
                 boolean anyAlreadyAvailable = false;
                 for(int y = -1; y <= 1; ++y) {
-                    long sectionPos = pos.offset(x, y, z).asLong();
-                    LayerLightSectionStorage.SectionType sectionStatus = engine.storage.getDebugSectionType(sectionPos);
+                    if(thisSectionPos.y() < minSection || thisSectionPos.y() > maxSection) continue;
+                    long checkedSectionPos = thisSectionPos.offset(x, y, z).asLong();
+                    LayerLightSectionStorage.SectionType checkedSectionStatus = engine.storage.getDebugSectionType(checkedSectionPos);
 
-                    if(storage.containsLayer(SectionPos.blockToSection(sectionPos))) {
+                    if(storage.containsLayer(checkedSectionPos)) {
                         anyAlreadyAvailable = true;
                         continue;
                     }
 
-                    if(sectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
-                        ColoredLightManager.getInstance().storage.removeSection(sectionPos);
-                        ColoredLightManager.getInstance().dequeuePropagateLight(sectionPos);
+                    if(checkedSectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
+                        ColoredLightManager.getInstance().storage.removeSection(checkedSectionPos);
+                        ColoredLightManager.getInstance().dequeuePropagateLight(checkedSectionPos);
                     }
                     else {
-                        ColoredLightManager.getInstance().storage.initializeSection(sectionPos);
+                        ColoredLightManager.getInstance().storage.initializeSection(checkedSectionPos);
                     }
                 }
 
                 if(!anyAlreadyAvailable)
-                    ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(pos.x() + x, pos.z() + z));
+                    ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(thisSectionPos.x() + x, thisSectionPos.z() + z));
             }
         }
     }

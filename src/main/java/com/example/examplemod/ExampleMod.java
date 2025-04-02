@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 
 // TODO
 // - check why bug0
+// - check ponder
+// - entities, blockentities
 // - disable block light loading
 // - remove vertex attribute, add light color info to overlay, override lightmap
 @Mod(ExampleMod.MOD_ID)
@@ -45,7 +47,9 @@ public class ExampleMod
             ChunkAccess chunkAccess = event.getChunk();
             for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
                 int y = chunkAccess.getSectionYFromSectionIndex(i);
-                ColoredLightManager.getInstance().storage.removeSection(SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z));
+                long sectionPos = SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z);
+                ColoredLightManager.getInstance().storage.removeSection(sectionPos);
+                ColoredLightManager.getInstance().dequeuePropagateLight(sectionPos);
             }
         }
     }
