@@ -3,23 +3,14 @@ package com.example.examplemod;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 
-import javax.annotation.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ColoredLightStorage {
-    private ConcurrentHashMap<Long, ColoredLightLayer> map = new ConcurrentHashMap<>(); //Long2ObjectOpenHashMap<ColoredLightLayer>
-
-    public ColoredLightLayer getLayer(long sectionPos) {
-        return map.get(sectionPos);
-    }
-
-    public boolean containsLayer(long sectionPos) {
-        return map.containsKey(sectionPos);
-    }
+    private ConcurrentHashMap<Long, ColoredLightLayer> map = new ConcurrentHashMap<>();
 
     public ColoredLightLayer.Entry getEntry(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        ColoredLightLayer layer = getLayer(sectionPos);
+        ColoredLightLayer layer = getSection(sectionPos);
         return layer.get(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
@@ -29,7 +20,7 @@ public class ColoredLightStorage {
 
     public void setEntry(int x, int y, int z, ColoredLightLayer.Entry value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        ColoredLightLayer layer = getLayer(sectionPos);
+        ColoredLightLayer layer = getSection(sectionPos);
         layer.set(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
@@ -38,14 +29,16 @@ public class ColoredLightStorage {
         );
     }
 
-    @Nullable
-    public ColoredLightLayer initializeSection(long sectionPos) {
-        if(!containsLayer(sectionPos)) {
-            ColoredLightLayer layer = new ColoredLightLayer();
-            map.put(sectionPos, layer);
-            return layer;
-        }
-        return null;
+    public boolean containsSection(long sectionPos) {
+        return map.containsKey(sectionPos);
+    }
+
+    public ColoredLightLayer getSection(long sectionPos) {
+        return map.get(sectionPos);
+    }
+
+    public void addSection(long sectionPos) {
+        map.put(sectionPos, new ColoredLightLayer());
     }
 
     public void removeSection(long sectionPos) {

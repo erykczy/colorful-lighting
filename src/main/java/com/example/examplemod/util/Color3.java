@@ -25,6 +25,10 @@ public class Color3 {
         return new Color3(red + other.red, green + other.green, blue + other.blue);
     }
 
+    public Color3 sub(Color3 other) {
+        return new Color3(red - other.red, green - other.green, blue - other.blue);
+    }
+
     public Color3 intDivide(int scalar) {
         return new Color3(red / scalar, green / scalar, blue / scalar);
     }

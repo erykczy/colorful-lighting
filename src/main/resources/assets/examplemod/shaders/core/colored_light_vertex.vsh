@@ -30,7 +30,7 @@ void main() {
     float blockLight = UV2.x/256.0;
     //float skyLight = UV2.y/256.0;
     vec3 skyLightColor = minecraft_sample_lightmap(Sampler2, ivec2(0, UV2.y)).xyz;
-    vec3 blockLightColor = BlockLightColor * blockLight;
+    vec3 blockLightColor = BlockLightColor;// * blockLight;
     vec4 lightColor = vec4(skyLightColor + blockLightColor, 1.0);//mix(colorFromLightMap, vec4(BlockLightColor + , 1.0), blockLight);
     vertexColor = lightColor * Color;
     texCoord0 = UV0;

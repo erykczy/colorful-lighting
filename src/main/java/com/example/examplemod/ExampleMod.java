@@ -40,13 +40,22 @@ public class ExampleMod
     public static class ClientModEvents
     {
         @SubscribeEvent
-        public static void onChunkUnload(ChunkEvent.Unload event) {
+        private static void onChunkLoad(ChunkEvent.Load event) {
+            ChunkAccess chunkAccess = event.getChunk();
+            for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
+                int y = chunkAccess.getSectionYFromSectionIndex(i);
+                long sectionPos = SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z);
+                ColoredLightManager.getInstance().storage.addSection(sectionPos);
+            }
+        }
+
+        @SubscribeEvent
+        private static void onChunkUnload(ChunkEvent.Unload event) {
             ChunkAccess chunkAccess = event.getChunk();
             for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
                 int y = chunkAccess.getSectionYFromSectionIndex(i);
                 long sectionPos = SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z);
                 ColoredLightManager.getInstance().storage.removeSection(sectionPos);
-                ColoredLightManager.getInstance().dequeuePropagateLight(sectionPos);
             }
         }
     }

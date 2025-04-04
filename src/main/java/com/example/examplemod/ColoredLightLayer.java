@@ -30,9 +30,9 @@ public class ColoredLightLayer {
             byte byte0 = data[index];
             byte byte1 = data[index + 1];
             byte byte2 = data[index + 2];
-            int r = byte0 >> 4;
+            int r = (byte0 >> 4) & 0x0F;
             int g = byte0 & 0x0F;
-            int b = byte1 >> 4;
+            int b = (byte1 >> 4) & 0x0F;
             int n = ((byte1 & 0x0F) << 8) | byte2;
 
             return new Entry(r, g, b, n);
@@ -44,16 +44,16 @@ public class ColoredLightLayer {
         if(data == null)
             data = new byte[LAYER_SIZE];
         if(
-            value.r >= 16 ||
-            value.g >= 16 ||
-            value.b >= 16 ||
-            value.count >= 4096
+            value.r >= 16 || value.r < 0 ||
+            value.g >= 16 || value.g < 0 ||
+            value.b >= 16 || value.b < 0 ||
+            value.count >= 4096 || value.count < 0
         ) {
             throw new IllegalArgumentException("Invalid ColoredLightLayer.Entry: ["+value.r+", "+value.g+", "+value.b+", "+value.count+"]");
         }
 
         byte byte0 = (byte) ((value.r << 4) | value.g);
-        byte byte1 = (byte) ((value.b << 4) | (value.count >> 8));
+        byte byte1 = (byte) ((value.b << 4) | ((value.count >> 8) & 0x0F));
         byte byte2 = (byte) (value.count & 0xFF);
 
         data[index] = byte0;
@@ -81,15 +81,32 @@ public class ColoredLightLayer {
         private int b;
         private int count;
 
-        private Entry(int r, int g, int b, int n) {
-            this.r = r;
-            this.g = g;
-            this.b = b;
-            this.count = n;
+        public static Entry create(int r, int g, int b, int count) {
+            // 17.0f = 255.0f / 15.0f
+            return new Entry((int) (r / 17.0f), (int) (g / 17.0f), (int) (b / 17.0f), count);
+        }
+
+        public static Entry create(float r, float g, float b, int count) {
+            return new Entry((int) (r * 15), (int) (g * 15), (int) (b * 15), count);
+        }
+
+        public static Entry create(Color3 color, int count) {
+            return create(color.red, color.green, color.blue, count);
+        }
+
+        private Entry(int rawRed, int rawGreen, int rawBlue, int count) {
+            this.r = rawRed;
+            this.g = rawGreen;
+            this.b = rawBlue;
+            this.count = count;
         }
 
         public Color3 toColor3() {
-            return new Color3(r / 16.0f, g / 16.0f, b / 16.0f);
+            return new Color3(r / 15.0f, g / 15.0f, b / 15.0f);
+        }
+
+        public void setCount(int value) {
+            count = value;
         }
 
         public int getCount() {

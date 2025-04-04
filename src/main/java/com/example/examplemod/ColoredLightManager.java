@@ -4,9 +4,16 @@ import com.example.examplemod.util.Color3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.BlockGetter;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
+
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
@@ -25,9 +32,10 @@ public class ColoredLightManager {
         // TODO debug
         ClientLevel level = Minecraft.getInstance().level;
         if(level != null && level.isOutsideBuildHeight(y)) return new Color3();
-        if(!storage.containsLayer(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new Color3();
+        if(!storage.containsSection(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new Color3();
 
-        return storage.getEntry(x, y, z).toColor3();
+        var entry = storage.getEntry(x, y, z);
+        return entry.toColor3().mul(entry.getCount());
     }
 
     public Color3 sampleMixedLightColor(Vector3f pos) {
@@ -38,13 +46,58 @@ public class ColoredLightManager {
             for(int oy = -1; oy < 1; ++oy) {
                 for(int oz = -1; oz < 1; ++oz) {
                     Color3 c = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
-                    if(c.red == 0 && c.green == 0 && c.blue == 0) continue;;
+                    if(c.red == 0 && c.green == 0 && c.blue == 0) continue;
                     finalColor = finalColor.add(c);
                     ++d;
                 }
             }
         }
         return d == 0 ? finalColor : finalColor.intDivide(d);
+    }
+
+    public void propagateLight(BlockGetter level, BlockPos originPos, boolean propagate) {
+        Color3 emissionColor = Config.getEmissionColor(level, originPos);
+        int vanillaEmission = level.getLightEmission(originPos);
+
+        Queue<BlockPos> blocksToUpdate = new LinkedList<>();
+        Queue<Integer> lightLevels = new LinkedList<>();
+        Set<Long> alreadyUpdated = new HashSet<>();
+        blocksToUpdate.add(originPos);
+        lightLevels.add(vanillaEmission);
+
+        do {
+            BlockPos blockPos = blocksToUpdate.poll();
+            int lightLevel = lightLevels.poll();
+
+            if(alreadyUpdated.contains(blockPos.asLong())) continue;
+            if(blockPos != originPos && !level.getBlockState(blockPos).isAir()) continue;
+
+            float distance = 1.0f - lightLevel / (float)vanillaEmission;
+            float attenuation = 1.0f - distance;
+            Color3 lightColorToAdd = emissionColor.mul(attenuation);
+            try {
+                var currentEntry = storage.getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+                var currentLightColor = currentEntry.toColor3();
+                var currentCount = currentEntry.getCount();
+                Color3 newLightColor;
+                if(propagate)
+                    newLightColor = currentLightColor.mul(currentCount).add(lightColorToAdd).intDivide(currentCount + 1);
+                else
+                    newLightColor = currentLightColor.mul(currentCount).sub(lightColorToAdd).intDivide(currentCount + 1);
+                storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), ColoredLightLayer.Entry.create(newLightColor, currentCount + 1));
+            }
+            catch (IllegalArgumentException e) {
+                System.err.println(e.getMessage());
+            }
+            alreadyUpdated.add(blockPos.asLong());
+
+            if(lightLevel <= 1) continue;
+            for(var direction : Direction.values()) {
+                blocksToUpdate.add(blockPos.relative(direction));
+                lightLevels.add(lightLevel - 1);
+            }
+        }
+        while (!blocksToUpdate.isEmpty());
     }
 
     /*public void findBlockLightSources(BlockLightEngine blockEngine) {

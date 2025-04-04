@@ -43,7 +43,7 @@ public class Config {
         emissionColors.put(Blocks.LIME_CANDLE, new Color3(0.0f, 1.0f, 0.0f));
     }
 
-    public static FastColor3 getEmissionColor(BlockGetter level, BlockPos pos) {
+    public static Color3 getEmissionColor(BlockGetter level, BlockPos pos) {
         BlockState state;
         if(level == null)
             state = Blocks.BEDROCK.defaultBlockState();
@@ -51,9 +51,9 @@ public class Config {
             state = level.getBlockState(pos);
 
         if(emissionColors.containsKey(state.getBlock())) {
-            return new FastColor3(emissionColors.get(state.getBlock()));
+            return emissionColors.get(state.getBlock());
         }
         else
-            return new FastColor3((byte)255, (byte)255, (byte)255);
+            return new Color3();
     }
 }
