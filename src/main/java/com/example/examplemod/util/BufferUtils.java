@@ -1,11 +1,11 @@
 package com.example.examplemod.util;
 
-import com.example.examplemod.Color3;
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.client.ModVertexFormatElements;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -87,7 +87,13 @@ public class BufferUtils {
                 buffer.applyBakedNormals(normal, byteBuffer, pose.normal());
                 buffer.addVertex(transformedPos.x(), transformedPos.y(), transformedPos.z(), i1, f10, f9, packedOverlay, j1, normal.x(), normal.y(), normal.z());
                 BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
-                setLightColor(buffer, ColoredLightManager.getMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ())));
+
+                Color3 lightColor;
+                if(Minecraft.useAmbientOcclusion())
+                    lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
+                else
+                     lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
+                setLightColor(buffer, lightColor);
             }
         }
     }
