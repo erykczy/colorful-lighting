@@ -1,4 +1,4 @@
-package com.example.examplemod.mixin;
+package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.client.ModRenderTypes;
 import net.minecraft.client.renderer.LevelRenderer;

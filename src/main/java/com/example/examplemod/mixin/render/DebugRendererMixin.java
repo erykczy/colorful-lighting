@@ -1,4 +1,4 @@
-package com.example.examplemod.mixin;
+package com.example.examplemod.mixin.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;

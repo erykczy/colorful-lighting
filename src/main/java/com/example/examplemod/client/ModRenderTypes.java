@@ -2,13 +2,9 @@ package com.example.examplemod.client;
 
 import com.example.examplemod.ExampleMod;
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.client.event.RegisterNamedRenderTypesEvent;
 
 public class ModRenderTypes {
     public static final RenderType COLORED_LIGHT_SOLID = RenderType.create(

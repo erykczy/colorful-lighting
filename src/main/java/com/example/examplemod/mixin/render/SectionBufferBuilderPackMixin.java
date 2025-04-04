@@ -1,4 +1,4 @@
-package com.example.examplemod.mixin;
+package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.client.ModRenderTypes;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;

@@ -1,4 +1,4 @@
-package com.example.examplemod.mixin;
+package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.BufferUtils;

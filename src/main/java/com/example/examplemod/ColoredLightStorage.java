@@ -1,6 +1,5 @@
 package com.example.examplemod;
 
-import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 
@@ -18,7 +17,7 @@ public class ColoredLightStorage {
         return map.containsKey(sectionPos);
     }
 
-    public FastColor3 getLightColor(int x, int y, int z) {
+    public ColoredLightLayer.Entry getEntry(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         ColoredLightLayer layer = getLayer(sectionPos);
         return layer.get(
@@ -28,7 +27,7 @@ public class ColoredLightStorage {
         );
     }
 
-    public void setLightColor(int x, int y, int z, FastColor3 value) {
+    public void setEntry(int x, int y, int z, ColoredLightLayer.Entry value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         ColoredLightLayer layer = getLayer(sectionPos);
         layer.set(

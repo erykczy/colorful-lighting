@@ -97,8 +97,8 @@ public class ModKeyBinds {
             boolean contains = ColoredLightManager.getInstance().storage.containsLayer(sectionPos.asLong());
             player.sendSystemMessage(Component.literal("CONTAINS DATA: "+contains).withColor(CommonColors.WHITE));
             if(contains) {
-                FastColor3 color = ColoredLightManager.getInstance().storage.getLightColor(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
-                player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
+                //FastColor3 color = ColoredLightManager.getInstance().storage.getEntry(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
+                //player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
             }
             LayerLightSectionStorage.SectionType type = level.getLightEngine().blockEngine.getDebugSectionType(sectionPos.asLong());
             player.sendSystemMessage(Component.literal(type.toString()).withColor(CommonColors.WHITE));
@@ -113,10 +113,10 @@ public class ModKeyBinds {
                     System.out.println("Doesn't contain.");
                     return;
                 }
-                int red = Byte.toUnsignedInt(ColoredLightManager.getInstance().storage.getLightColor(pos.getX(), pos.getY(), pos.getZ()).red());
+                //int red = Byte.toUnsignedInt(ColoredLightManager.getInstance().storage.getEntry(pos.getX(), pos.getY(), pos.getZ()).red());
                 Minecraft.getInstance().gui.setTimes(0, 1, 0);
                 Minecraft.getInstance().gui.setTitle(Component.literal(""));
-                Minecraft.getInstance().gui.setSubtitle(Component.literal(""+red).withColor(CommonColors.RED));
+                //Minecraft.getInstance().gui.setSubtitle(Component.literal(""+red).withColor(CommonColors.RED));
             }
             //int red = ColoredLightManager.getInstance().sampleLightColor(pos).red;
         }

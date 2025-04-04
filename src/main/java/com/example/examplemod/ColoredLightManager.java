@@ -1,64 +1,15 @@
 package com.example.examplemod;
 
 import com.example.examplemod.util.Color3;
-import com.example.examplemod.util.FastColor3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.LightChunk;
-import net.minecraft.world.level.lighting.BlockLightEngine;
-import net.minecraft.world.level.lighting.LayerLightSectionStorage;
-import net.minecraft.world.level.lighting.LightEngine;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-import java.util.HashMap;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
-    public Queue<FastColor3> increaseQueue = new ConcurrentLinkedQueue<>();
-    public Queue<Long> propagateLightChunks = new ConcurrentLinkedQueue<>();
-    public Queue<Long> propagateLightBlocks = new ConcurrentLinkedQueue<>();
-    public static HashMap<Block, Color3> emissionColors = new HashMap<>();
-    private final Thread thread;
-
-    static {
-        emissionColors.put(Blocks.BEACON, new Color3(0.1f, 0.1f, 1.0f));
-        emissionColors.put(Blocks.FIRE, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.LAVA, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.GLOWSTONE, new Color3(0.6f, 0.3f, 0.1f));
-        emissionColors.put(Blocks.MAGMA_BLOCK, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.LAVA_CAULDRON, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.SHROOMLIGHT, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.REDSTONE_LAMP, new Color3(0.9f, 0.8f, 0.8f));
-        emissionColors.put(Blocks.SEA_LANTERN, new Color3(0.0f, 0.4f, 1.0f));
-        emissionColors.put(Blocks.CAVE_VINES, new Color3(0.0f, 1.0f, 0.0f));
-        emissionColors.put(Blocks.NETHER_PORTAL, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.RESPAWN_ANCHOR, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.ENCHANTING_TABLE, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.AMETHYST_CLUSTER, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.LARGE_AMETHYST_BUD, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.CRYING_OBSIDIAN, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.SOUL_CAMPFIRE, new Color3(0.2f, 0.3f, 1.0f));
-        emissionColors.put(Blocks.SOUL_FIRE, new Color3(0.2f, 0.3f, 1.0f));
-        emissionColors.put(Blocks.SOUL_LANTERN, new Color3(0.2f, 0.3f, 1.0f));
-        emissionColors.put(Blocks.SOUL_TORCH, new Color3(0.2f, 0.3f, 1.0f));
-        emissionColors.put(Blocks.SOUL_WALL_TORCH, new Color3(0.2f, 0.3f, 1.0f));
-        emissionColors.put(Blocks.REDSTONE_TORCH, new Color3(1.0f, 0.0f, 0.0f));
-        emissionColors.put(Blocks.REDSTONE_WALL_TORCH, new Color3(1.0f, 0.0f, 0.0f));
-        emissionColors.put(Blocks.OCHRE_FROGLIGHT, new Color3(1.0f, 1.0f, 0.0f));
-        emissionColors.put(Blocks.VERDANT_FROGLIGHT, new Color3(0.0f, 1.0f, 0.0f));
-        emissionColors.put(Blocks.PEARLESCENT_FROGLIGHT, new Color3(1.0f, 0.0f, 1.0f));
-        emissionColors.put(Blocks.LIME_CANDLE, new Color3(0.0f, 1.0f, 0.0f));
-    }
 
     private static ColoredLightManager instance = new ColoredLightManager();
     public static ColoredLightManager getInstance() {
@@ -66,57 +17,18 @@ public class ColoredLightManager {
     }
 
     public ColoredLightManager() {
-        thread = new Thread() {
-            @Override
-            public void run() {
-                while(true) {
-                    try {
-                        Thread.sleep(20);
-                    }
-                    catch (Exception e) {
-                        System.err.println(e.getMessage());
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-                    ClientLevel clientLevel = Minecraft.getInstance().level;
-                    if(clientLevel == null) continue;
-                    findBlockLightSources((BlockLightEngine) clientLevel.getLightEngine().blockEngine);
-                }
-            }
-        };
-        thread.start();
+
     }
 
-    public void enqueueIncrease(FastColor3 color) {
-        increaseQueue.add(color);
-    }
-
-    public FastColor3 getEmissionColor(BlockGetter level, BlockPos pos) {
-        BlockState state;
-        if(level == null)
-            state = Blocks.BEDROCK.defaultBlockState();
-        else
-            state = level.getBlockState(pos);
-
-        if(emissionColors.containsKey(state.getBlock())) {
-            return new FastColor3(emissionColors.get(state.getBlock()));
-        }
-        else
-            return new FastColor3((byte)255, (byte)255, (byte)255);
-    }
-
+    public Color3 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
     public Color3 sampleLightColor(int x, int y, int z) {
         // TODO debug
         ClientLevel level = Minecraft.getInstance().level;
-        if(level != null) {
-            if(level.isOutsideBuildHeight(y))
-                return new Color3();
-        }
-        if(!storage.containsLayer(SectionPos.blockToSection(BlockPos.asLong(x, y, z))))
-            return new Color3();
-        return new Color3(storage.getLightColor(x, y, z));
+        if(level != null && level.isOutsideBuildHeight(y)) return new Color3();
+        if(!storage.containsLayer(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new Color3();
+
+        return storage.getEntry(x, y, z).toColor3();
     }
-    public Color3 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
 
     public Color3 sampleMixedLightColor(Vector3f pos) {
         Vector3i cornerPos = new Vector3i((int)pos.x, (int)pos.y, (int)pos.z); // reject fraction
@@ -135,16 +47,7 @@ public class ColoredLightManager {
         return d == 0 ? finalColor : finalColor.intDivide(d);
     }
 
-    public void queuePropagateLight(long chunkPos) {
-        if(!propagateLightChunks.contains(chunkPos))
-            propagateLightChunks.add(chunkPos);
-    }
-
-    public void dequeuePropagateLight(long chunkPos) {
-        propagateLightChunks.remove(chunkPos);
-    }
-
-    public void findBlockLightSources(BlockLightEngine blockEngine) {
+    /*public void findBlockLightSources(BlockLightEngine blockEngine) {
         if(propagateLightChunks.isEmpty()) return;
         if(!propagateLightBlocks.isEmpty()) return;
 
@@ -176,9 +79,9 @@ public class ColoredLightManager {
         }));
 
         //}
-    }
+    }*/
 
-    public void propagateLight(BlockLightEngine blockEngine) {
+    /*public void propagateLight(BlockLightEngine blockEngine) {
         //int i = 400;
         System.out.println("t: "+propagateLightBlocks.size());
         while (!propagateLightBlocks.isEmpty()){
@@ -200,9 +103,9 @@ public class ColoredLightManager {
 
             ///blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
         }
-    }
+    }*/
 
-    public void handleSectionUpdate(BlockLightEngine engine, SectionPos thisSectionPos, LayerLightSectionStorage.SectionType ss) {
+    /*public void handleSectionUpdate(BlockLightEngine engine, SectionPos thisSectionPos, LayerLightSectionStorage.SectionType ss) {
         int minSection = engine.chunkSource.getLevel().getMinSection();
         int maxSection = engine.chunkSource.getLevel().getMaxSection();
 
@@ -232,5 +135,5 @@ public class ColoredLightManager {
                     ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(thisSectionPos.x() + x, thisSectionPos.z() + z));
             }
         }
-    }
+    }*/
 }
