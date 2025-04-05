@@ -23,9 +23,16 @@ public class BufferUtils {
     public static void setLightColor(BufferBuilder buffer, Color3 lightColor) {
         long i = buffer.beginElement(ModVertexFormatElements.LIGHT_COLOR);
         if (i != -1L) {
-            MemoryUtil.memPutByte(i, lightColor.redByte());
-            MemoryUtil.memPutByte(i + 1L, lightColor.greenByte());
-            MemoryUtil.memPutByte(i + 2L, lightColor.blueByte());
+            int red = lightColor.red;
+            int green = lightColor.green;
+            int blue = lightColor.blue;
+            if(red > 255) red = 255;
+            if(green > 255) green = 255;
+            if(blue > 255) blue = 255;
+
+            MemoryUtil.memPutByte(i, (byte)red);
+            MemoryUtil.memPutByte(i + 1L, (byte)green);
+            MemoryUtil.memPutByte(i + 2L, (byte)blue);
         }
     }
 

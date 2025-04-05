@@ -1,7 +1,6 @@
 package com.example.examplemod;
 
 import com.example.examplemod.util.Color3;
-import com.example.examplemod.util.FastColor3;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
@@ -17,7 +16,7 @@ public class Config {
         emissionColors.put(Blocks.BEACON, new Color3(0.1f, 0.1f, 1.0f));
         emissionColors.put(Blocks.FIRE, new Color3(0.9f, 0.1f, 0.1f));
         emissionColors.put(Blocks.LAVA, new Color3(0.9f, 0.1f, 0.1f));
-        emissionColors.put(Blocks.GLOWSTONE, new Color3(0.6f, 0.3f, 0.1f));
+        emissionColors.put(Blocks.GLOWSTONE, new Color3(1.0f, 0.5f, 0.1f)); //0.6f 0.3f 0.1f
         emissionColors.put(Blocks.MAGMA_BLOCK, new Color3(0.9f, 0.1f, 0.1f));
         emissionColors.put(Blocks.LAVA_CAULDRON, new Color3(0.9f, 0.1f, 0.1f));
         emissionColors.put(Blocks.SHROOMLIGHT, new Color3(0.9f, 0.1f, 0.1f));

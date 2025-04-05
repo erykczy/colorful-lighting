@@ -1,6 +1,7 @@
 package com.example.examplemod;
 
 import com.example.examplemod.util.Color3;
+import com.example.examplemod.util.Mathi;
 import net.minecraft.Util;
 
 public class ColoredLightLayer {
@@ -25,17 +26,13 @@ public class ColoredLightLayer {
     public Entry get(int x, int y, int z) { return get(getIndex(x, y, z)); }
     public Entry get(int index) {
         if(data == null)
-            return new Entry(0, 0, 0, 0);
+            return new Entry(0, 0, 0);
         else  {
             byte byte0 = data[index];
             byte byte1 = data[index + 1];
             byte byte2 = data[index + 2];
-            int r = (byte0 >> 4) & 0x0F;
-            int g = byte0 & 0x0F;
-            int b = (byte1 >> 4) & 0x0F;
-            int n = ((byte1 & 0x0F) << 8) | byte2;
 
-            return new Entry(r, g, b, n);
+            return new Entry(Byte.toUnsignedInt(byte0), Byte.toUnsignedInt(byte1), Byte.toUnsignedInt(byte2));
         }
     }
 
@@ -43,22 +40,25 @@ public class ColoredLightLayer {
     public void set(int index, Entry value) {
         if(data == null)
             data = new byte[LAYER_SIZE];
-        if(
+        /*if(
             value.r >= 16 || value.r < 0 ||
             value.g >= 16 || value.g < 0 ||
             value.b >= 16 || value.b < 0 ||
             value.count >= 4096 || value.count < 0
         ) {
             throw new IllegalArgumentException("Invalid ColoredLightLayer.Entry: ["+value.r+", "+value.g+", "+value.b+", "+value.count+"]");
+        }*/
+        if(
+                value.r > 255 || value.r < 0 ||
+                value.g > 255 || value.g < 0 ||
+                value.b > 255 || value.b < 0
+        ) {
+            throw new IllegalArgumentException("Invalid ColoredLightLayer.Entry: ["+value.r+", "+value.g+", "+value.b+"]");
         }
 
-        byte byte0 = (byte) ((value.r << 4) | value.g);
-        byte byte1 = (byte) ((value.b << 4) | ((value.count >> 8) & 0x0F));
-        byte byte2 = (byte) (value.count & 0xFF);
-
-        data[index] = byte0;
-        data[index + 1] = byte1;
-        data[index + 2] = byte2;
+        data[index] = (byte)value.r;
+        data[index + 1] = (byte)value.g;
+        data[index + 2] = (byte)value.b;
     }
 
 
@@ -72,45 +72,31 @@ public class ColoredLightLayer {
 
     public static class Entry {
         private static final int ENTRY_SIZE = 3;
-        private static final int RED_BITS = 4;
-        private static final int GREEN_BITS = 4;
-        private static final int BLUE_BITS = 4;
-        private static final int COUNT_BITS = 12;
         private int r;
         private int g;
         private int b;
-        private int count;
 
-        public static Entry create(int r, int g, int b, int count) {
+        public static Entry create(int r, int g, int b) {
             // 17.0f = 255.0f / 15.0f
-            return new Entry((int) (r / 17.0f), (int) (g / 17.0f), (int) (b / 17.0f), count);
+            return new Entry(Math.floorDiv(r, 17), Math.floorDiv(g, 17), Math.floorDiv(b, 17));
         }
 
-        public static Entry create(float r, float g, float b, int count) {
-            return new Entry((int) (r * 15), (int) (g * 15), (int) (b * 15), count);
+        public static Entry create(float r, float g, float b) {
+            return new Entry(Mathi.floor(r * 15), Mathi.floor(g * 15), Mathi.floor(b * 15));
         }
 
-        public static Entry create(Color3 color, int count) {
-            return create(color.red, color.green, color.blue, count);
+        public static Entry create(Color3 color) {
+            return create(color.red, color.green, color.blue);
         }
 
-        private Entry(int rawRed, int rawGreen, int rawBlue, int count) {
+        private Entry(int rawRed, int rawGreen, int rawBlue) {
             this.r = rawRed;
             this.g = rawGreen;
             this.b = rawBlue;
-            this.count = count;
         }
 
         public Color3 toColor3() {
             return new Color3(r / 15.0f, g / 15.0f, b / 15.0f);
-        }
-
-        public void setCount(int value) {
-            count = value;
-        }
-
-        public int getCount() {
-            return count;
         }
     }
 }

@@ -61,6 +61,12 @@ public class ModKeyBinds {
             GLFW.GLFW_KEY_U,
             "Colored Lights Debug Category"
     ));
+    public static final Lazy<KeyMapping> BLOCK_TEST = Lazy.of(() -> new KeyMapping(
+            "key.examplemod.block_test",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_B,
+            "Colored Lights Debug Category"
+    ));
 
     public static void register(IEventBus bus) {
         bus.addListener(ModKeyBinds::registerBindings);
@@ -113,16 +119,27 @@ public class ModKeyBinds {
             if(contains) {
                 //FastColor3 color = ColoredLightManager.getInstance().storage.getEntry(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
                 //player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
+                Color3 color = ColoredLightManager.getInstance().sampleLightColor(player.blockPosition().below());
+                player.sendSystemMessage(
+                        Component.literal(color.red+" ").withColor(CommonColors.RED).append(
+                                Component.literal(color.green+" ").withColor(CommonColors.GREEN).append(
+                                        Component.literal(color.blue+" ").withColor(CommonColors.BLUE)
+                                )
+                        )
+                );
             }
             LayerLightSectionStorage.SectionType type = level.getLightEngine().blockEngine.getDebugSectionType(sectionPos.asLong());
             player.sendSystemMessage(Component.literal(type.toString()).withColor(CommonColors.WHITE));
         }
 
         while (PROPAGATE_TEST.get().consumeClick()) {
-            ColoredLightManager.getInstance().propagateLight(level, player.blockPosition().below(), true);
+            ColoredLightManager.getInstance().propagateLight(level, player.blockPosition().below(), true, null);
         }
         while (DEPROPAGATE_TEST.get().consumeClick()) {
-            ColoredLightManager.getInstance().propagateLight(level, player.blockPosition().below(), false);
+            ColoredLightManager.getInstance().propagateLight(level, player.blockPosition().below(), false, null);
+        }
+        while (BLOCK_TEST.get().consumeClick()) {
+            ColoredLightManager.getInstance().blockLights(level, player.blockPosition().below());
         }
 
         HitResult result = Minecraft.getInstance().hitResult;

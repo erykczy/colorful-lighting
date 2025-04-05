@@ -6,10 +6,15 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Blocks;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -35,7 +40,7 @@ public class ColoredLightManager {
         if(!storage.containsSection(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new Color3();
 
         var entry = storage.getEntry(x, y, z);
-        return entry.toColor3().mul(entry.getCount());
+        return entry.toColor3();
     }
 
     public Color3 sampleMixedLightColor(Vector3f pos) {
@@ -55,8 +60,10 @@ public class ColoredLightManager {
         return d == 0 ? finalColor : finalColor.intDivide(d);
     }
 
-    public void propagateLight(BlockGetter level, BlockPos originPos, boolean propagate) {
+    public void propagateLight(BlockGetter level, BlockPos originPos, boolean propagate, @Nullable BlockPos ignore) {
         Color3 emissionColor = Config.getEmissionColor(level, originPos);
+        if(level.getBlockState(originPos).is(Blocks.GLOWSTONE))
+            emissionColor = new Color3(255, 128, 0);
         int vanillaEmission = level.getLightEmission(originPos);
 
         Queue<BlockPos> blocksToUpdate = new LinkedList<>();
@@ -70,21 +77,33 @@ public class ColoredLightManager {
             int lightLevel = lightLevels.poll();
 
             if(alreadyUpdated.contains(blockPos.asLong())) continue;
-            if(blockPos != originPos && !level.getBlockState(blockPos).isAir()) continue;
+            if(blockPos != originPos && !blockPos.equals(ignore) && !level.getBlockState(blockPos).isAir()) continue;
 
             float distance = 1.0f - lightLevel / (float)vanillaEmission;
             float attenuation = 1.0f - distance;
-            Color3 lightColorToAdd = emissionColor.mul(attenuation);
+            Color3 lightColorToAdd = ColoredLightLayer.Entry.create(emissionColor.mul(attenuation)).toColor3();
+            /*Color3 lightColorToAdd = new Color3(
+                    emissionColor.red/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel),
+                    emissionColor.green/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel),
+                    emissionColor.blue/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel)
+            );*/
             try {
                 var currentEntry = storage.getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                 var currentLightColor = currentEntry.toColor3();
-                var currentCount = currentEntry.getCount();
-                Color3 newLightColor;
-                if(propagate)
-                    newLightColor = currentLightColor.mul(currentCount).add(lightColorToAdd).intDivide(currentCount + 1);
-                else
-                    newLightColor = currentLightColor.mul(currentCount).sub(lightColorToAdd).intDivide(currentCount + 1);
-                storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), ColoredLightLayer.Entry.create(newLightColor, currentCount + 1));
+                //var currentCount = currentEntry.getCount();
+                Color3 newLightColor = currentLightColor;
+                if(propagate) {
+                    newLightColor = currentLightColor.add(lightColorToAdd);
+                    /*newLightColor = new Color3(
+                            Math.max(currentLightColor.red, lightColorToAdd.red),
+                            Math.max(currentLightColor.green, lightColorToAdd.green),
+                            Math.max(currentLightColor.blue, lightColorToAdd.blue)
+                    );*/
+                }
+                else {
+                    newLightColor = currentLightColor.sub(lightColorToAdd);
+                }
+                storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), ColoredLightLayer.Entry.create(newLightColor));
             }
             catch (IllegalArgumentException e) {
                 System.err.println(e.getMessage());
@@ -98,6 +117,51 @@ public class ColoredLightManager {
             }
         }
         while (!blocksToUpdate.isEmpty());
+    }
+
+    public void blockLights(BlockAndTintGetter world, BlockPos originPos) {
+        //int originLightLevel = world.getBrightness(LightLayer.BLOCK, originPos);
+        storage.setEntry(originPos.getX(), originPos.getY(), originPos.getZ(), ColoredLightLayer.Entry.create(0, 0, 0));
+
+        /*for(int oy = -14; oy <= 14; ++oy) {
+            int xExtent = 14-Math.abs(oy);
+            int xWidth = xExtent * 2 + 1;
+            for(int ox = -xExtent; ox <= xExtent; ++ox) {
+                int zExtent = xExtent - Math.abs(ox);
+            }
+        }*/
+
+        for(int x = -14; x <= 14; ++x) {
+            for(int y = -14; y <= 14; ++y) {
+                for(int z = -14; z <= 14; ++z) {
+                    BlockPos blockPos = originPos.offset(x, y, z);
+                    if(world.getLightEmission(blockPos) > 0) {
+                        propagateLight(world, blockPos, false, originPos);
+                        propagateLight(world, blockPos, true, null);
+                    }
+                }
+            }
+        }
+
+        /*Queue<BlockPos> toCheck = new LinkedList<>();
+        toCheck.add(originPos);
+        do {
+            BlockPos currentPos = toCheck.poll();
+            if(world.getLightEmission(currentPos) > 0) {
+                propagateLight(world, currentPos, false, currentPos);
+                propagateLight(world, currentPos, true, null);
+            }
+            int currentLightLevel = world.getBrightness(LightLayer.BLOCK, currentPos);
+            if(currentLightLevel >= 15) continue;
+            for(var direction : Direction.values()) {
+                BlockPos neighbourPos = currentPos.relative(direction);
+                int neighbourLightLevel = world.getBrightness(LightLayer.BLOCK, neighbourPos);
+
+                if(neighbourLightLevel > currentLightLevel)
+                    toCheck.add(neighbourPos);
+            }
+        }
+        while (!toCheck.isEmpty());*/
     }
 
     /*public void findBlockLightSources(BlockLightEngine blockEngine) {
