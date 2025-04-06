@@ -18,10 +18,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 @Mixin(LiquidBlockRenderer.class)
 public class LiquidBlockRendererMixin {
     @Unique
     private BlockPos coloredLights$blockPos;
+    @Unique
+    private Lock coloredLights$blockPosLock = new ReentrantLock();
+
+    @Inject(method = "tesselate", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;vertex(Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFFFFFI)V"))
+    private void coloredLights$beforeVertex(BlockAndTintGetter level, BlockPos pos, VertexConsumer buffer, BlockState blockState, FluidState fluidState, CallbackInfo ci) {
+        this.coloredLights$blockPosLock.lock();
+        this.coloredLights$blockPos = pos;
+    }
 
     @Redirect(method = "tesselate", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;vertex(Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFFFFFI)V"))
     private void coloredLights$vertex(
@@ -38,6 +49,8 @@ public class LiquidBlockRendererMixin {
             float v,
             int packedLight
     ) {
+        BlockPos blockPos = new BlockPos(this.coloredLights$blockPos);
+        this.coloredLights$blockPosLock.unlock();
         if(!(buffer instanceof BufferBuilder bufferBuilder)) return;
         //ci.cancel();
         buffer.addVertex(x, y, z)
@@ -45,16 +58,9 @@ public class LiquidBlockRendererMixin {
                 .setUv(u, v)
                 .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
-        SectionPos sectionPos = SectionPos.of(this.coloredLights$blockPos);
+        SectionPos sectionPos = SectionPos.of(blockPos);
         BufferUtils.setLightColor(bufferBuilder, ColoredLightManager.getInstance().sampleMixedLightColor(new Vector3f(sectionPos.x() * 16 + x, sectionPos.y() * 16 + y, sectionPos.z() * 16 + z)));
     }
-
-
-    @Inject(method = "tesselate", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/LiquidBlockRenderer;vertex(Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFFFFFFI)V"))
-    private void coloredLights$beforeVertex(BlockAndTintGetter level, BlockPos pos, VertexConsumer buffer, BlockState blockState, FluidState fluidState, CallbackInfo ci) {
-        this.coloredLights$blockPos = pos;
-    }
-
 
     /*@Inject(at = @At("HEAD"), method = "tesselate", cancellable = true)
     public void tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer buffer, BlockState blockState, FluidState fluidState, CallbackInfo ci) {
