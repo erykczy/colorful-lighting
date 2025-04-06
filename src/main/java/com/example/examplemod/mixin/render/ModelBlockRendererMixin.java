@@ -1,23 +1,40 @@
 package com.example.examplemod.mixin.render;
 
+import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.BufferUtils;
+import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
+
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
 @Mixin(ModelBlockRenderer.class)
 public class ModelBlockRendererMixin {
-    @Inject(at = @At("HEAD"), method = "putQuadData", cancellable = true)
-    public void putQuadData(
+    private BlockPos blockPos;
+
+    @Inject(method = "putQuadData", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFFF[IIZ)V"), locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
+    public void coloredLights$beforePutBulkData(
             BlockAndTintGetter level,
             BlockState state,
             BlockPos pos,
@@ -35,38 +52,75 @@ public class ModelBlockRendererMixin {
             int packedOverlay,
             CallbackInfo ci)
     {
-        if(!(consumer instanceof BufferBuilder bufferBuilder)) return;
-        ci.cancel();
-        ModelBlockRenderer renderer = (ModelBlockRenderer) (Object)this;
+        this.blockPos = pos;
+    }
 
-        float f;
-        float f1;
-        float f2;
-        if (quad.isTinted()) {
-            int i = renderer.blockColors.getColor(state, level, pos, quad.getTintIndex());
-            f = (float)(i >> 16 & 0xFF) / 255.0F;
-            f1 = (float)(i >> 8 & 0xFF) / 255.0F;
-            f2 = (float)(i & 0xFF) / 255.0F;
-        } else {
-            f = 1.0F;
-            f1 = 1.0F;
-            f2 = 1.0F;
+    @Redirect(method = "putQuadData", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFFF[IIZ)V"))
+    private void coloredLights$putBulkData(
+            VertexConsumer buffer,
+            PoseStack.Pose pose,
+            BakedQuad quad,
+            float[] brightness,
+            float red,
+            float green,
+            float blue,
+            float alpha,
+            int[] lightmap,
+            int packedOverlay,
+            boolean readAlpha
+    ) {
+        int[] vertices = quad.getVertices();
+        Matrix4f poseMatrix = pose.pose();
+        Vec3i untransformedNormal = quad.getDirection().getNormal();
+        Vector3f normal = pose.transformNormal((float)untransformedNormal.getX(), (float)untransformedNormal.getY(), (float)untransformedNormal.getZ(), new Vector3f());
+        int alphaInt = (int)(alpha * 255.0F);
+
+        try (MemoryStack memorystack = MemoryStack.stackPush()) {
+            ByteBuffer byteBuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
+            IntBuffer intBuffer = byteBuffer.asIntBuffer();
+
+            for (int i = 0; i < vertices.length / 8; i++) {
+                intBuffer.clear();
+                intBuffer.put(vertices, i * 8, 8);
+                float x = byteBuffer.getFloat(0);
+                float y = byteBuffer.getFloat(4);
+                float z = byteBuffer.getFloat(8);
+                float f3;
+                float f4;
+                float f5;
+                if (readAlpha) {
+                    float f6 = (float)(byteBuffer.get(12) & 255);
+                    float f7 = (float)(byteBuffer.get(13) & 255);
+                    float f8 = (float)(byteBuffer.get(14) & 255);
+                    f3 = f6 * brightness[i] * red;
+                    f4 = f7 * brightness[i] * green;
+                    f5 = f8 * brightness[i] * blue;
+                } else {
+                    f3 = brightness[i] * red * 255.0F;
+                    f4 = brightness[i] * green * 255.0F;
+                    f5 = brightness[i] * blue * 255.0F;
+                }
+
+                // Neo: also apply alpha that's coming from the baked quad
+                int vertexAlpha = readAlpha ? (int)((alpha * (float) (byteBuffer.get(15) & 255) / 255.0F) * 255) : alphaInt;
+                int i1 = FastColor.ARGB32.color(vertexAlpha, (int)f3, (int)f4, (int)f5);
+                int j1 = buffer.applyBakedLighting(lightmap[i], byteBuffer);
+                float f10 = byteBuffer.getFloat(16);
+                float f9 = byteBuffer.getFloat(20);
+                Vector3f transformedPos = poseMatrix.transformPosition(x, y, z, new Vector3f());
+                buffer.applyBakedNormals(normal, byteBuffer, pose.normal());
+                buffer.addVertex(transformedPos.x(), transformedPos.y(), transformedPos.z(), i1, f10, f9, packedOverlay, j1, normal.x(), normal.y(), normal.z());
+                BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
+
+                if(buffer instanceof BufferBuilder bufferBuilder) {
+                    ColorRGB8 lightColor;
+                    if(Minecraft.useAmbientOcclusion())
+                        lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
+                    else
+                        lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
+                    BufferUtils.setLightColor(bufferBuilder, lightColor);
+                }
+            }
         }
-
-        BufferUtils.putQuadWithColoredLighting(
-                bufferBuilder,
-                pose,
-                quad,
-                new float[]{brightness0, brightness1, brightness2, brightness3},
-                f,
-                f1,
-                f2,
-                1.0F,
-                new int[]{lightmap0, lightmap1, lightmap2, lightmap3},
-                packedOverlay,
-                true,
-                pos
-                //ColoredLightManager.getLightColor(pos)
-        );
     }
 }

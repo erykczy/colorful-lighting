@@ -1,20 +1,18 @@
 package com.example.examplemod;
 
 import com.example.examplemod.util.ColorRGB4;
-import net.minecraft.Util;
 
+// TODO optimize storage
 public class ColoredLightLayer {
     private static final int LAYER_SIZE = 16 * 16 * 16 * ColorRGB4.SIZE;
     public byte[] data;
 
-    public ColoredLightLayer() {
-
-    }
+    public ColoredLightLayer() {}
 
     public ColoredLightLayer(byte[] data) {
         this.data = data;
         if (data.length != LAYER_SIZE) {
-            throw (IllegalArgumentException) Util.pauseInIde(new IllegalArgumentException("ColoredLightLayer should be "+ LAYER_SIZE +" bytes not: " + data.length));
+            throw new IllegalArgumentException("ColoredLightLayer should be "+ LAYER_SIZE +" bytes not: " + data.length);
         }
     }
 

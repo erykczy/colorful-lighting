@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SectionBufferBuilderPack.class)
 public class SectionBufferBuilderPackMixin {
-    @Inject(method = "buffer", at=@At(value = "HEAD"), cancellable = true)
+    @Inject(method = "buffer", at = @At(value = "HEAD"), cancellable = true)
     public void coloredLights$buffer(RenderType renderType, CallbackInfoReturnable<ByteBufferBuilder> ci) {
         SectionBufferBuilderPack pack = (SectionBufferBuilderPack)(Object)this;
         ci.setReturnValue(pack.buffers.get(ModRenderTypes.vanillaToModified(renderType)));

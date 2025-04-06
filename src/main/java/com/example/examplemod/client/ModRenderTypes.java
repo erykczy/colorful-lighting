@@ -82,19 +82,6 @@ public class ModRenderTypes {
                 .add(COLORED_LIGHT_CUTOUT)
                 .add(COLORED_LIGHT_TRANSLUCENT)
                 .build();
-        /*RenderType.SOLID = RenderType.create(
-                "solid",
-                ModVertexFormats.COLORED_LIGHT_BLOCK,
-                VertexFormat.Mode.QUADS,
-                4194304,
-                true,
-                false,
-                RenderType.CompositeState.builder()
-                        .setLightmapState(RenderType.LIGHTMAP)
-                        .setShaderState(new RenderStateShard.ShaderStateShard(() -> ModShaders.COLORED_LIGHT_SOLID))
-                        .setTextureState(RenderType.BLOCK_SHEET_MIPPED)
-                        .createCompositeState(true)
-        );*/
     }
 
 }

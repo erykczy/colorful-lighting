@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlockLightEngine.class)
-public class BlockLightEngineMixin {
+public abstract class BlockLightEngineMixin {
     @Inject(method = "checkNode", at = @At("TAIL"))
     private void coloredLights$checkNode(long packedPos, CallbackInfo ci) {
         if(!Minecraft.getInstance().isSameThread()) return; // only client side

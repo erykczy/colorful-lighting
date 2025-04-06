@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ColoredLightStorage {
+    // stores ColoredLightLayer for every loaded section
     private ConcurrentHashMap<Long, ColoredLightLayer> map = new ConcurrentHashMap<>();
 
     @Nullable
