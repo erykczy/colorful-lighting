@@ -36,8 +36,8 @@ public class ColoredLightManager {
     public ColorRGB8 sampleLightColor(int x, int y, int z) {
         // TODO debug
         ClientLevel level = Minecraft.getInstance().level;
-        if(level != null && level.isOutsideBuildHeight(y)) return new ColorRGB8();
-        if(!storage.containsSection(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new ColorRGB8();
+        if(level != null && level.isOutsideBuildHeight(y)) return ColorRGB8.fromRGB8(0, 0, 0);
+        if(!storage.containsSection(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return ColorRGB8.fromRGB8(0, 0, 0);
 
         var entry = storage.getEntry(x, y, z);
         return ColorRGB8.fromRGB4(entry);
@@ -46,7 +46,7 @@ public class ColoredLightManager {
     public ColorRGB8 sampleMixedLightColor(Vector3f pos) {
         Vector3i cornerPos = new Vector3i((int)pos.x, (int)pos.y, (int)pos.z); // reject fraction
         int d = 0;
-        ColorRGB8 finalColor = new ColorRGB8();
+        ColorRGB8 finalColor = ColorRGB8.fromRGB8(0, 0, 0);
         for(int ox = -1; ox < 1; ++ox) {
             for(int oy = -1; oy < 1; ++oy) {
                 for(int oz = -1; oz < 1; ++oz) {

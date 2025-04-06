@@ -42,6 +42,6 @@ public class TestBlockRenderer implements BlockEntityRenderer<TestBlockEntity> {
         Vector3f tranPos = mat.transformPosition(pos, new Vector3f(0.0f, 0.0f, 0.0f));
         Vector3f tranNormal = mat.transformDirection(normal, new Vector3f(0.0f, 0.0f, 0.0f));
         buffer.addVertex(tranPos.x, tranPos.y, tranPos.z, Color.RED.getRGB(), u, v, packedOverlay, packedLight, tranNormal.x, tranNormal.y, tranNormal.z);
-        BufferUtils.setLightColor(buffer, new ColorRGB8((byte)0, (byte)255, (byte)0));
+        BufferUtils.setLightColor(buffer, ColorRGB8.fromRGB8(0, 255, 0));
     }
 }

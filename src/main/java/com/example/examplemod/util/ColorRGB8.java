@@ -7,18 +7,18 @@ public class ColorRGB8 {
         return new ColorRGB8(value.red4 * 17, value.green4 * 17, value.blue4 * 17);
     }
 
-    public ColorRGB8() {
-        this(0, 0, 0);
+    public static ColorRGB8 fromRGB8(int r, int g, int b) {
+        return new ColorRGB8(r, g, b);
     }
 
-    public ColorRGB8(int red, int green, int blue) {
+    public static ColorRGB8 fromRGBFloat(float r, float g, float b) {
+        return new ColorRGB8((int)(r * 255), (int)(g * 255), (int)(b * 255));
+    }
+
+    private ColorRGB8(int red, int green, int blue) {
         this.red = red;
         this.green = green;
         this.blue = blue;
-    }
-
-    public ColorRGB8(float red, float green, float blue) {
-        this((int)(red * 255), (int)(green * 255), (int)(blue * 255));
     }
 
     public ColorRGB8 add(ColorRGB8 other) {
