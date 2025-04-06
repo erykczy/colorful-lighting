@@ -9,7 +9,7 @@
     "render.LiquidBlockRendererMixin",
     "render.SectionCompilerMixin",
     "BlockLightEngineMixin",
-    "LightEngineMixin",
+    "LevelLightEngineMixin",
     "render.DebugRendererMixin",
     "render.SectionBufferBuilderPackMixin"
   ],

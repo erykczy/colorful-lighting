@@ -1,10 +1,23 @@
 package com.example.examplemod.mixin;
 
+import com.example.examplemod.ColoredLightManager;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlockLightEngine.class)
 public class BlockLightEngineMixin {
+    @Inject(method = "checkNode", at = @At("TAIL"))
+    private void coloredLights$checkNode(long packedPos, CallbackInfo ci) {
+        if(!Minecraft.getInstance().isSameThread()) return; // only client side
+        BlockLightEngine lightEngine = (BlockLightEngine)(Object)this;
+        ColoredLightManager.getInstance().onBlockLightPropertiesChanged(lightEngine.chunkSource.getLevel(), BlockPos.of(packedPos));
+    }
+
     /*@Inject(at = @At("HEAD"), method = "checkNode", cancellable = true)
     protected void checkNode(long blockPos, CallbackInfo ci) {
         if(!Minecraft.getInstance().isSameThread()) return; // only client side

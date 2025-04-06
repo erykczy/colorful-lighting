@@ -7,18 +7,21 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
     private Queue<LightUpdateRequest> propagateIncreases = new LinkedList<>();
     private Queue<LightUpdateRequest> propagateDecreases = new LinkedList<>();
+    private Set<Long> dirtySections = new HashSet<>();
 
     private static ColoredLightManager instance = new ColoredLightManager();
     public static ColoredLightManager getInstance() {
@@ -73,16 +76,16 @@ public class ColoredLightManager {
     public void requestLightRepropagation(BlockPos originPos, boolean increase) {
         ColorRGB4 lightColor = storage.getEntry(originPos.getX(), originPos.getY(), originPos.getZ());
         if(increase) {
-            storage.setEntry(originPos.getX(), originPos.getY(), originPos.getZ(), ColorRGB4.fromRGB4(0, 0, 0)); // the color will be later updated by request
+            setLightColor(originPos, ColorRGB4.fromRGB4(0, 0, 0)); // the color will be later updated by request
             propagateIncreases.add(new LightUpdateRequest(originPos, lightColor));
         }
         else {
-            storage.setEntry(originPos.getX(), originPos.getY(), originPos.getZ(), lightColor); // the color will be later updated by request
+            setLightColor(originPos, lightColor); // the color will be later updated by request
             propagateDecreases.add(new LightUpdateRequest(originPos, lightColor));
         }
     }
 
-    public void propagateIncreases(BlockAndTintGetter level) {
+    public void propagateIncreases(BlockGetter level) {
         while(!propagateIncreases.isEmpty()) {
             LightUpdateRequest request = propagateIncreases.poll();
             ColorRGB4 oldLightColor = storage.getEntry(request.blockPos.getX(), request.blockPos.getY(), request.blockPos.getZ());
@@ -93,7 +96,7 @@ public class ColoredLightManager {
             );
 
             if(newLightColor.red4 == oldLightColor.red4 && newLightColor.green4 == oldLightColor.green4 && newLightColor.blue4 == oldLightColor.blue4) continue;
-            storage.setEntry(request.blockPos.getX(), request.blockPos.getY(), request.blockPos.getZ(), newLightColor);
+            setLightColor(request.blockPos, newLightColor);
 
             ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
                 Math.max(0, request.lightColor.red4 - 1),
@@ -111,12 +114,12 @@ public class ColoredLightManager {
         }
     }
 
-    public void propagateDecreases(BlockAndTintGetter level) {
+    public void propagateDecreases(BlockGetter level) {
         while(!propagateDecreases.isEmpty()) {
             LightUpdateRequest request = propagateDecreases.poll();
             ColorRGB4 oldLightColor = storage.getEntry(request.blockPos.getX(), request.blockPos.getY(), request.blockPos.getZ());
             if(oldLightColor.red4 == 0 && oldLightColor.green4 == 0 && oldLightColor.blue4 == 0) continue;
-            storage.setEntry(request.blockPos.getX(), request.blockPos.getY(), request.blockPos.getZ(), ColorRGB4.fromRGB4(0, 0, 0));
+            setLightColor(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
 
             BlockState blockState = level.getBlockState(request.blockPos);
             if(blockState.getLightEmission(level, request.blockPos) > 0) {
@@ -134,26 +137,58 @@ public class ColoredLightManager {
                 BlockPos neighbourPos = request.blockPos.relative(direction);
                 if(level.isOutsideBuildHeight(neighbourPos)) continue;
 
-                ColorRGB4 neighbourLightColor = storage.getEntry(neighbourPos.getX(), neighbourPos.getY(), neighbourPos.getZ());
-                if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0)
-                    continue;
-
                 if(decreaseMore)
                     requestLightPropagation(neighbourPos, neighbourLightDecrease, false);
                 else {
+                    ColorRGB4 neighbourLightColor = storage.getEntry(neighbourPos.getX(), neighbourPos.getY(), neighbourPos.getZ());
+                    if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0)
+                        continue;
+
                     requestLightRepropagation(neighbourPos, true);
                 }
             }
         }
     }
 
-    public void pullLightIn(BlockPos blockPos) {
+    /*public void requestLightPullIn(BlockPos blockPos) {
         for(var direction : Direction.values()) {
             BlockPos neighbourPos = blockPos.relative(direction);
             ColorRGB4 neighbourLight = storage.getEntry(neighbourPos.getX(), neighbourPos.getY(), neighbourPos.getZ());
             if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
             requestLightRepropagation(neighbourPos, true);
         }
+    }*/
+
+    public void onBlockLightPropertiesChanged(BlockGetter level, BlockPos blockPos) {
+        BlockState blockState = level.getBlockState(blockPos);
+        int lightEmission = blockState.getLightEmission(level, blockPos);
+        ColorRGB4 currentColor = storage.getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+
+        requestLightPropagation(blockPos, currentColor, false);
+
+        if(lightEmission > 0)
+            requestLightPropagation(blockPos, Config.getEmissionColor(level, blockPos), true);
+    }
+
+    public void runLightUpdates(BlockGetter level) {
+        propagateDecreases(level);
+        propagateIncreases(level);
+
+        var iterator = dirtySections.iterator();
+        while (iterator.hasNext()) {
+            SectionPos sectionPos = SectionPos.of(iterator.next());
+            Minecraft.getInstance().levelRenderer.setSectionDirty(
+                    sectionPos.x(),
+                    sectionPos.y(),
+                    sectionPos.z()
+            );
+            iterator.remove();
+        }
+    }
+
+    private void setLightColor(BlockPos blockPos, ColorRGB4 color) {
+        storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), color);
+        dirtySections.add(SectionPos.asLong(blockPos));
     }
 
     private static class LightUpdateRequest {

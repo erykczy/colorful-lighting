@@ -1,9 +1,7 @@
 package com.example.examplemod.client.debug;
 
-import com.example.examplemod.ColoredLightLayer;
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.Config;
-import com.example.examplemod.util.ColorRGB4;
 import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -151,12 +149,10 @@ public class ModKeyBinds {
             ColoredLightManager.getInstance().propagateIncreases(level);
         }
         while (BLOCK_TEST.get().consumeClick()) {
-            //ColoredLightManager.getInstance().blockLights(level, player.blockPosition().below());
             BlockPos pos = player.blockPosition().below();
-            //ColoredLightManager.getInstance().storage.setEntry(pos.getX(), pos.getY(), pos.getZ(), ColorRGB4.fromRGB4(1, 1, 1));
-            //ColoredLightManager.getInstance().requestLightPropagation(pos, ColorRGB4.fromRGB4(1, 1, 1), false);
-            ColoredLightManager.getInstance().pullLightIn(pos);
-            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            //ColoredLightManager.getInstance().pullLightIn(pos);
+            ColoredLightManager.getInstance().requestLightPropagation(pos, ColoredLightManager.getInstance().storage.getEntry(pos.getX(), pos.getY(), pos.getZ()), false);
+            //level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             ColoredLightManager.getInstance().propagateDecreases(level);
             ColoredLightManager.getInstance().propagateIncreases(level);
         }
