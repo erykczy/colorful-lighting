@@ -24,16 +24,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Mixin(ModelBlockRenderer.class)
 public class ModelBlockRendererMixin {
     private BlockPos blockPos;
+    private Lock blockPosLock = new ReentrantLock();
 
-    @Inject(method = "putQuadData", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFFF[IIZ)V"), locals = LocalCapture.CAPTURE_FAILEXCEPTION, cancellable = true)
+    @Inject(method = "putQuadData", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFFF[IIZ)V"))
     public void coloredLights$beforePutBulkData(
             BlockAndTintGetter level,
             BlockState state,
@@ -52,6 +54,7 @@ public class ModelBlockRendererMixin {
             int packedOverlay,
             CallbackInfo ci)
     {
+        blockPosLock.lock();
         this.blockPos = pos;
     }
 
@@ -110,17 +113,18 @@ public class ModelBlockRendererMixin {
                 Vector3f transformedPos = poseMatrix.transformPosition(x, y, z, new Vector3f());
                 buffer.applyBakedNormals(normal, byteBuffer, pose.normal());
                 buffer.addVertex(transformedPos.x(), transformedPos.y(), transformedPos.z(), i1, f10, f9, packedOverlay, j1, normal.x(), normal.y(), normal.z());
-                BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
 
                 if(buffer instanceof BufferBuilder bufferBuilder) {
+                    BlockPos sectionOrigin = SectionPos.of(this.blockPos).origin();
                     ColorRGB8 lightColor;
                     if(Minecraft.useAmbientOcclusion())
                         lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
                     else
-                        lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
+                        lightColor = ColoredLightManager.getInstance().sampleLightColor(this.blockPos.offset(quad.getDirection().getNormal()));
                     BufferUtils.setLightColor(bufferBuilder, lightColor);
                 }
             }
         }
+        blockPosLock.unlock();
     }
 }
