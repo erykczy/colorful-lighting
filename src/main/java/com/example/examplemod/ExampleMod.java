@@ -5,7 +5,6 @@ import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.client.debug.ModKeyBinds;
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -14,6 +13,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import org.slf4j.Logger;
 
 // TODO
@@ -42,21 +42,21 @@ public class ExampleMod
         @SubscribeEvent
         private static void onChunkLoad(ChunkEvent.Load event) {
             ChunkAccess chunkAccess = event.getChunk();
-            for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
-                int y = chunkAccess.getSectionYFromSectionIndex(i);
-                long sectionPos = SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z);
-                ColoredLightManager.getInstance().storage.addSection(sectionPos);
-            }
+            if(!chunkAccess.getLevel().isClientSide()) return;
+            ColoredLightManager.getInstance().onChunkLoad(chunkAccess.getLevel().getChunkSource(), chunkAccess);
         }
 
         @SubscribeEvent
         private static void onChunkUnload(ChunkEvent.Unload event) {
             ChunkAccess chunkAccess = event.getChunk();
-            for(int i = 0; i < chunkAccess.getSectionsCount(); i++) {
-                int y = chunkAccess.getSectionYFromSectionIndex(i);
-                long sectionPos = SectionPos.asLong(chunkAccess.getPos().x, y, chunkAccess.getPos().z);
-                ColoredLightManager.getInstance().storage.removeSection(sectionPos);
-            }
+            if(!chunkAccess.getLevel().isClientSide()) return;
+            ColoredLightManager.getInstance().onChunkUnload(chunkAccess);
+        }
+
+        @SubscribeEvent
+        private static void onLevelUnload(LevelEvent.Unload event) {
+            if(!event.getLevel().isClientSide()) return;
+            ColoredLightManager.getInstance().onLevelUnload();
         }
     }
 }

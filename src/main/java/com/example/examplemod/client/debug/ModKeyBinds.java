@@ -137,24 +137,24 @@ public class ModKeyBinds {
 
         while (PROPAGATE_INCREASE_TEST.get().consumeClick()) {
             //ColoredLightManager.getInstance().requestLightPropagation(level, player.blockPosition().below(), true);
-            ColoredLightManager.getInstance().requestLightPropagation(player.blockPosition().below(), Config.getEmissionColor(level, player.blockPosition().below()), true);
-            ColoredLightManager.getInstance().propagateDecreases(level);
-            ColoredLightManager.getInstance().propagateIncreases(level);
+            //ColoredLightManager.getInstance().requestLightPropagation(player.blockPosition().below(), Config.getEmissionColor(level, player.blockPosition().below()), true);
+            //ColoredLightManager.getInstance().propagateDecreases(level);
+            //ColoredLightManager.getInstance().propagateIncreases(level);
         }
         while (PROPAGATE_DECREASE_TEST.get().consumeClick()) {
             //ColoredLightManager.getInstance().requestLightPropagation(level, player.blockPosition().below(), false);
-            ColoredLightManager.getInstance().requestLightPropagation(player.blockPosition().below(), Config.getEmissionColor(level, player.blockPosition().below()), false);
-            level.setBlock(player.blockPosition().below(), Blocks.AIR.defaultBlockState(), 3);
-            ColoredLightManager.getInstance().propagateDecreases(level);
-            ColoredLightManager.getInstance().propagateIncreases(level);
+            //ColoredLightManager.getInstance().requestLightPropagation(player.blockPosition().below(), Config.getEmissionColor(level, player.blockPosition().below()), false);
+            //level.setBlock(player.blockPosition().below(), Blocks.AIR.defaultBlockState(), 3);
+            //ColoredLightManager.getInstance().propagateDecreases(level);
+            //ColoredLightManager.getInstance().propagateIncreases(level);
         }
         while (BLOCK_TEST.get().consumeClick()) {
             BlockPos pos = player.blockPosition().below();
             //ColoredLightManager.getInstance().pullLightIn(pos);
-            ColoredLightManager.getInstance().requestLightPropagation(pos, ColoredLightManager.getInstance().storage.getEntry(pos.getX(), pos.getY(), pos.getZ()), false);
+            //ColoredLightManager.getInstance().requestLightPropagation(pos, ColoredLightManager.getInstance().storage.getEntry(pos.getX(), pos.getY(), pos.getZ()), false);
             //level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
-            ColoredLightManager.getInstance().propagateDecreases(level);
-            ColoredLightManager.getInstance().propagateIncreases(level);
+            //ColoredLightManager.getInstance().propagateDecreases(level);
+            //ColoredLightManager.getInstance().propagateIncreases(level);
         }
 
         HitResult result = Minecraft.getInstance().hitResult;
