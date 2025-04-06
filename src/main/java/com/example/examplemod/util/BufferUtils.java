@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 public class BufferUtils {
-    public static void setLightColor(BufferBuilder buffer, Color3 lightColor) {
+    public static void setLightColor(BufferBuilder buffer, ColorRGB8 lightColor) {
         long i = buffer.beginElement(ModVertexFormatElements.LIGHT_COLOR);
         if (i != -1L) {
             int red = lightColor.red;
@@ -95,7 +95,7 @@ public class BufferUtils {
                 buffer.addVertex(transformedPos.x(), transformedPos.y(), transformedPos.z(), i1, f10, f9, packedOverlay, j1, normal.x(), normal.y(), normal.z());
                 BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
 
-                Color3 lightColor;
+                ColorRGB8 lightColor;
                 if(Minecraft.useAmbientOcclusion())
                     lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
                 else

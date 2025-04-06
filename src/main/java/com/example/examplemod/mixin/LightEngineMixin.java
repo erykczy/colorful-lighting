@@ -1,5 +1,10 @@
 package com.example.examplemod.mixin;
 
+import com.example.examplemod.ColoredLightManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.BlockLightEngine;
 import net.minecraft.world.level.lighting.LightEngine;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -148,9 +153,9 @@ public class LightEngineMixin {
         }
 
         cir.setReturnValue(i);
-    }
+    }*/
 
-    @Unique
+    /*@Unique
     protected void lightEngine$propagateDecrease(BlockLightEngine engine, long thisBlockPos, long thisLightLevel) {
         int queueEntryLightLevel = LightEngine.QueueEntry.getFromLevel(thisLightLevel);
 
