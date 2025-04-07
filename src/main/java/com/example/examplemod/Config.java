@@ -2,6 +2,8 @@ package com.example.examplemod;
 
 import com.example.examplemod.util.ColorRGB4;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -10,9 +12,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.HashMap;
 
 public class Config {
-    public static HashMap<Block, ColorRGB4> emissionColors = new HashMap<>();
+    public static final ColorRGB4 defaultColor = ColorRGB4.fromRGB4(15, 15, 15);
+    private static HashMap<ResourceLocation, ColorRGB4> emissionColors = new HashMap<>();
 
-    static {
+    /*static {
         emissionColors.put(Blocks.BEACON, ColorRGB4.fromRGBFloat(0.1f, 0.1f, 1.0f));
         emissionColors.put(Blocks.FIRE, ColorRGB4.fromRGBFloat(0.9f, 0.1f, 0.1f));
         emissionColors.put(Blocks.LAVA, ColorRGB4.fromRGBFloat(0.9f, 0.1f, 0.1f));
@@ -41,6 +44,11 @@ public class Config {
         emissionColors.put(Blocks.PEARLESCENT_FROGLIGHT, ColorRGB4.fromRGBFloat(1.0f, 0.0f, 1.0f));
         emissionColors.put(Blocks.LIME_CANDLE, ColorRGB4.fromRGBFloat(0.0f, 1.0f, 0.0f));
         emissionColors.put(Blocks.GLOW_LICHEN, ColorRGB4.fromRGBFloat(0.53f, 0.53f, 0.53f));
+    }*/
+
+    public static void setEmissionColors(HashMap<ResourceLocation, ColorRGB4> colors) {
+        emissionColors = colors;
+        ColoredLightManager.getInstance().refreshLevel();
     }
 
     public static ColorRGB4 getEmissionColor(BlockGetter level, BlockPos pos) {
@@ -50,10 +58,12 @@ public class Config {
         else
             state = level.getBlockState(pos);
 
-        if(emissionColors.containsKey(state.getBlock())) {
-            return emissionColors.get(state.getBlock());
+        ResourceKey<Block> blockResourceKey = state.getBlockHolder().getKey();
+
+        if(blockResourceKey != null && emissionColors.containsKey(blockResourceKey.location())) {
+            return emissionColors.get(blockResourceKey.location());
         }
         else
-            return ColorRGB4.fromRGB4(0, 0, 0);
+            return defaultColor;
     }
 }

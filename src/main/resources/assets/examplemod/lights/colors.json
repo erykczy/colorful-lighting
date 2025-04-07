@@ -1,0 +1,6 @@
+{
+	"minecraft:glowstone": [ 1.0, 0.5, 0.0 ],
+	"minecraft:torch": [ 1.0, 1.0, 1.0 ],
+	"minecraft:sea_lantern": [ 0.0, 0.7, 1.0 ],
+	"minecraft:nether_portal": [ 1.0, 0.0, 1.0 ]
+}

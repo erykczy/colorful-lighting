@@ -13,6 +13,7 @@ import net.minecraft.world.level.chunk.ChunkSource;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -27,6 +28,7 @@ public class ColoredLightManager {
     private LinkedList<Long> dirtySections = new LinkedList<>();
     // newly loaded chunks that wait for light propagation
     private Queue<ChunkAccess> newChunks = new ConcurrentLinkedQueue<>();
+    private HashSet<ChunkAccess> fullyLoadedChunks = new HashSet<>();
     // thread that finds light sources in newly loaded chunks and adds propagation requests for those blocks (it is slow task so it is executed in other thread)
     private Thread handleNewChunksThread;
 
@@ -243,8 +245,11 @@ public class ColoredLightManager {
                     }
                     if(!allNeighboursLoaded) break;
                 }
-                if(allNeighboursLoaded)
-                    newChunks.add(chunkSource.getChunk(chunk.getPos().x + x, chunk.getPos().z + z, false));
+                if(allNeighboursLoaded) {
+                    ChunkAccess chunk1 = chunkSource.getChunk(chunk.getPos().x + x, chunk.getPos().z + z, false);
+                    newChunks.add(chunk1);
+                    fullyLoadedChunks.add(chunk1);
+                }
             }
         }
     }
@@ -255,11 +260,23 @@ public class ColoredLightManager {
             int y = chunk.getSectionYFromSectionIndex(i);
             storage.removeSection(SectionPos.asLong(chunk.getPos().x, y, chunk.getPos().z));
         }
+        fullyLoadedChunks.remove(chunk);
     }
 
     public void onLevelUnload() {
         newChunks.clear();
+        fullyLoadedChunks.clear();
         storage.clear();
+    }
+
+    public void refreshLevel() {
+        for(var chunk : fullyLoadedChunks) {
+            for(int i = 0; i < chunk.getSectionsCount(); i++) {
+                int y = chunk.getSectionYFromSectionIndex(i);
+                storage.getSection(SectionPos.asLong(chunk.getPos().x, y, chunk.getPos().z)).clear();
+            }
+        }
+        newChunks.addAll(fullyLoadedChunks);
     }
 
     private static class LightUpdateRequest {

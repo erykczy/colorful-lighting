@@ -21,6 +21,12 @@ public class ColorRGB8 {
         this.blue = blue;
     }
 
+    public boolean isInValidState() {
+        return  red >= 0 && red < 256 &&
+                green >= 0 && green < 256 &&
+                blue >= 0 && blue < 256;
+    }
+
     public ColorRGB8 add(ColorRGB8 other) {
         return new ColorRGB8(red + other.red, green + other.green, blue + other.blue);
     }

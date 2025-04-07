@@ -4,6 +4,7 @@ import com.example.examplemod.block.ModBlocks;
 import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.client.debug.ModKeyBinds;
+import com.example.examplemod.client.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
@@ -26,13 +27,14 @@ import org.slf4j.Logger;
 public class ExampleMod
 {
     public static final String MOD_ID = "examplemod";
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
 
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer)
     {
         ModBlocks.register(modEventBus);
         ModShaders.register(modEventBus);
         ModKeyBinds.register(modEventBus);
+        ModResourceManagers.register(modEventBus);
         ModRenderTypes.register();
     }
 
