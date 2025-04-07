@@ -52,16 +52,14 @@ public class Config {
     }
 
     public static ColorRGB4 getEmissionColor(BlockGetter level, BlockPos pos) {
-        BlockState state;
         if(level == null)
-            state = Blocks.BEDROCK.defaultBlockState();
-        else
-            state = level.getBlockState(pos);
+            return defaultColor;
+        BlockState state = level.getBlockState(pos);
 
         ResourceKey<Block> blockResourceKey = state.getBlockHolder().getKey();
 
         if(blockResourceKey != null && emissionColors.containsKey(blockResourceKey.location())) {
-            return emissionColors.get(blockResourceKey.location());
+            return emissionColors.get(blockResourceKey.location()).mul(state.getLightEmission(level, pos)/15.0f);
         }
         else
             return defaultColor;

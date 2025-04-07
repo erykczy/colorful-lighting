@@ -28,6 +28,10 @@ public class ColorRGB4 {
                 blue4 >= 0 && blue4 < 16;
     }
 
+    public ColorRGB4 mul(float scalar) {
+        return new ColorRGB4((int)(red4 * scalar), (int)(green4 * scalar), (int)(blue4 * scalar));
+    }
+
     @Override
     public String toString() {
         return "ColorRGB4["+ red4 +", " + green4 + ", " + blue4 + "]";
