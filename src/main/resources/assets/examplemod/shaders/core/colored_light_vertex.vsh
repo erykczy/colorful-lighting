@@ -26,12 +26,11 @@ void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(pos, 1.0);
 
     vertexDistance = fog_distance(pos, FogShape);
-    //vec4 colorFromLightMap = minecraft_sample_lightmap(Sampler2, UV2);
-    float blockLight = UV2.x/256.0;
-    //float skyLight = UV2.y/256.0;
-    vec3 skyLightColor = minecraft_sample_lightmap(Sampler2, ivec2(0, UV2.y)).xyz;
-    vec3 blockLightColor = BlockLightColor * blockLight;// * max(BlockLightColor.r, max(BlockLightColor.g, BlockLightColor.b));
-    vec4 lightColor = vec4(skyLightColor + blockLightColor, 1.0);//mix(colorFromLightMap, vec4(BlockLightColor + , 1.0), blockLight);
-    vertexColor = lightColor * Color;
     texCoord0 = UV0;
+
+    float blockLight = UV2.x/256.0;
+    vec3 skyLightColor = minecraft_sample_lightmap(Sampler2, ivec2(0, UV2.y)).xyz;
+    vec3 blockLightColor = BlockLightColor * max(BlockLightColor.r, max(BlockLightColor.g, BlockLightColor.b));
+    vec4 lightColor = vec4(skyLightColor + blockLightColor, 1.0);
+    vertexColor = lightColor * Color;
 }

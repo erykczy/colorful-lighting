@@ -291,6 +291,7 @@ public class ColoredLightManager {
 
         private void doTask() {
             while (!newChunks.isEmpty()) {
+                if(!propagateIncreases.isEmpty()) break;
                 ChunkAccess chunk = newChunks.poll();
 
                 chunk.findBlockLightSources((blockPos, blockState) -> {

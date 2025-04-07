@@ -40,6 +40,7 @@ public class Config {
         emissionColors.put(Blocks.VERDANT_FROGLIGHT, ColorRGB4.fromRGBFloat(0.0f, 1.0f, 0.0f));
         emissionColors.put(Blocks.PEARLESCENT_FROGLIGHT, ColorRGB4.fromRGBFloat(1.0f, 0.0f, 1.0f));
         emissionColors.put(Blocks.LIME_CANDLE, ColorRGB4.fromRGBFloat(0.0f, 1.0f, 0.0f));
+        emissionColors.put(Blocks.GLOW_LICHEN, ColorRGB4.fromRGBFloat(0.53f, 0.53f, 0.53f));
     }
 
     public static ColorRGB4 getEmissionColor(BlockGetter level, BlockPos pos) {
