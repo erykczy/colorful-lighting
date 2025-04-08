@@ -68,18 +68,20 @@ public class Config {
         return defaultColor.mul(lightEmission);
     }
 
-    public static int getEmissionBrightness(BlockGetter level, BlockPos pos) {
+    public static int getEmissionBrightness(BlockGetter level, BlockPos pos) { return getEmissionBrightness(level, pos, null); }
+    public static int getEmissionBrightness(BlockGetter level, BlockPos pos, @Nullable BlockState blockState) {
         if(level == null) return 0;
-        BlockState state = level.getBlockState(pos);
+        if(blockState == null)
+            blockState = level.getBlockState(pos);
 
-        ResourceKey<Block> blockResourceKey = state.getBlockHolder().getKey();
+        ResourceKey<Block> blockResourceKey = blockState.getBlockHolder().getKey();
 
         if(blockResourceKey != null) {
             LightColor config = emissionColors.get(blockResourceKey.location());
             if(config != null && config.brightness4 >= 0)
                 return config.brightness4;
         }
-        return level.getLightEmission(pos);
+        return blockState.getLightEmission(level, pos);
     }
 
     /**

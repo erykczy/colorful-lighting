@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
@@ -311,9 +312,17 @@ public class ColoredLightManager {
                 if(!propagateIncreases.isEmpty()) break;
                 ChunkAccess chunk = newChunks.poll();
 
-                chunk.findBlockLightSources((blockPos, blockState) -> {
-                    requestLightPropagation(new BlockPos(blockPos), Config.getEmissionColor(chunk, blockPos), true, false);
-                });
+                chunk.findBlocks(
+                    blockState -> // block state filter
+                            blockState.hasDynamicLightEmission() ||
+                            blockState.getLightEmission(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) != 0 ||
+                            Config.getEmissionBrightness(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, blockState) != 0,
+                    (blockState, blockPos) -> // individual block filter
+                            blockState.getLightEmission(chunk, blockPos) != 0 ||
+                            Config.getEmissionBrightness(chunk, blockPos) != 0,
+                    (blockPos, blockState) -> // for each found light source
+                            requestLightPropagation(new BlockPos(blockPos), Config.getEmissionColor(chunk, blockPos), true, false)
+                );
             }
         }
     }

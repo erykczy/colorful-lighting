@@ -78,6 +78,5 @@
 	"minecraft:dragon_egg": "magenta",
 	"minecraft:end_portal_frame": "white",
 	"minecraft:sculk_sensor": "blue",
-	"minecraft:light": "#0F00FFFF",
-	"minecraft:amethyst_block": "#FF00FFFF"
+	"minecraft:amethyst_block": "purple;F"
 }
