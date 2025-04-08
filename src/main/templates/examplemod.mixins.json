@@ -11,7 +11,8 @@
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "render.DebugRendererMixin",
-    "render.SectionBufferBuilderPackMixin"
+    "render.SectionBufferBuilderPackMixin",
+    "LightEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1

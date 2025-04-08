@@ -36,4 +36,13 @@ public class ColorRGB4 {
     public String toString() {
         return "ColorRGB4["+ red4 +", " + green4 + ", " + blue4 + "]";
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        return  obj instanceof ColorRGB4 other &&
+                other.red4 == red4 &&
+                other.green4 == green4 &&
+                other.blue4 == blue4;
+    }
 }

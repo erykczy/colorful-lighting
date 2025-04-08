@@ -30,7 +30,8 @@ void main() {
 
     float blockLight = UV2.x/256.0;
     vec3 skyLightColor = minecraft_sample_lightmap(Sampler2, ivec2(0, UV2.y)).xyz;
-    vec3 blockLightColor = BlockLightColor * max(BlockLightColor.r, max(BlockLightColor.g, BlockLightColor.b));
+    //if(BlockLightColor.g < 0.1)
+    vec3 blockLightColor = pow(BlockLightColor, vec3(2));//vec3(0, BlockLightColor.g < 0.3 ? BlockLightColor.g / 2.0 : BlockLightColor.g, 0);// * max(BlockLightColor.r, max(BlockLightColor.g, BlockLightColor.b));
     vec4 lightColor = vec4(skyLightColor + blockLightColor, 1.0);
     vertexColor = lightColor * Color;
 }

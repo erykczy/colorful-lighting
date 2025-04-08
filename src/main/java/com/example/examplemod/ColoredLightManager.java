@@ -132,7 +132,7 @@ public class ColoredLightManager {
 
             BlockState blockState = level.getBlockState(request.blockPos);
             // repropagate removed light
-            if(blockState.getLightEmission(level, request.blockPos) > 0) {
+            if(Config.getEmissionBrightness(level, request.blockPos) > 0) {
                 requestLightPropagation(request.blockPos, Config.getEmissionColor(level, request.blockPos), true, false);
             }
 
@@ -180,8 +180,7 @@ public class ColoredLightManager {
     }
 
     public void onBlockLightPropertiesChanged(BlockGetter level, BlockPos blockPos) {
-        BlockState blockState = level.getBlockState(blockPos);
-        int lightEmission = blockState.getLightEmission(level, blockPos);
+        //BlockState blockState = level.getBlockState(blockPos);
         ColorRGB4 lightColor = storage.getEntry(blockPos);
         if(lightColor == null) return;
 
@@ -192,7 +191,8 @@ public class ColoredLightManager {
             requestLightPropagation(blockPos, lightColor, false, false);
 
         // propagate light if new blockState emits light
-        if(lightEmission > 0)
+        int lightEmissionBrightness = Config.getEmissionBrightness(level, blockPos); //blockState.getLightEmission(level, blockPos);
+        if(lightEmissionBrightness > 0)
             requestLightPropagation(blockPos, Config.getEmissionColor(level, blockPos), true, false);
     }
 
