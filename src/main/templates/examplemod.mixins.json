@@ -12,7 +12,9 @@
     "LevelLightEngineMixin",
     "render.DebugRendererMixin",
     "render.SectionBufferBuilderPackMixin",
-    "LightEngineMixin"
+    "LightEngineMixin",
+    "render.BufferBuilderMixin",
+    "render.SingleQuadParticleMixin"
   ],
   "injectors": {
     "defaultRequire": 1

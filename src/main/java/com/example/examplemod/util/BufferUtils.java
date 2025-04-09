@@ -1,23 +1,8 @@
 package com.example.examplemod.util;
 
-import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.client.ModVertexFormatElements;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
-import net.minecraft.core.Vec3i;
-import net.minecraft.util.FastColor;
-import org.joml.Matrix4f;
-import org.joml.Vector3f;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
-
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 public class BufferUtils {
     public static void setLightColor(BufferBuilder buffer, ColorRGB8 lightColor) {
@@ -36,22 +21,10 @@ public class BufferUtils {
         }
     }
 
-    // from VertexConsumer::putBulkData
-    public static void putQuadWithColoredLighting(
-            BufferBuilder buffer,
-            PoseStack.Pose pose,
-            BakedQuad quad,
-            float[] brightness,
-            float red,
-            float green,
-            float blue,
-            float alpha,
-            int[] lightmap,
-            int packedOverlay,
-            boolean readAlpha,
-            BlockPos blockPos
-            //Color3 lightColor
-    ) {
-        
+    public static boolean isLightColorFilled(BufferBuilder buffer) {
+        // logic from com.mojang.blaze3d.vertex.BufferBuilder::beginElement
+        int elementsToFill = buffer.elementsToFill;
+        int afterFilling = elementsToFill & ~ModVertexFormatElements.LIGHT_COLOR.mask();
+        return afterFilling == elementsToFill;
     }
 }

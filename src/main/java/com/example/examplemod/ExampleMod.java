@@ -3,6 +3,7 @@ package com.example.examplemod;
 import com.example.examplemod.block.ModBlocks;
 import com.example.examplemod.client.ModRenderTypes;
 import com.example.examplemod.client.ModShaders;
+import com.example.examplemod.client.ModVertexFormats;
 import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.client.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
@@ -35,6 +36,7 @@ public class ExampleMod
         ModShaders.register(modEventBus);
         ModKeyBinds.register(modEventBus);
         ModResourceManagers.register(modEventBus);
+        ModVertexFormats.register();
         ModRenderTypes.register();
     }
 
