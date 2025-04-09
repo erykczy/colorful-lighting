@@ -127,7 +127,12 @@ public class ModelBlockRendererMixin {
                         lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
                     else
                         lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
-                    BufferUtils.setLightColor(bufferBuilder, lightColor);
+
+                    if(bufferBuilder.fastFormat)
+                        BufferUtils.setLightColorFastFormat(bufferBuilder, lightColor);
+                    else {
+                        BufferUtils.setLightColor(bufferBuilder, lightColor);
+                    }
                 }
             }
         }

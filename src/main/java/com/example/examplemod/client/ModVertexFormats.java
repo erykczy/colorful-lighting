@@ -12,7 +12,7 @@ public class ModVertexFormats {
             .add("UV2", VertexFormatElement.UV2)
             .add("Normal", VertexFormatElement.NORMAL)
             .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR)
-            .padding(2) // TODO
+            .padding(2)
             .build();
 
     public static final VertexFormat COLORED_LIGHT_PARTICLE = VertexFormat.builder()
@@ -20,10 +20,12 @@ public class ModVertexFormats {
             .add("UV0", VertexFormatElement.UV0)
             .add("Color", VertexFormatElement.COLOR)
             .add("UV2", VertexFormatElement.UV2)
-            .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR) // TODO padding
+            .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR)
+            .padding(1)
             .build();
 
-    public static void register() {
+    static {
+        DefaultVertexFormat.BLOCK = COLORED_LIGHT_BLOCK;
         DefaultVertexFormat.PARTICLE = COLORED_LIGHT_PARTICLE;
     }
 }

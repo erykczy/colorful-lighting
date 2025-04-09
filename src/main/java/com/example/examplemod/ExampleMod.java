@@ -36,7 +36,6 @@ public class ExampleMod
         ModShaders.register(modEventBus);
         ModKeyBinds.register(modEventBus);
         ModResourceManagers.register(modEventBus);
-        ModVertexFormats.register();
         ModRenderTypes.register();
     }
 

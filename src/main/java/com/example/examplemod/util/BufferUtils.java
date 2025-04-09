@@ -27,4 +27,16 @@ public class BufferUtils {
         int afterFilling = elementsToFill & ~ModVertexFormatElements.LIGHT_COLOR.mask();
         return afterFilling == elementsToFill;
     }
+
+    public static void setLightColorFastFormat(BufferBuilder buffer, ColorRGB8 lightColor) {
+        int red = lightColor.red;
+        int green = lightColor.green;
+        int blue = lightColor.blue;
+
+        long prevAttributesSize = (buffer.fullFormat ? 28L : 24L) + 7L; // see com.mojang.blaze3d.vertex.BufferBuilder::addVertex
+        long pointer = buffer.vertexPointer + prevAttributesSize;
+        MemoryUtil.memPutByte(pointer, (byte)red);
+        MemoryUtil.memPutByte(pointer + 1L, (byte)green);
+        MemoryUtil.memPutByte(pointer + 2L, (byte)blue);
+    }
 }
