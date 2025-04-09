@@ -1,7 +1,6 @@
 package com.example.examplemod.client.debug;
 
 import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.Config;
 import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -13,7 +12,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.CommonColors;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.lighting.LayerLightSectionStorage;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;

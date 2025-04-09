@@ -24,7 +24,7 @@ public class ModVertexFormats {
             .padding(1)
             .build();
 
-    static {
+    public static void register() {
         DefaultVertexFormat.BLOCK = COLORED_LIGHT_BLOCK;
         DefaultVertexFormat.PARTICLE = COLORED_LIGHT_PARTICLE;
     }

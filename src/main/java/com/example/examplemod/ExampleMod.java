@@ -1,8 +1,6 @@
 package com.example.examplemod;
 
 import com.example.examplemod.block.ModBlocks;
-import com.example.examplemod.client.ModRenderTypes;
-import com.example.examplemod.client.ModShaders;
 import com.example.examplemod.client.ModVertexFormats;
 import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.client.resourcemanager.ModResourceManagers;
@@ -33,10 +31,9 @@ public class ExampleMod
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer)
     {
         ModBlocks.register(modEventBus);
-        ModShaders.register(modEventBus);
         ModKeyBinds.register(modEventBus);
         ModResourceManagers.register(modEventBus);
-        ModRenderTypes.register();
+        ModVertexFormats.register();
     }
 
     @EventBusSubscriber(modid = MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)

@@ -12,7 +12,6 @@ import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraft.world.item.DyeColor;
 import org.slf4j.Logger;
 
-import javax.naming.NameNotFoundException;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
