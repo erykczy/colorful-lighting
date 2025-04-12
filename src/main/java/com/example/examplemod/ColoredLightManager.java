@@ -11,7 +11,10 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Vector3i;
 
 import java.util.HashSet;
@@ -113,22 +116,21 @@ public class ColoredLightManager {
             if(!request.force && newLightColor.red4 == oldLightColor.red4 && newLightColor.green4 == oldLightColor.green4 && newLightColor.blue4 == oldLightColor.blue4) continue;
             setLightColor(request.blockPos, newLightColor);
 
-            // light attenuation
-            ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
-                Math.max(0, request.lightColor.red4 - 1),
-                Math.max(0, request.lightColor.green4 - 1),
-                Math.max(0, request.lightColor.blue4 - 1)
-            );
-            // if no more color to propagate
-            if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;
-
             for(var direction : Direction.values()) {
                 BlockPos neighbourPos = request.blockPos.relative(direction);
                 if(level.isOutsideBuildHeight(neighbourPos)) continue;
-
                 BlockState neighbourState = level.getBlockState(neighbourPos);
-                // if block blocks light
-                if(neighbourState.getLightBlock(level, neighbourPos) > 0) continue;
+
+                // light attenuation
+                int lightBlock = Math.max(1, neighbourState.getLightBlock(level, neighbourPos));
+                ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
+                        Math.max(0, request.lightColor.red4 - lightBlock),
+                        Math.max(0, request.lightColor.green4 - lightBlock),
+                        Math.max(0, request.lightColor.blue4 - lightBlock)
+                );
+                // if no more color to propagate
+                if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;
+
                 requestLightPropagation(neighbourPos, neighbourLightColor, true, false);
             }
         }
