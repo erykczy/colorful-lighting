@@ -3,10 +3,12 @@ package com.example.examplemod;
 import com.example.examplemod.util.ColorRGB4;
 import com.example.examplemod.util.ColorRGB8;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -18,6 +20,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
@@ -329,7 +333,7 @@ public class ColoredLightManager {
         public void run() {
             while (true) {
                 try {
-                    Thread.sleep(20);
+                    Thread.sleep(1);
                 }
                 catch (Exception e) {
                     System.err.println(e.getMessage());
@@ -339,22 +343,36 @@ public class ColoredLightManager {
         }
 
         private void doTask() {
-            while (!newChunks.isEmpty()) {
-                if(!propagateIncreases.isEmpty()) break;
-                ChunkAccess chunk = newChunks.poll();
+            if (newChunks.isEmpty()) return;
+            if (!propagateIncreases.isEmpty()) return;
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) return;
+            ChunkPos playerPos = player.chunkPosition();
+            var iterator = newChunks.iterator();
+            int minDistance = Integer.MAX_VALUE;
+            ChunkAccess nearestChunk = null;
+            while (iterator.hasNext()) {
+                ChunkAccess chunk = iterator.next();
+                int distance = chunk.getPos().getChessboardDistance(playerPos);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestChunk = chunk;
+                }
+            }
+            newChunks.remove(nearestChunk);
 
-                chunk.findBlocks(
+            final ChunkAccess finalNearestChunk = nearestChunk;
+            nearestChunk.findBlocks(
                     blockState -> // block state filter
                             blockState.hasDynamicLightEmission() ||
-                            blockState.getLightEmission(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) != 0 ||
-                            Config.getEmissionBrightness(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, blockState) != 0,
+                                    blockState.getLightEmission(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) != 0 ||
+                                    Config.getEmissionBrightness(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, blockState) != 0,
                     (blockState, blockPos) -> // individual block filter
-                            blockState.getLightEmission(chunk, blockPos) != 0 ||
-                            Config.getEmissionBrightness(chunk, blockPos) != 0,
+                            blockState.getLightEmission(finalNearestChunk, blockPos) != 0 ||
+                                    Config.getEmissionBrightness(finalNearestChunk, blockPos) != 0,
                     (blockPos, blockState) -> // for each found light source
-                            requestLightPropagation(new BlockPos(blockPos), Config.getEmissionColor(chunk, blockPos), true, false)
-                );
-            }
+                            requestLightPropagation(new BlockPos(blockPos), Config.getEmissionColor(finalNearestChunk, blockPos), true, false)
+            );
         }
     }
 }
