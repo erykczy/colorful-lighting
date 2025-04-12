@@ -50,4 +50,7 @@ public class ColorRGB8 {
     public ColorRGB8 mul(float scalar) {
         return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
     }
+    public ColorRGB8 mul(double scalar) {
+        return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
+    }
 }

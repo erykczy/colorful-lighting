@@ -11,10 +11,7 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
-import net.minecraft.world.level.lighting.LightEngine;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import org.joml.Vector3i;
 
 import java.util.HashSet;
@@ -54,9 +51,9 @@ public class ColoredLightManager {
     }
 
     /**
-     * Mixes light color from blocks neighbouring cornerPos. Used to smooth light color transitions. TODO
+     * Mixes light color from blocks neighbouring given position using arithmetic average.
      */
-    public ColorRGB8 sampleMixedLightColor(Vec3 pos) {
+    public ColorRGB8 sampleSimpleInterpolationLightColor(Vec3 pos) {
         Vector3i centerPos = new Vector3i((int)Math.round(pos.x), (int)Math.round(pos.y), (int)Math.round(pos.z));
         Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
         int coefficientsCount = 0;
@@ -74,20 +71,36 @@ public class ColoredLightManager {
         return coefficientsCount == 0 ? ColorRGB8.fromRGB8(0, 0, 0) : finalColor.intDivide(coefficientsCount);
     }
 
-    /*public ColorRGB8 sampleBilinearLightColor(Vector3f pos) {
-        Vector3i centerPos = new Vector3i(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
-        BlockPos lowerCorner = new BlockPos(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
+    /**
+     * Mixes light color from blocks neighbouring given position using trilinear interpolation.
+     */
+    public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
+        int cornerX = (int)Math.round(pos.x) - 1;
+        int cornerY = (int)Math.round(pos.y) - 1;
+        int cornerZ = (int)Math.round(pos.z) - 1;
+        ColorRGB8 c000 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 0);
+        ColorRGB8 c100 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 0);
+        ColorRGB8 c101 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 1);
+        ColorRGB8 c001 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 1);
+        ColorRGB8 c010 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 0);
+        ColorRGB8 c110 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 0);
+        ColorRGB8 c111 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1);
+        ColorRGB8 c011 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 1);
 
-        for(int x = lowerCorner.getX(); x <= lowerCorner.getX()+1; ++x) {
-            for(int y = lowerCorner.getY(); y <= lowerCorner.getY()+1; ++y) {
-                for(int z = lowerCorner.getZ(); z <= lowerCorner.getZ()+1; ++z) {
-                    BlockPos blockPos = lowerCorner.offset(x, y, z);
-                    ColorRGB8 blockLightColor = sampleLightColor(blockPos);
+        double x = (pos.x - cornerX) / 2.0;
+        double y = (pos.y - cornerY) / 2.0;
+        double z = (pos.z - cornerZ) / 2.0;
 
-                }
-            }
-        }
-    }*/
+        ColorRGB8 c00 = c000.mul(1.0 - x).add(c100.mul(x));
+        ColorRGB8 c01 = c001.mul(1.0 - x).add(c101.mul(x));
+        ColorRGB8 c11 = c011.mul(1.0 - x).add(c111.mul(x));
+        ColorRGB8 c10 = c010.mul(1.0 - x).add(c110.mul(x));
+
+        ColorRGB8 c0 = c00.mul(1.0 - y).add(c10.mul(y));
+        ColorRGB8 c1 = c01.mul(1.0 - y).add(c11.mul(y));
+
+        return c0.mul(1.0 - z).add(c1.mul(z));
+    }
 
     private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
         if(increase) {

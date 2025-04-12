@@ -37,7 +37,7 @@ public class BufferUtils {
         Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
         Vec3 vertexWorldPos = cameraPos.add(vertexPos.x, vertexPos.y, vertexPos.z);
 
-        ColorRGB8 lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(vertexWorldPos);
+        ColorRGB8 lightColor = ColoredLightManager.getInstance().sampleTrilinearLightColor(vertexWorldPos);
         BufferUtils.forceSetLightColor(buffer, lightColor);
     }
 
