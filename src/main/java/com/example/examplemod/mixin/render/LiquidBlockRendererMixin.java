@@ -9,7 +9,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
-import org.joml.Vector3f;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -57,6 +57,7 @@ public class LiquidBlockRendererMixin {
                 .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
         SectionPos sectionPos = SectionPos.of(blockPos);
-        BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleMixedLightColor(new Vector3f(sectionPos.x() * 16 + x, sectionPos.y() * 16 + y, sectionPos.z() * 16 + z)));
+        BlockPos sectionOrigin = sectionPos.origin();
+        BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleMixedLightColor(new Vec3(sectionOrigin.getX() + x, sectionOrigin.getY() + y, sectionOrigin.getZ() + z)));
     }
 }

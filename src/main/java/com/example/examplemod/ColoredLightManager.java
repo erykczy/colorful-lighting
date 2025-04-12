@@ -11,7 +11,7 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
-import org.joml.Vector3f;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3i;
 
 import java.util.HashSet;
@@ -53,8 +53,8 @@ public class ColoredLightManager {
     /**
      * Mixes light color from blocks neighbouring cornerPos. Used to smooth light color transitions. TODO
      */
-    public ColorRGB8 sampleMixedLightColor(Vector3f pos) {
-        Vector3i centerPos = new Vector3i(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
+    public ColorRGB8 sampleMixedLightColor(Vec3 pos) {
+        Vector3i centerPos = new Vector3i((int)Math.round(pos.x), (int)Math.round(pos.y), (int)Math.round(pos.z));
         Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
         int coefficientsCount = 0;
         ColorRGB8 finalColor = ColorRGB8.fromRGB8(0, 0, 0);

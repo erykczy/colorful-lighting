@@ -16,6 +16,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.util.FastColor;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
@@ -124,7 +125,7 @@ public class ModelBlockRendererMixin {
                     BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
                     ColorRGB8 lightColor;
                     if(Minecraft.useAmbientOcclusion())
-                        lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ()));
+                        lightColor = ColoredLightManager.getInstance().sampleMixedLightColor(new Vec3(sectionOrigin.getX() + transformedPos.x, sectionOrigin.getY() + transformedPos.y, sectionOrigin.getZ() + transformedPos.z)); //transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ())
                     else
                         lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
 
