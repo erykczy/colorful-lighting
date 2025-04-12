@@ -1,5 +1,6 @@
 #version 150
 
+#moj_import <colored_light.glsl>
 #moj_import <light.glsl>
 #moj_import <fog.glsl>
 
@@ -9,6 +10,7 @@ in vec2 UV0;
 in ivec2 UV1;
 in ivec2 UV2;
 in vec3 Normal;
+in vec3 BlockLightColor;
 
 uniform sampler2D Sampler1;
 uniform sampler2D Sampler2;
@@ -22,6 +24,7 @@ uniform vec3 Light1_Direction;
 
 out float vertexDistance;
 out vec4 vertexColor;
+out vec4 lightMapColor;
 out vec4 overlayColor;
 out vec2 texCoord0;
 
@@ -29,7 +32,9 @@ void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
     vertexDistance = fog_distance(Position, FogShape);
-    vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color) * texelFetch(Sampler2, UV2 / 16, 0);
+    vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     overlayColor = texelFetch(Sampler1, UV1, 0);
     texCoord0 = UV0;
+
+    lightMapColor = calculateLightColor(Sampler2, UV2, BlockLightColor);
 }

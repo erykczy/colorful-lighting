@@ -36,6 +36,5 @@ void main() {
     overlayColor = texelFetch(Sampler1, UV1, 0);
     texCoord0 = UV0;
 
-    // item uses this shader
     lightMapColor = calculateLightColor(Sampler2, UV2, BlockLightColor);
 }
