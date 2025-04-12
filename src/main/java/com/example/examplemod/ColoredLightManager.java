@@ -20,8 +20,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
@@ -91,19 +89,35 @@ public class ColoredLightManager {
         ColorRGB8 c111 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1);
         ColorRGB8 c011 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 1);
 
-        double x = (pos.x - cornerX) / 2.0;
-        double y = (pos.y - cornerY) / 2.0;
-        double z = (pos.z - cornerZ) / 2.0;
+        double x = (pos.x - (double) cornerX) / 2.0;
+        double y = (pos.y - (double) cornerY) / 2.0;
+        double z = (pos.z - (double) cornerZ) / 2.0;
 
-        ColorRGB8 c00 = c000.mul(1.0 - x).add(c100.mul(x));
+        /*ColorRGB8 c00 = c000.mul(1.0 - x).add(c100.mul(x));
         ColorRGB8 c01 = c001.mul(1.0 - x).add(c101.mul(x));
         ColorRGB8 c11 = c011.mul(1.0 - x).add(c111.mul(x));
-        ColorRGB8 c10 = c010.mul(1.0 - x).add(c110.mul(x));
+        ColorRGB8 c10 = c010.mul(1.0 - x).add(c110.mul(x));*/
+        ColorRGB8 c00 = linearInterpolation(c000, c100, x);
+        ColorRGB8 c01 = linearInterpolation(c001, c101, x);
+        ColorRGB8 c11 = linearInterpolation(c011, c111, x);
+        ColorRGB8 c10 = linearInterpolation(c010, c110, x);
 
-        ColorRGB8 c0 = c00.mul(1.0 - y).add(c10.mul(y));
-        ColorRGB8 c1 = c01.mul(1.0 - y).add(c11.mul(y));
+        ColorRGB8 c0 = linearInterpolation(c00, c10, y);
+        ColorRGB8 c1 = linearInterpolation(c01, c11, y);
 
-        return c0.mul(1.0 - z).add(c1.mul(z));
+        return linearInterpolation(c0, c1, z);
+    }
+
+    private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
+        if(a.isZero()) return b;
+        if(b.isZero()) return a;
+        return a.mul(1.0 - x).add(b.mul(x));
+    }
+
+    public ColorRGB8 sampleTrilinearLightColorAtLocalPlayer() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if(player == null) return ColorRGB8.fromRGB8(0, 0, 0);
+        return sampleTrilinearLightColor(player.getEyePosition());
     }
 
     private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
@@ -241,11 +255,18 @@ public class ColoredLightManager {
         var iterator = dirtySections.iterator();
         while (iterator.hasNext()) {
             SectionPos sectionPos = SectionPos.of(iterator.next());
-            Minecraft.getInstance().levelRenderer.setSectionDirty(
-                    sectionPos.x(),
-                    sectionPos.y(),
-                    sectionPos.z()
-            );
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    for(int z = -1; z <= 1; ++z) {
+                        Minecraft.getInstance().levelRenderer.setSectionDirty(
+                                sectionPos.x() + x,
+                                sectionPos.y() + y,
+                                sectionPos.z() + z
+                        );
+                    }
+                }
+            }
+
             iterator.remove();
         }
     }

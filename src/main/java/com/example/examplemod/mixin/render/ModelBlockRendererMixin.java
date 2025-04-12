@@ -62,6 +62,7 @@ public class ModelBlockRendererMixin {
         this.coloredLights$blockPos = pos;
     }
 
+    // modified code from com.mojang.blaze3d.vertex.VertexConsumer::putBulkData
     @Redirect(method = "putQuadData", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;[FFFFF[IIZ)V"))
     private void coloredLights$putBulkData(
             VertexConsumer buffer,
@@ -129,7 +130,7 @@ public class ModelBlockRendererMixin {
                     else
                         lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
 
-                    BufferUtils.forceSetLightColor(bufferBuilder, lightColor);
+                    BufferUtils.forceSetLightColor(bufferBuilder, lightColor, false);
                 }
             }
         }

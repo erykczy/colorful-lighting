@@ -5,7 +5,6 @@ import com.example.examplemod.util.BufferUtils;
 import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.particle.SingleQuadParticle;
-import net.minecraft.core.BlockPos;
 import org.joml.Quaternionf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,7 +16,7 @@ public class SingleQuadParticleMixin {
     @Inject(method = "renderVertex", at = @At("TAIL"))
     private void coloredLights$afterRenderVertex(VertexConsumer consumer, Quaternionf quaternion, float x, float y, float z, float xOffset, float yOffset, float quadSize, float u, float v, int packedLight, CallbackInfo ci) {
         SingleQuadParticle singleQuadParticle = (SingleQuadParticle)(Object)this;
-        ColorRGB8 lightColor = ColoredLightManager.getInstance().sampleLightColor(BlockPos.containing(singleQuadParticle.getPos()));
-        BufferUtils.forceSetLightColor(consumer, lightColor);
+        ColorRGB8 lightColor = ColoredLightManager.getInstance().sampleTrilinearLightColor(singleQuadParticle.getPos());
+        BufferUtils.forceSetLightColor(consumer, lightColor, false);
     }
 }

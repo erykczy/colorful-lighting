@@ -35,6 +35,10 @@ public class ColorRGB8 {
         );
     }
 
+    public boolean isZero() {
+        return red == 0 && green == 0 && blue == 0;
+    }
+
     public ColorRGB8 add(ColorRGB8 other) {
         return new ColorRGB8(red + other.red, green + other.green, blue + other.blue);
     }

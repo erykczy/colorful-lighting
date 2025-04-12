@@ -19,7 +19,7 @@ public class BufferBuilderMixin {
         if(!bufferBuilder.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return;
 
         if(!BufferUtils.isLightColorFilled(bufferBuilder))
-            BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(1, 0, 0)); // this special case is handled in shaders
+            BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(0, 0, 0), true);
     }
 
     // executed when adding a vertex to the buffer with fastFormat=true
@@ -27,6 +27,6 @@ public class BufferBuilderMixin {
     private void coloredLights$addVertex(float x, float y, float z, int color, float u, float v, int packedOverlay, int packedLight, float normalX, float normalY, float normalZ, CallbackInfo ci) {
         BufferBuilder bufferBuilder = (BufferBuilder)(Object)this;
         if(!bufferBuilder.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return;
-        BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(1, 0, 0)); // this special case is handled in shaders
+        BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(0, 0, 0), true);
     }
 }

@@ -11,7 +11,8 @@
     "render.SingleQuadParticleMixin",
     "render.ModelBlockRendererMixin",
     "render.LiquidBlockRendererMixin",
-    "render.ModelPartCubeMixin"
+    "render.ModelPartCubeMixin",
+    "render.ItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

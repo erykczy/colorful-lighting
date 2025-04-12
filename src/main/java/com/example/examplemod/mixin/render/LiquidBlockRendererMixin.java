@@ -58,6 +58,6 @@ public class LiquidBlockRendererMixin {
                 .setNormal(0.0F, 1.0F, 0.0F);
         SectionPos sectionPos = SectionPos.of(blockPos);
         BlockPos sectionOrigin = sectionPos.origin();
-        BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleSimpleInterpolationLightColor(new Vec3(sectionOrigin.getX() + x, sectionOrigin.getY() + y, sectionOrigin.getZ() + z)));
+        BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleSimpleInterpolationLightColor(new Vec3(sectionOrigin.getX() + x, sectionOrigin.getY() + y, sectionOrigin.getZ() + z)), false);
     }
 }
