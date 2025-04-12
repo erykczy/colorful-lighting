@@ -6,6 +6,7 @@ import com.example.examplemod.util.ColorRGB4;
 import com.google.gson.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -24,25 +25,27 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
     public void onResourceManagerReload(ResourceManager resourceManager) {
         HashMap<ResourceLocation, Config.LightColor> colors = new HashMap<>();
 
-        for(String namespace : resourceManager.getNamespaces()) {
-            var resources = resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "lights/colors.json"));
-            for(Resource resource : resources) {
-                try {
-                    JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
-                    for(var entry : object.entrySet()) {
-                        try {
-                            handleEntry(entry, colors);
-                        }
-                        catch (Exception e) {
-                            LOGGER.warn("Failed to load light colors entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
+        resourceManager.listPacks().forEach((pack) -> {
+            for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
+                var resources = resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "lights/colors.json"));
+                for(Resource resource : resources) {
+                    try {
+                        JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
+                        for(var entry : object.entrySet()) {
+                            try {
+                                handleEntry(entry, colors);
+                            }
+                            catch (Exception e) {
+                                LOGGER.warn("Failed to load light colors entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
+                            }
                         }
                     }
-                }
-                catch (Exception e) {
-                    LOGGER.warn("Failed to load light colors from pack {}", resource.sourcePackId(), e);
+                    catch (Exception e) {
+                        LOGGER.warn("Failed to load light colors from pack {}", resource.sourcePackId(), e);
+                    }
                 }
             }
-        }
+        });
 
         Config.setEmissionColors(colors);
     }
@@ -66,16 +69,23 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                 int r = array.get(0).getAsBigInteger().intValue();
                 int g = array.get(1).getAsBigInteger().intValue();
                 int b = array.get(2).getAsBigInteger().intValue();
-                if(array.size() == 4) emissionBrightness4 = array.get(3).getAsBigInteger().intValue();
                 color = ColorRGB4.fromRGB8(r, g, b);
             }
             catch (NumberFormatException e) {
                 float r = array.get(0).getAsFloat();
                 float g = array.get(1).getAsFloat();
                 float b = array.get(2).getAsFloat();
-                if(array.size() == 4) emissionBrightness4 = (int)(array.get(3).getAsFloat()*15.0f);
                 color = ColorRGB4.fromRGBFloat(r, g, b);
             }
+            if(array.size() == 4) {
+                try {
+                    emissionBrightness4 = array.get(3).getAsBigInteger().intValue();
+                }
+                catch (NumberFormatException e) {
+                    emissionBrightness4 = (int)(array.get(3).getAsFloat()*15.0f);
+                }
+            }
+
             if(!color.isInValidState()) throw new IllegalArgumentException("RGB values are out of range: "+color);
             if(emissionBrightness4 >= 16) throw new IllegalArgumentException("Brightness value is out of range: "+emissionBrightness4);
             colors.put(key, new Config.LightColor(color, emissionBrightness4));

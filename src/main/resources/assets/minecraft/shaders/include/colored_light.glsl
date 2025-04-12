@@ -8,6 +8,7 @@ vec4 calculateLightColor(sampler2D lightMap, ivec2 uv, vec3 blockLightColor) {
 
     // workaround for incorrect rendering of items in inventory
     float useVanilla = step(blockLightColor.r + blockLightColor.g + blockLightColor.b, 0.0);
+    useVanilla = float(blockLightColor.r > 0 && blockLightColor.r < 0.01); // special case
     vec3 vanillaSkyBlock = minecraft_sample_lightmap(lightMap, uv).xyz;
 
     return vec4((1.0 - useVanilla) * (sky + block) + useVanilla * vanillaSkyBlock, 1.0);

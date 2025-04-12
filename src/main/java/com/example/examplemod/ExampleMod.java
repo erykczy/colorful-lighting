@@ -17,14 +17,9 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 import org.slf4j.Logger;
 
 // TODO
-// - check why bug0
 // - check ponder
-// - entities, blockentities
-// - disable block light loading
-// - remove vertex attribute, add light color info to overlay, override lightmap
+// - blockentities
 //
-// * mobs flickering
-// * resource pack order doesn't work
 // * some chunks are not set dirty
 // * chunks are propagating light too slowly
 // * better sky + block mixing
