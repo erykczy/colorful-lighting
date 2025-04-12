@@ -2,7 +2,6 @@ package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.BufferUtils;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.core.BlockPos;
@@ -51,7 +50,6 @@ public class LiquidBlockRendererMixin {
     ) {
         BlockPos blockPos = new BlockPos(this.coloredLights$blockPos);
         this.coloredLights$blockPosLock.unlock();
-        if(!(buffer instanceof BufferBuilder bufferBuilder)) return;
         //ci.cancel();
         buffer.addVertex(x, y, z)
                 .setColor(red, green, blue, alpha)
@@ -59,6 +57,6 @@ public class LiquidBlockRendererMixin {
                 .setLight(packedLight)
                 .setNormal(0.0F, 1.0F, 0.0F);
         SectionPos sectionPos = SectionPos.of(blockPos);
-        BufferUtils.setLightColor(bufferBuilder, ColoredLightManager.getInstance().sampleMixedLightColor(new Vector3f(sectionPos.x() * 16 + x, sectionPos.y() * 16 + y, sectionPos.z() * 16 + z)));
+        BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleMixedLightColor(new Vector3f(sectionPos.x() * 16 + x, sectionPos.y() * 16 + y, sectionPos.z() * 16 + z)));
     }
 }

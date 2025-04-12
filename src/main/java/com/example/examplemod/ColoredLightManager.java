@@ -51,16 +51,17 @@ public class ColoredLightManager {
     }
 
     /**
-     * Mixes light color from blocks neighbouring cornerPos. Used to smooth light color transitions.
+     * Mixes light color from blocks neighbouring cornerPos. Used to smooth light color transitions. TODO
      */
-    public ColorRGB8 sampleMixedLightColor(Vector3f cornerPos) {
-        Vector3i flooredCornerPos = new Vector3i((int)cornerPos.x, (int)cornerPos.y, (int)cornerPos.z);
+    public ColorRGB8 sampleMixedLightColor(Vector3f pos) {
+        Vector3i centerPos = new Vector3i(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
+        Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
         int coefficientsCount = 0;
         ColorRGB8 finalColor = ColorRGB8.fromRGB8(0, 0, 0);
-        for(int ox = -1; ox <= 0; ++ox) {
-            for(int oy = -1; oy <= 0; ++oy) {
-                for(int oz = -1; oz <= 0; ++oz) {
-                    ColorRGB8 coefficient = sampleLightColor(flooredCornerPos.x + ox, flooredCornerPos.y + oy, flooredCornerPos.z + oz);
+        for(int ox = 0; ox <= 1; ++ox) {
+            for(int oy = 0; oy <= 1; ++oy) {
+                for(int oz = 0; oz <= 1; ++oz) {
+                    ColorRGB8 coefficient = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
                     if(coefficient.red == 0 && coefficient.green == 0 && coefficient.blue == 0) continue;
                     finalColor = finalColor.add(coefficient);
                     ++coefficientsCount;
@@ -69,6 +70,21 @@ public class ColoredLightManager {
         }
         return coefficientsCount == 0 ? ColorRGB8.fromRGB8(0, 0, 0) : finalColor.intDivide(coefficientsCount);
     }
+
+    /*public ColorRGB8 sampleBilinearLightColor(Vector3f pos) {
+        Vector3i centerPos = new Vector3i(Math.round(pos.x), Math.round(pos.y), Math.round(pos.z));
+        BlockPos lowerCorner = new BlockPos(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
+
+        for(int x = lowerCorner.getX(); x <= lowerCorner.getX()+1; ++x) {
+            for(int y = lowerCorner.getY(); y <= lowerCorner.getY()+1; ++y) {
+                for(int z = lowerCorner.getZ(); z <= lowerCorner.getZ()+1; ++z) {
+                    BlockPos blockPos = lowerCorner.offset(x, y, z);
+                    ColorRGB8 blockLightColor = sampleLightColor(blockPos);
+
+                }
+            }
+        }
+    }*/
 
     private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
         if(increase) {

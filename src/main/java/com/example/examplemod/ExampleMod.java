@@ -22,6 +22,13 @@ import org.slf4j.Logger;
 // - entities, blockentities
 // - disable block light loading
 // - remove vertex attribute, add light color info to overlay, override lightmap
+//
+// * mobs flickering
+// * resource pack order doesn't work
+// * some chunks are not set dirty
+// * chunks are propagating light too slowly
+// * better sky + block mixing
+// * sculk sesnor
 @Mod(ExampleMod.MOD_ID)
 public class ExampleMod
 {

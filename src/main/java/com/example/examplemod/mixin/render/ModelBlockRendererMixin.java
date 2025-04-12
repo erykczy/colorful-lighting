@@ -128,11 +128,7 @@ public class ModelBlockRendererMixin {
                     else
                         lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
 
-                    if(bufferBuilder.fastFormat)
-                        BufferUtils.setLightColorFastFormat(bufferBuilder, lightColor);
-                    else {
-                        BufferUtils.setLightColor(bufferBuilder, lightColor);
-                    }
+                    BufferUtils.forceSetLightColor(bufferBuilder, lightColor);
                 }
             }
         }

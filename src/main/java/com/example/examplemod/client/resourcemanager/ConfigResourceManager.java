@@ -42,7 +42,7 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                     LOGGER.warn("Failed to load light colors from pack {}", resource.sourcePackId(), e);
                 }
             }
-         }
+        }
 
         Config.setEmissionColors(colors);
     }
@@ -77,7 +77,7 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                 color = ColorRGB4.fromRGBFloat(r, g, b);
             }
             if(!color.isInValidState()) throw new IllegalArgumentException("RGB values are out of range: "+color);
-            if(emissionBrightness4 < 0 || emissionBrightness4 >= 16) throw new IllegalArgumentException("Brightness value is out of range: "+emissionBrightness4);
+            if(emissionBrightness4 >= 16) throw new IllegalArgumentException("Brightness value is out of range: "+emissionBrightness4);
             colors.put(key, new Config.LightColor(color, emissionBrightness4));
             return;
         }

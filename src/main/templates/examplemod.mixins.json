@@ -10,7 +10,8 @@
     "render.BufferBuilderMixin",
     "render.SingleQuadParticleMixin",
     "render.ModelBlockRendererMixin",
-    "render.LiquidBlockRendererMixin"
+    "render.LiquidBlockRendererMixin",
+    "render.ModelPartCubeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -27,6 +27,14 @@ public class ColorRGB8 {
                 blue >= 0 && blue < 256;
     }
 
+    public ColorRGB8 clamp() {
+        return new ColorRGB8(
+            Math.clamp(red, 0, 255),
+            Math.clamp(green, 0, 255),
+            Math.clamp(blue, 0, 255)
+        );
+    }
+
     public ColorRGB8 add(ColorRGB8 other) {
         return new ColorRGB8(red + other.red, green + other.green, blue + other.blue);
     }

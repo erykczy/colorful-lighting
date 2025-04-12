@@ -14,7 +14,16 @@ public class ModVertexFormats {
             .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR)
             .padding(2)
             .build();
-
+    public static VertexFormat COLORED_LIGHT_NEW_ENTITY = VertexFormat.builder()
+            .add("Position", VertexFormatElement.POSITION)
+            .add("Color", VertexFormatElement.COLOR)
+            .add("UV0", VertexFormatElement.UV0)
+            .add("UV1", VertexFormatElement.UV1)
+            .add("UV2", VertexFormatElement.UV2)
+            .add("Normal", VertexFormatElement.NORMAL)
+            .add("BlockLightColor", ModVertexFormatElements.LIGHT_COLOR)
+            .padding(2)
+            .build();
     public static final VertexFormat COLORED_LIGHT_PARTICLE = VertexFormat.builder()
             .add("Position", VertexFormatElement.POSITION)
             .add("UV0", VertexFormatElement.UV0)
@@ -26,6 +35,7 @@ public class ModVertexFormats {
 
     public static void register() {
         DefaultVertexFormat.BLOCK = COLORED_LIGHT_BLOCK;
+        DefaultVertexFormat.NEW_ENTITY = COLORED_LIGHT_NEW_ENTITY;
         DefaultVertexFormat.PARTICLE = COLORED_LIGHT_PARTICLE;
     }
 }
