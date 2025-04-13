@@ -8,6 +8,7 @@ import org.lwjgl.system.MemoryUtil;
 public class BufferUtils {
     public static void forceSetLightColor(VertexConsumer buffer, ColorRGB8 lightColor, boolean useVanillaLighting) { if(buffer instanceof BufferBuilder bufferBuilder) forceSetLightColor(bufferBuilder, lightColor, useVanillaLighting); }
     public static void forceSetLightColor(BufferBuilder buffer, ColorRGB8 lightColor, boolean useVanillaLighting) {
+        if(!buffer.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return;
         lightColor = lightColor.clamp();
         int red = lightColor.red;
         int green = lightColor.green;
@@ -22,6 +23,7 @@ public class BufferUtils {
     }
 
     public static boolean isLightColorFilled(BufferBuilder buffer) {
+        if(!buffer.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return true;
         // logic from com.mojang.blaze3d.vertex.BufferBuilder::beginElement
         int elementsToFill = buffer.elementsToFill;
         int afterFilling = elementsToFill & ~ModVertexFormatElements.LIGHT_COLOR.mask();

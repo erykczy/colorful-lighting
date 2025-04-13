@@ -18,8 +18,6 @@ import org.slf4j.Logger;
 
 // TODO
 // - check ponder
-// - blockentities
-// - items
 //
 // * some chunks are not set dirty
 // * sculk sesnor

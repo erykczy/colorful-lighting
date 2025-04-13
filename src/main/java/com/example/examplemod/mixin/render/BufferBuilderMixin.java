@@ -1,6 +1,5 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.client.ModVertexFormatElements;
 import com.example.examplemod.util.BufferUtils;
 import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -16,7 +15,6 @@ public class BufferBuilderMixin {
     private void coloredLights$endLastVertex(CallbackInfo ci) {
         BufferBuilder bufferBuilder = (BufferBuilder)(Object)this;
         if(bufferBuilder.vertices == 0) return;
-        if(!bufferBuilder.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return;
 
         if(!BufferUtils.isLightColorFilled(bufferBuilder))
             BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(0, 0, 0), true);
@@ -26,7 +24,6 @@ public class BufferBuilderMixin {
     @Inject(method = "addVertex(FFFIFFIIFFF)V", at = @At(value = "INVOKE", target = "Lorg/lwjgl/system/MemoryUtil;memPutByte(JB)V", ordinal = 2, shift = At.Shift.AFTER))
     private void coloredLights$addVertex(float x, float y, float z, int color, float u, float v, int packedOverlay, int packedLight, float normalX, float normalY, float normalZ, CallbackInfo ci) {
         BufferBuilder bufferBuilder = (BufferBuilder)(Object)this;
-        if(!bufferBuilder.format.contains(ModVertexFormatElements.LIGHT_COLOR)) return;
         BufferUtils.forceSetLightColor(bufferBuilder, ColorRGB8.fromRGB8(0, 0, 0), true);
     }
 }

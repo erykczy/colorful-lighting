@@ -3,6 +3,7 @@ package com.example.examplemod.client;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.simibubi.create.foundation.model.BakedQuadHelper;
 
 public class ModVertexFormats {
     public static final VertexFormat COLORED_LIGHT_BLOCK = VertexFormat.builder()
@@ -33,6 +34,7 @@ public class ModVertexFormats {
             .build();
 
     public static void register() {
+        System.out.println(BakedQuadHelper.FORMAT);
         DefaultVertexFormat.BLOCK = COLORED_LIGHT_BLOCK;
         DefaultVertexFormat.NEW_ENTITY = COLORED_LIGHT_NEW_ENTITY;
         DefaultVertexFormat.PARTICLE = COLORED_LIGHT_PARTICLE;
