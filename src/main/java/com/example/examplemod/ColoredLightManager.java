@@ -1,27 +1,39 @@
 package com.example.examplemod;
 
-import com.example.examplemod.util.Color3;
+import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.util.ColorRGB8;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.block.Blocks;
-import org.joml.Vector3f;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3i;
 
-import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class ColoredLightManager {
     public ColoredLightStorage storage = new ColoredLightStorage();
+    // light increase propagation requests
+    private Queue<LightUpdateRequest> propagateIncreases = new ConcurrentLinkedQueue<>();
+    // light decrease propagation requests
+    private Queue<LightUpdateRequest> propagateDecreases = new LinkedList<>();
+    // sections that were modified by requests
+    private LinkedList<Long> dirtySections = new LinkedList<>();
+    // newly loaded chunks that wait for light propagation
+    private Queue<ChunkAccess> newChunks = new ConcurrentLinkedQueue<>();
+    private HashSet<ChunkAccess> fullyLoadedChunks = new HashSet<>();
+    // thread that finds light sources in newly loaded chunks and adds propagation requests for those blocks (it is slow task so it is executed in other thread)
+    private Thread handleNewChunksThread;
 
     private static ColoredLightManager instance = new ColoredLightManager();
     public static ColoredLightManager getInstance() {
@@ -29,228 +41,359 @@ public class ColoredLightManager {
     }
 
     public ColoredLightManager() {
-
+        handleNewChunksThread = new Thread(new PropagateLightInNewChunks());
+        handleNewChunksThread.start();
     }
 
-    public Color3 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
-    public Color3 sampleLightColor(int x, int y, int z) {
-        // TODO debug
-        ClientLevel level = Minecraft.getInstance().level;
-        if(level != null && level.isOutsideBuildHeight(y)) return new Color3();
-        if(!storage.containsSection(SectionPos.blockToSection(BlockPos.asLong(x, y, z)))) return new Color3();
-
+    public ColorRGB8 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
+    public ColorRGB8 sampleLightColor(int x, int y, int z) {
         var entry = storage.getEntry(x, y, z);
-        return entry.toColor3();
+        if(entry == null) return ColorRGB8.fromRGB8(0, 0, 0);
+        return ColorRGB8.fromRGB4(entry);
     }
 
-    public Color3 sampleMixedLightColor(Vector3f pos) {
-        Vector3i cornerPos = new Vector3i((int)pos.x, (int)pos.y, (int)pos.z); // reject fraction
-        int d = 0;
-        Color3 finalColor = new Color3();
-        for(int ox = -1; ox < 1; ++ox) {
-            for(int oy = -1; oy < 1; ++oy) {
-                for(int oz = -1; oz < 1; ++oz) {
-                    Color3 c = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
-                    if(c.red == 0 && c.green == 0 && c.blue == 0) continue;
-                    finalColor = finalColor.add(c);
-                    ++d;
+    /**
+     * Mixes light color from blocks neighbouring given position using arithmetic average.
+     */
+    public ColorRGB8 sampleSimpleInterpolationLightColor(Vec3 pos) {
+        Vector3i centerPos = new Vector3i((int)Math.round(pos.x), (int)Math.round(pos.y), (int)Math.round(pos.z));
+        Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
+        int coefficientsCount = 0;
+        ColorRGB8 finalColor = ColorRGB8.fromRGB8(0, 0, 0);
+        for(int ox = 0; ox <= 1; ++ox) {
+            for(int oy = 0; oy <= 1; ++oy) {
+                for(int oz = 0; oz <= 1; ++oz) {
+                    ColorRGB8 coefficient = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
+                    if(coefficient.red == 0 && coefficient.green == 0 && coefficient.blue == 0) continue;
+                    finalColor = finalColor.add(coefficient);
+                    ++coefficientsCount;
                 }
             }
         }
-        return d == 0 ? finalColor : finalColor.intDivide(d);
+        return coefficientsCount == 0 ? ColorRGB8.fromRGB8(0, 0, 0) : finalColor.intDivide(coefficientsCount);
     }
 
-    public void propagateLight(BlockGetter level, BlockPos originPos, boolean propagate, @Nullable BlockPos ignore) {
-        Color3 emissionColor = Config.getEmissionColor(level, originPos);
-        if(level.getBlockState(originPos).is(Blocks.GLOWSTONE))
-            emissionColor = new Color3(255, 128, 0);
-        int vanillaEmission = level.getLightEmission(originPos);
+    /**
+     * Mixes light color from blocks neighbouring given position using trilinear interpolation.
+     */
+    public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
+        int cornerX = (int)Math.round(pos.x) - 1;
+        int cornerY = (int)Math.round(pos.y) - 1;
+        int cornerZ = (int)Math.round(pos.z) - 1;
+        ColorRGB8 c000 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 0);
+        ColorRGB8 c100 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 0);
+        ColorRGB8 c101 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 1);
+        ColorRGB8 c001 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 1);
+        ColorRGB8 c010 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 0);
+        ColorRGB8 c110 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 0);
+        ColorRGB8 c111 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1);
+        ColorRGB8 c011 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 1);
 
-        Queue<BlockPos> blocksToUpdate = new LinkedList<>();
-        Queue<Integer> lightLevels = new LinkedList<>();
-        Set<Long> alreadyUpdated = new HashSet<>();
-        blocksToUpdate.add(originPos);
-        lightLevels.add(vanillaEmission);
+        double x = (pos.x - (double) cornerX) / 2.0;
+        double y = (pos.y - (double) cornerY) / 2.0;
+        double z = (pos.z - (double) cornerZ) / 2.0;
 
-        do {
-            BlockPos blockPos = blocksToUpdate.poll();
-            int lightLevel = lightLevels.poll();
+        /*ColorRGB8 c00 = c000.mul(1.0 - x).add(c100.mul(x));
+        ColorRGB8 c01 = c001.mul(1.0 - x).add(c101.mul(x));
+        ColorRGB8 c11 = c011.mul(1.0 - x).add(c111.mul(x));
+        ColorRGB8 c10 = c010.mul(1.0 - x).add(c110.mul(x));*/
+        ColorRGB8 c00 = linearInterpolation(c000, c100, x);
+        ColorRGB8 c01 = linearInterpolation(c001, c101, x);
+        ColorRGB8 c11 = linearInterpolation(c011, c111, x);
+        ColorRGB8 c10 = linearInterpolation(c010, c110, x);
 
-            if(alreadyUpdated.contains(blockPos.asLong())) continue;
-            if(blockPos != originPos && !blockPos.equals(ignore) && !level.getBlockState(blockPos).isAir()) continue;
+        ColorRGB8 c0 = linearInterpolation(c00, c10, y);
+        ColorRGB8 c1 = linearInterpolation(c01, c11, y);
 
-            float distance = 1.0f - lightLevel / (float)vanillaEmission;
-            float attenuation = 1.0f - distance;
-            Color3 lightColorToAdd = ColoredLightLayer.Entry.create(emissionColor.mul(attenuation)).toColor3();
-            /*Color3 lightColorToAdd = new Color3(
-                    emissionColor.red/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel),
-                    emissionColor.green/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel),
-                    emissionColor.blue/255.0f * (float)Math.pow(0.8f, vanillaEmission - lightLevel)
-            );*/
-            try {
-                var currentEntry = storage.getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-                var currentLightColor = currentEntry.toColor3();
-                //var currentCount = currentEntry.getCount();
-                Color3 newLightColor = currentLightColor;
-                if(propagate) {
-                    newLightColor = currentLightColor.add(lightColorToAdd);
-                    /*newLightColor = new Color3(
-                            Math.max(currentLightColor.red, lightColorToAdd.red),
-                            Math.max(currentLightColor.green, lightColorToAdd.green),
-                            Math.max(currentLightColor.blue, lightColorToAdd.blue)
-                    );*/
+        return linearInterpolation(c0, c1, z);
+    }
+
+    private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
+        if(a.isZero()) return b;
+        if(b.isZero()) return a;
+        return a.mul(1.0 - x).add(b.mul(x));
+    }
+
+    public ColorRGB8 sampleTrilinearLightColorAtLocalPlayer() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if(player == null) return ColorRGB8.fromRGB8(0, 0, 0);
+        return sampleTrilinearLightColor(player.getEyePosition());
+    }
+
+    private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
+        if(increase) {
+            propagateIncreases.add(new LightUpdateRequest(originPos, lightColor, force));
+        }
+        else {
+            propagateDecreases.add(new LightUpdateRequest(originPos, lightColor, force));
+        }
+    }
+
+    /**
+     * Handles all increase propagation requests.
+     */
+    private void propagateIncreases(BlockGetter level) {
+        while(!propagateIncreases.isEmpty()) {
+            LightUpdateRequest request = propagateIncreases.poll();
+            ColorRGB4 oldLightColor = storage.getEntry(request.blockPos);
+            if(oldLightColor == null) continue;
+            ColorRGB4 newLightColor = ColorRGB4.fromRGB4(
+                Math.max(oldLightColor.red4, request.lightColor.red4),
+                Math.max(oldLightColor.green4, request.lightColor.green4),
+                Math.max(oldLightColor.blue4, request.lightColor.blue4)
+            );
+
+            // if light color didn't change (check is ignored if request is forced)
+            if(!request.force && newLightColor.red4 == oldLightColor.red4 && newLightColor.green4 == oldLightColor.green4 && newLightColor.blue4 == oldLightColor.blue4) continue;
+            setLightColor(request.blockPos, newLightColor);
+
+            for(var direction : Direction.values()) {
+                BlockPos neighbourPos = request.blockPos.relative(direction);
+                if(level.isOutsideBuildHeight(neighbourPos)) continue;
+                BlockState neighbourState = level.getBlockState(neighbourPos);
+
+                // light attenuation
+                int lightBlock = Math.max(1, neighbourState.getLightBlock(level, neighbourPos));
+                ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
+                        Math.max(0, request.lightColor.red4 - lightBlock),
+                        Math.max(0, request.lightColor.green4 - lightBlock),
+                        Math.max(0, request.lightColor.blue4 - lightBlock)
+                );
+                // if no more color to propagate
+                if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;
+
+                requestLightPropagation(neighbourPos, neighbourLightColor, true, false);
+            }
+        }
+    }
+
+    /**
+     * Handles all decrease propagation requests.
+     */
+    private void propagateDecreases(BlockGetter level) {
+        while(!propagateDecreases.isEmpty()) {
+            LightUpdateRequest request = propagateDecreases.poll();
+            ColorRGB4 oldLightColor = storage.getEntry(request.blockPos);
+            if(oldLightColor == null) continue;
+
+            // if light color didn't change (check is ignored if request is forced)
+            if(!request.force && oldLightColor.red4 == 0 && oldLightColor.green4 == 0 && oldLightColor.blue4 == 0) continue;
+            setLightColor(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
+
+            BlockState blockState = level.getBlockState(request.blockPos);
+            // repropagate removed light
+            if(Config.getEmissionBrightness(level, request.blockPos) > 0) {
+                requestLightPropagation(request.blockPos, Config.getEmissionColor(level, request.blockPos), true, false);
+            }
+
+            // decrease attenuation
+            ColorRGB4 neighbourLightDecrease = ColorRGB4.fromRGB4(
+                    Math.max(0, request.lightColor.red4 - 1),
+                    Math.max(0, request.lightColor.green4 - 1),
+                    Math.max(0, request.lightColor.blue4 - 1)
+            );
+            // whether neighbours' light should be decreased or increased (to repropagate)
+            boolean decreaseMore = neighbourLightDecrease.red4 != 0 || neighbourLightDecrease.green4 != 0 || neighbourLightDecrease.blue4 != 0;
+
+            for(var direction : Direction.values()) {
+                BlockPos neighbourPos = request.blockPos.relative(direction);
+                if(level.isOutsideBuildHeight(neighbourPos)) continue;
+
+                if(decreaseMore) {
+                    // propagate decrease
+                    requestLightPropagation(neighbourPos, neighbourLightDecrease, false, false);
                 }
                 else {
-                    newLightColor = currentLightColor.sub(lightColorToAdd);
-                }
-                storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), ColoredLightLayer.Entry.create(newLightColor));
-            }
-            catch (IllegalArgumentException e) {
-                System.err.println(e.getMessage());
-            }
-            alreadyUpdated.add(blockPos.asLong());
-
-            if(lightLevel <= 1) continue;
-            for(var direction : Direction.values()) {
-                blocksToUpdate.add(blockPos.relative(direction));
-                lightLevels.add(lightLevel - 1);
-            }
-        }
-        while (!blocksToUpdate.isEmpty());
-    }
-
-    public void blockLights(BlockAndTintGetter world, BlockPos originPos) {
-        //int originLightLevel = world.getBrightness(LightLayer.BLOCK, originPos);
-        storage.setEntry(originPos.getX(), originPos.getY(), originPos.getZ(), ColoredLightLayer.Entry.create(0, 0, 0));
-
-        /*for(int oy = -14; oy <= 14; ++oy) {
-            int xExtent = 14-Math.abs(oy);
-            int xWidth = xExtent * 2 + 1;
-            for(int ox = -xExtent; ox <= xExtent; ++ox) {
-                int zExtent = xExtent - Math.abs(ox);
-            }
-        }*/
-
-        for(int x = -14; x <= 14; ++x) {
-            for(int y = -14; y <= 14; ++y) {
-                for(int z = -14; z <= 14; ++z) {
-                    BlockPos blockPos = originPos.offset(x, y, z);
-                    if(world.getLightEmission(blockPos) > 0) {
-                        propagateLight(world, blockPos, false, originPos);
-                        propagateLight(world, blockPos, true, null);
-                    }
-                }
-            }
-        }
-
-        /*Queue<BlockPos> toCheck = new LinkedList<>();
-        toCheck.add(originPos);
-        do {
-            BlockPos currentPos = toCheck.poll();
-            if(world.getLightEmission(currentPos) > 0) {
-                propagateLight(world, currentPos, false, currentPos);
-                propagateLight(world, currentPos, true, null);
-            }
-            int currentLightLevel = world.getBrightness(LightLayer.BLOCK, currentPos);
-            if(currentLightLevel >= 15) continue;
-            for(var direction : Direction.values()) {
-                BlockPos neighbourPos = currentPos.relative(direction);
-                int neighbourLightLevel = world.getBrightness(LightLayer.BLOCK, neighbourPos);
-
-                if(neighbourLightLevel > currentLightLevel)
-                    toCheck.add(neighbourPos);
-            }
-        }
-        while (!toCheck.isEmpty());*/
-    }
-
-    /*public void findBlockLightSources(BlockLightEngine blockEngine) {
-        if(propagateLightChunks.isEmpty()) return;
-        if(!propagateLightBlocks.isEmpty()) return;
-
-        if(Minecraft.getInstance().player == null) return;
-        ChunkPos playerChunkPos = Minecraft.getInstance().player.chunkPosition();
-
-        var iterator = propagateLightChunks.iterator();
-        int minDistance = Integer.MAX_VALUE;
-        ChunkPos nearestChunkPos = new ChunkPos(0, 0);
-        while(iterator.hasNext()) {
-            ChunkPos pos = new ChunkPos(iterator.next());
-            if(blockEngine.chunkSource.getChunkForLighting(pos.x, pos.z) == null) { // TODO temporary (I hope) solution
-                iterator.remove();
-                continue;
-            }
-            int distance = Math.abs(pos.x - playerChunkPos.x) + Math.abs(pos.z - playerChunkPos.z);
-            if(distance < minDistance) {
-                minDistance = distance;
-                nearestChunkPos = pos;
-            }
-        }
-        propagateLightChunks.remove(nearestChunkPos.toLong());
-        LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(nearestChunkPos.x, nearestChunkPos.z);
-        if(chunk == null)
-            return;
-
-        chunk.findBlockLightSources(((blockPos, blockState) -> {
-            propagateLightBlocks.add(blockPos.asLong());
-        }));
-
-        //}
-    }*/
-
-    /*public void propagateLight(BlockLightEngine blockEngine) {
-        //int i = 400;
-        System.out.println("t: "+propagateLightBlocks.size());
-        while (!propagateLightBlocks.isEmpty()){
-            //if(--i < 0) return;
-            BlockPos blockPos = BlockPos.of(propagateLightBlocks.poll());
-            ChunkPos chunkPos = new ChunkPos(blockPos);
-            LightChunk chunk = blockEngine.chunkSource.getChunkForLighting(chunkPos.x, chunkPos.z);
-            if(chunk == null)
-                continue;
-            BlockState blockState = chunk.getBlockState(blockPos);
-
-            // chunk might not have light data
-            if(!blockEngine.storage.storingLightForSection(SectionPos.blockToSection(blockPos.asLong()))) continue;
-
-            // queue light removal
-            //blockEngine.enqueueDecrease(blockPos.asLong(), LightEngine.QueueEntry.decreaseAllDirections(blockState.getLightEmission(chunk, blockPos)));
-            // queue light revert
-            blockEngine.checkBlock(blockPos);
-
-            ///blockEngine.storage.setStoredLevel(blockPos.asLong(), 0);
-        }
-    }*/
-
-    /*public void handleSectionUpdate(BlockLightEngine engine, SectionPos thisSectionPos, LayerLightSectionStorage.SectionType ss) {
-        int minSection = engine.chunkSource.getLevel().getMinSection();
-        int maxSection = engine.chunkSource.getLevel().getMaxSection();
-
-        for(int x = -1; x <= 1; ++x) {
-            for(int z = -1; z <= 1; ++z) {
-                boolean anyAlreadyAvailable = false;
-                for(int y = -1; y <= 1; ++y) {
-                    if(thisSectionPos.y() < minSection || thisSectionPos.y() > maxSection) continue;
-                    long checkedSectionPos = thisSectionPos.offset(x, y, z).asLong();
-                    LayerLightSectionStorage.SectionType checkedSectionStatus = engine.storage.getDebugSectionType(checkedSectionPos);
-
-                    if(storage.containsLayer(checkedSectionPos)) {
-                        anyAlreadyAvailable = true;
+                    ColorRGB4 neighbourLightColor = storage.getEntry(neighbourPos);
+                    if(neighbourLightColor == null) continue;
+                    // if neighbour doesn't already have any light
+                    if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0)
                         continue;
-                    }
 
-                    if(checkedSectionStatus == LayerLightSectionStorage.SectionType.EMPTY) {
-                        ColoredLightManager.getInstance().storage.removeSection(checkedSectionPos);
-                        ColoredLightManager.getInstance().dequeuePropagateLight(checkedSectionPos);
-                    }
-                    else {
-                        ColoredLightManager.getInstance().storage.initializeSection(checkedSectionPos);
-                    }
+                    // force neighbour to propagate light to the region that has been cleared
+                    requestLightPropagation(neighbourPos, neighbourLightColor, true, true);
                 }
-
-                if(!anyAlreadyAvailable)
-                    ColoredLightManager.getInstance().queuePropagateLight(ChunkPos.asLong(thisSectionPos.x() + x, thisSectionPos.z() + z));
             }
         }
-    }*/
+    }
+
+    public void requestLightPullIn(BlockPos blockPos) {
+        for(var direction : Direction.values()) {
+            BlockPos neighbourPos = blockPos.relative(direction);
+            ColorRGB4 neighbourLight = storage.getEntry(neighbourPos);
+            if(neighbourLight == null) continue;
+
+            // if neighbour doesn't have any light
+            if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
+            requestLightPropagation(neighbourPos, neighbourLight, true, true);
+        }
+    }
+
+    public void onBlockLightPropertiesChanged(BlockGetter level, BlockPos blockPos) {
+        //BlockState blockState = level.getBlockState(blockPos);
+        ColorRGB4 lightColor = storage.getEntry(blockPos);
+        if(lightColor == null) return;
+
+        // TODO
+        if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
+            requestLightPullIn(blockPos);
+        else
+            requestLightPropagation(blockPos, lightColor, false, false);
+
+        // propagate light if new blockState emits light
+        int lightEmissionBrightness = Config.getEmissionBrightness(level, blockPos); //blockState.getLightEmission(level, blockPos);
+        if(lightEmissionBrightness > 0)
+            requestLightPropagation(blockPos, Config.getEmissionColor(level, blockPos), true, false);
+    }
+
+    public void runLightUpdates(BlockGetter level) {
+        // handle increase and decrease requests
+        propagateDecreases(level);
+        propagateIncreases(level);
+
+        // set dirty all modified sections
+        var iterator = dirtySections.iterator();
+        while (iterator.hasNext()) {
+            SectionPos sectionPos = SectionPos.of(iterator.next());
+            for(int x = -1; x <= 1; ++x) {
+                for(int y = -1; y <= 1; ++y) {
+                    for(int z = -1; z <= 1; ++z) {
+                        Minecraft.getInstance().levelRenderer.setSectionDirty(
+                                sectionPos.x() + x,
+                                sectionPos.y() + y,
+                                sectionPos.z() + z
+                        );
+                    }
+                }
+            }
+
+            iterator.remove();
+        }
+    }
+
+    private void setLightColor(BlockPos blockPos, ColorRGB4 color) {
+        storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), color);
+        dirtySections.add(SectionPos.asLong(blockPos));
+    }
+
+    public void onChunkLoad(ChunkSource chunkSource, ChunkAccess chunk) {
+        // add sections to storage
+        for(int i = 0; i < chunk.getSectionsCount(); i++) {
+            int y = chunk.getSectionYFromSectionIndex(i);
+            storage.addSection(SectionPos.asLong(chunk.getPos().x, y, chunk.getPos().z));
+        }
+
+        // add fully loaded chunks (that have all neighbours loaded) to newChunks collection
+        // for each neighbour
+        for(int x = -1; x <= 1; ++x) {
+            for (int z = -1; z <= 1; ++z) {
+                // check if neighbour's neighbours are loaded
+                boolean allNeighboursLoaded = true;
+                for(int neighbourX = -1; neighbourX <= 1; ++neighbourX) {
+                    for (int neighbourZ = -1; neighbourZ <= 1; ++neighbourZ) {
+                        // if neighbour's neighbour is not loaded
+                        if(
+                            !chunkSource.hasChunk(chunk.getPos().x + x + neighbourX, chunk.getPos().z + z + neighbourZ) ||
+                            !storage.containsSection(SectionPos.asLong(chunk.getPos().x + x + neighbourX, chunk.getMinSection(), chunk.getPos().z + z + neighbourZ))
+                        ) {
+                            allNeighboursLoaded = false;
+                            break;
+                        }
+                    }
+                    if(!allNeighboursLoaded) break;
+                }
+                if(allNeighboursLoaded) {
+                    ChunkAccess chunk1 = chunkSource.getChunk(chunk.getPos().x + x, chunk.getPos().z + z, false);
+                    newChunks.add(chunk1);
+                    fullyLoadedChunks.add(chunk1);
+                }
+            }
+        }
+    }
+
+    public void onChunkUnload(ChunkAccess chunk) {
+        newChunks.remove(chunk);
+        for(int i = 0; i < chunk.getSectionsCount(); i++) {
+            int y = chunk.getSectionYFromSectionIndex(i);
+            storage.removeSection(SectionPos.asLong(chunk.getPos().x, y, chunk.getPos().z));
+        }
+        fullyLoadedChunks.remove(chunk);
+    }
+
+    public void onLevelUnload() {
+        newChunks.clear();
+        fullyLoadedChunks.clear();
+        storage.clear();
+    }
+
+    public void refreshLevel() {
+        for(var chunk : fullyLoadedChunks) {
+            for(int i = 0; i < chunk.getSectionsCount(); i++) {
+                int y = chunk.getSectionYFromSectionIndex(i);
+                storage.getSection(SectionPos.asLong(chunk.getPos().x, y, chunk.getPos().z)).clear();
+            }
+        }
+        newChunks.addAll(fullyLoadedChunks);
+    }
+
+    private static class LightUpdateRequest {
+        BlockPos blockPos;
+        ColorRGB4 lightColor;
+        boolean force;
+
+        public LightUpdateRequest(BlockPos blockPos, ColorRGB4 lightColor, boolean force) {
+            this.blockPos = blockPos;
+            this.lightColor = lightColor;
+            this.force = force;
+        }
+    }
+
+    private class PropagateLightInNewChunks implements Runnable {
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    Thread.sleep(1);
+                }
+                catch (Exception e) {
+                    System.err.println(e.getMessage());
+                }
+                doTask();
+            }
+        }
+
+        private void doTask() {
+            if (newChunks.isEmpty()) return;
+            if (!propagateIncreases.isEmpty()) return;
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) return;
+            ChunkPos playerPos = player.chunkPosition();
+            var iterator = newChunks.iterator();
+            int minDistance = Integer.MAX_VALUE;
+            ChunkAccess nearestChunk = null;
+            while (iterator.hasNext()) {
+                ChunkAccess chunk = iterator.next();
+                int distance = chunk.getPos().getChessboardDistance(playerPos);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestChunk = chunk;
+                }
+            }
+            newChunks.remove(nearestChunk);
+
+            final ChunkAccess finalNearestChunk = nearestChunk;
+            nearestChunk.findBlocks(
+                    blockState -> // block state filter
+                            blockState.hasDynamicLightEmission() ||
+                                    blockState.getLightEmission(EmptyBlockGetter.INSTANCE, BlockPos.ZERO) != 0 ||
+                                    Config.getEmissionBrightness(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, blockState) != 0,
+                    (blockState, blockPos) -> // individual block filter
+                            blockState.getLightEmission(finalNearestChunk, blockPos) != 0 ||
+                                    Config.getEmissionBrightness(finalNearestChunk, blockPos) != 0,
+                    (blockPos, blockState) -> // for each found light source
+                            requestLightPropagation(new BlockPos(blockPos), Config.getEmissionColor(finalNearestChunk, blockPos), true, false)
+            );
+        }
+    }
 }

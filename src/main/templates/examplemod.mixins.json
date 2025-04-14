@@ -4,14 +4,15 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [],
   "client": [
-    "render.LeverRendererMixin",
+    "BlockLightEngineMixin",
+    "LevelLightEngineMixin",
+    "LightEngineMixin",
+    "render.BufferBuilderMixin",
+    "render.SingleQuadParticleMixin",
     "render.ModelBlockRendererMixin",
     "render.LiquidBlockRendererMixin",
-    "render.SectionCompilerMixin",
-    "BlockLightEngineMixin",
-    "LightEngineMixin",
-    "render.DebugRendererMixin",
-    "render.SectionBufferBuilderPackMixin"
+    "render.ModelPartCubeMixin",
+    "render.ItemRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
