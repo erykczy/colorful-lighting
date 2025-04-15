@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SingleQuadParticle.class)
 public class SingleQuadParticleMixin {
-    @Inject(method = "renderVertex", at = @At("TAIL"))
+    /*@Inject(method = "renderVertex", at = @At("TAIL"))
     private void coloredLights$afterRenderVertex(VertexConsumer consumer, Quaternionf quaternion, float x, float y, float z, float xOffset, float yOffset, float quadSize, float u, float v, int packedLight, CallbackInfo ci) {
         SingleQuadParticle singleQuadParticle = (SingleQuadParticle)(Object)this;
         ColorRGB8 lightColor = ColoredLightManager.getInstance().sampleTrilinearLightColor(singleQuadParticle.getPos());
         BufferUtils.forceSetLightColor(consumer, lightColor, false);
-    }
+    }*/
 }

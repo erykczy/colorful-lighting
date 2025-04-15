@@ -8,7 +8,6 @@ in vec4 Color;
 in vec2 UV0;
 in ivec2 UV2;
 in vec3 Normal;
-in vec4 BlockLightColor;
 
 uniform sampler2D Sampler2;
 
@@ -28,5 +27,5 @@ void main() {
     vertexDistance = fog_distance(pos, FogShape);
     texCoord0 = UV0;
 
-    vertexColor = Color * calculateLightColor(Sampler2, UV2, BlockLightColor);
+    vertexColor = Color * calculateLightColor(Sampler2, UV2);
 }

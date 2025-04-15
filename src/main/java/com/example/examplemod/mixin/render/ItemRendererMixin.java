@@ -30,7 +30,7 @@ import java.nio.IntBuffer;
 
 @Mixin(ItemRenderer.class)
 public class ItemRendererMixin {
-    @Inject(method = "render", at = @At("HEAD"))
+    /*@Inject(method = "render", at = @At("HEAD"))
     private void coloredLights$renderHead(ItemStack itemStack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight, int combinedOverlay, BakedModel p_model, CallbackInfo ci) {
         MixinBridge.itemRenderContext = displayContext;
     }
@@ -112,5 +112,5 @@ public class ItemRendererMixin {
                 BufferUtils.forceSetLightColor(consumer, ColoredLightManager.getInstance().sampleTrilinearLightColor(vertexWorldPos), false);
             }
         }
-    }
+    }*/
 }

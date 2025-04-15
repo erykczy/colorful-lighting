@@ -126,14 +126,14 @@ public class ModelBlockRendererMixin {
                 buffer.applyBakedNormals(normal, byteBuffer, pose.normal());
                 buffer.addVertex(transformedPos.x(), transformedPos.y(), transformedPos.z(), i1, f10, f9, packedOverlay, j1, normal.x(), normal.y(), normal.z());
 
-                BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
+                /*BlockPos sectionOrigin = SectionPos.of(blockPos).origin();
                 ColorRGB8 lightColor;
                 if(Minecraft.useAmbientOcclusion())
                     lightColor = ColoredLightManager.getInstance().sampleSimpleInterpolationLightColor(new Vec3(sectionOrigin.getX() + transformedPos.x, sectionOrigin.getY() + transformedPos.y, sectionOrigin.getZ() + transformedPos.z)); //transformedPos.add(sectionOrigin.getX(), sectionOrigin.getY(), sectionOrigin.getZ())
                 else
                     lightColor = ColoredLightManager.getInstance().sampleLightColor(blockPos.offset(quad.getDirection().getNormal()));
 
-                BufferUtils.forceSetLightColor(bufferBuilder, lightColor, false);
+                BufferUtils.forceSetLightColor(bufferBuilder, lightColor, false);*/
             }
         }
     }

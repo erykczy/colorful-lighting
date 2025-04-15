@@ -4,6 +4,9 @@ public class ColorRGB4 {
     public static final int SIZE = 12;
     public int red4, green4, blue4;
 
+    public static ColorRGB4 fromRGB8(ColorRGB8 other) {
+        return fromRGB8(other.red, other.green, other.blue);
+    }
     public static ColorRGB4 fromRGB8(int r, int g, int b) {
         return fromRGB4(r / 17, g / 17, b / 17); // 0..255 range to 0..15 range
     }

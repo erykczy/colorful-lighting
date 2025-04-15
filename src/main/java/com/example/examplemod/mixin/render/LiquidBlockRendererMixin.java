@@ -2,7 +2,9 @@ package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.BufferUtils;
+import com.example.examplemod.util.PackedLightData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -16,13 +18,29 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Mixin(LiquidBlockRenderer.class)
 public class LiquidBlockRendererMixin {
-    @Unique
+    @Inject(method = "getLightColor", at = @At("HEAD"), cancellable = true)
+    private void coloredLights$getLightColor(BlockAndTintGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+        int lightColor = LevelRenderer.getLightColor(level, pos);
+        int lightColorAbove = LevelRenderer.getLightColor(level, pos.above());
+        PackedLightData data = PackedLightData.unpackData(lightColor);
+        PackedLightData dataAbove = PackedLightData.unpackData(lightColorAbove);
+        int blockLight = Math.max(data.blockLight, dataAbove.blockLight);
+        int skyLight = Math.max(data.skyLight, dataAbove.skyLight);
+        int red4 = Math.max(data.red4, dataAbove.red4);
+        int green4 = Math.max(data.green4, dataAbove.green4);
+        int blue4 = Math.max(data.blue4, dataAbove.blue4);
+
+        cir.setReturnValue(PackedLightData.packData(blockLight, skyLight, red4, green4, blue4));
+    }
+
+    /*@Unique
     private BlockPos coloredLights$blockPos;
     @Unique
     private Lock coloredLights$blockPosLock = new ReentrantLock();
@@ -59,5 +77,5 @@ public class LiquidBlockRendererMixin {
         SectionPos sectionPos = SectionPos.of(blockPos);
         BlockPos sectionOrigin = sectionPos.origin();
         BufferUtils.forceSetLightColor(buffer, ColoredLightManager.getInstance().sampleSimpleInterpolationLightColor(new Vec3(sectionOrigin.getX() + x, sectionOrigin.getY() + y, sectionOrigin.getZ() + z)), false);
-    }
+    }*/
 }

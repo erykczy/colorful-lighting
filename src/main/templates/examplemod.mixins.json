@@ -8,11 +8,10 @@
     "LevelLightEngineMixin",
     "LightEngineMixin",
     "render.BufferBuilderMixin",
-    "render.SingleQuadParticleMixin",
     "render.ModelBlockRendererMixin",
     "render.LiquidBlockRendererMixin",
-    "render.ModelPartCubeMixin",
-    "render.ItemRendererMixin"
+    "render.LevelRendererMixin",
+    "render.AmbientOcclusionFaceMixin"
   ],
   "injectors": {
     "defaultRequire": 1

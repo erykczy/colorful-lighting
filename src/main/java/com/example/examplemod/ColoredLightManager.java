@@ -45,11 +45,11 @@ public class ColoredLightManager {
         handleNewChunksThread.start();
     }
 
-    public ColorRGB8 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
-    public ColorRGB8 sampleLightColor(int x, int y, int z) {
+    public ColorRGB4 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
+    public ColorRGB4 sampleLightColor(int x, int y, int z) {
         var entry = storage.getEntry(x, y, z);
-        if(entry == null) return ColorRGB8.fromRGB8(0, 0, 0);
-        return ColorRGB8.fromRGB4(entry);
+        if(entry == null) return ColorRGB4.fromRGB4(0, 0, 0);
+        return entry;
     }
 
     /**
@@ -63,7 +63,7 @@ public class ColoredLightManager {
         for(int ox = 0; ox <= 1; ++ox) {
             for(int oy = 0; oy <= 1; ++oy) {
                 for(int oz = 0; oz <= 1; ++oz) {
-                    ColorRGB8 coefficient = sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz);
+                    ColorRGB8 coefficient = ColorRGB8.fromRGB4(sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz));
                     if(coefficient.red == 0 && coefficient.green == 0 && coefficient.blue == 0) continue;
                     finalColor = finalColor.add(coefficient);
                     ++coefficientsCount;
@@ -76,18 +76,18 @@ public class ColoredLightManager {
     /**
      * Mixes light color from blocks neighbouring given position using trilinear interpolation.
      */
-    public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
+    public ColorRGB4 sampleTrilinearLightColor(Vec3 pos) {
         int cornerX = (int)Math.round(pos.x) - 1;
         int cornerY = (int)Math.round(pos.y) - 1;
         int cornerZ = (int)Math.round(pos.z) - 1;
-        ColorRGB8 c000 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 0);
-        ColorRGB8 c100 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 0);
-        ColorRGB8 c101 = sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 1);
-        ColorRGB8 c001 = sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 1);
-        ColorRGB8 c010 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 0);
-        ColorRGB8 c110 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 0);
-        ColorRGB8 c111 = sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1);
-        ColorRGB8 c011 = sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 1);
+        ColorRGB8 c000 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 0));
+        ColorRGB8 c100 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 0));
+        ColorRGB8 c101 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY + 0, cornerZ + 1));
+        ColorRGB8 c001 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 0, cornerY + 0, cornerZ + 1));
+        ColorRGB8 c010 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 0));
+        ColorRGB8 c110 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 0));
+        ColorRGB8 c111 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1));
+        ColorRGB8 c011 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 0, cornerY + 1, cornerZ + 1));
 
         double x = (pos.x - (double) cornerX) / 2.0;
         double y = (pos.y - (double) cornerY) / 2.0;
@@ -105,7 +105,7 @@ public class ColoredLightManager {
         ColorRGB8 c0 = linearInterpolation(c00, c10, y);
         ColorRGB8 c1 = linearInterpolation(c01, c11, y);
 
-        return linearInterpolation(c0, c1, z);
+        return ColorRGB4.fromRGB8(linearInterpolation(c0, c1, z));
     }
 
     private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
@@ -114,9 +114,9 @@ public class ColoredLightManager {
         return a.mul(1.0 - x).add(b.mul(x));
     }
 
-    public ColorRGB8 sampleTrilinearLightColorAtLocalPlayer() {
+    public ColorRGB4 sampleTrilinearLightColorAtLocalPlayer() {
         LocalPlayer player = Minecraft.getInstance().player;
-        if(player == null) return ColorRGB8.fromRGB8(0, 0, 0);
+        if(player == null) return ColorRGB4.fromRGB4(0, 0, 0);
         return sampleTrilinearLightColor(player.getEyePosition());
     }
 

@@ -1,6 +1,7 @@
 package com.example.examplemod.client.debug;
 
 import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.util.ColorRGB4;
 import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -120,11 +121,11 @@ public class ModKeyBinds {
             if(contains) {
                 //FastColor3 color = ColoredLightManager.getInstance().storage.getEntry(player.blockPosition().getX(), player.blockPosition().getY(), player.blockPosition().getZ());
                 //player.sendSystemMessage(Component.literal(""+Byte.toUnsignedInt(color.red())).withColor(CommonColors.RED));
-                ColorRGB8 color = ColoredLightManager.getInstance().sampleLightColor(player.blockPosition().below());
+                ColorRGB4 color = ColoredLightManager.getInstance().sampleLightColor(player.blockPosition().below());
                 player.sendSystemMessage(
-                        Component.literal(color.red+" ").withColor(CommonColors.RED).append(
-                                Component.literal(color.green+" ").withColor(CommonColors.GREEN).append(
-                                        Component.literal(color.blue+" ").withColor(CommonColors.BLUE)
+                        Component.literal(color.red4+" ").withColor(CommonColors.RED).append(
+                                Component.literal(color.green4+" ").withColor(CommonColors.GREEN).append(
+                                        Component.literal(color.blue4+" ").withColor(CommonColors.BLUE)
                                 )
                         )
                 );
@@ -164,13 +165,13 @@ public class ModKeyBinds {
                     System.out.println("Doesn't contain.");
                     return;
                 }
-                ColorRGB8 color = ColoredLightManager.getInstance().sampleLightColor(pos);
+                ColorRGB4 color = ColoredLightManager.getInstance().sampleLightColor(pos);
                 Minecraft.getInstance().gui.setTimes(0, 1, 0);
                 Minecraft.getInstance().gui.setTitle(Component.literal(""));
                 Minecraft.getInstance().gui.setSubtitle(
-                        Component.literal(color.red+" ").withColor(CommonColors.RED).append(
-                            Component.literal(color.green+" ").withColor(CommonColors.GREEN).append(
-                                    Component.literal(color.blue+" ").withColor(CommonColors.BLUE)
+                        Component.literal(color.red4+" ").withColor(CommonColors.RED).append(
+                            Component.literal(color.green4+" ").withColor(CommonColors.GREEN).append(
+                                    Component.literal(color.blue4+" ").withColor(CommonColors.BLUE)
                             )
                         )
                 );
