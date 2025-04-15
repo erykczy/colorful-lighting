@@ -12,17 +12,9 @@ public class AmbientOcclusionFaceMixin {
 
     @Inject(method = "blend(IIII)I", at = @At("HEAD"), cancellable = true)
     private void coloredLights$blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3, CallbackInfoReturnable<Integer> cir) {
-        if (lightColor0 == 0) {
-            lightColor0 = lightColor3;
-        }
-
-        if (lightColor1 == 0) {
-            lightColor1 = lightColor3;
-        }
-
-        if (lightColor2 == 0) {
-            lightColor2 = lightColor3;
-        }
+        if (PackedLightData.isEmpty(lightColor0)) lightColor0 = lightColor3;
+        if (PackedLightData.isEmpty(lightColor1)) lightColor1 = lightColor3;
+        if (PackedLightData.isEmpty(lightColor2)) lightColor2 = lightColor3;
 
         var data0 = PackedLightData.unpackData(lightColor0);
         var data1 = PackedLightData.unpackData(lightColor1);

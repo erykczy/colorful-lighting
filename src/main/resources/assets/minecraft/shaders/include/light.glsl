@@ -22,6 +22,13 @@ vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
     int red4 = (leastSignificantShort) & 0xF;
     int green4 = (leastSignificantShort >> 4) & 0xF;
     int blue4 = (leastSignificantShort >> 8) & 0xF;
+    int alpha4 = (leastSignificantShort >> 12) & 0xF;
+    /**if(mostSignificantShort == 240 && leastSignificantShort == 240) {
+        return minecraft_sample_vanilla_lightmap(lightMap, uv);
+    }*/
+    if(alpha4 == 0) {
+        return minecraft_sample_vanilla_lightmap(lightMap, uv);
+    }
     vec3 blockLightColor = vec3(red4*0.06666, green4*0.06666, blue4*0.06666);
 
     vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, uv.y)).xyz;

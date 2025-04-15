@@ -19,10 +19,6 @@ public class LevelRendererMixin {
     private static void coloredLights$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
         int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
-        //int thisEmission = state.getLightEmission(level, pos);
-        /*if (blockLight < thisEmission) {
-            blockLight = thisEmission;
-        }*/
 
         ColorRGB4 color = ColoredLightManager.getInstance().sampleLightColor(pos);
         cir.setReturnValue(PackedLightData.packData(blockLight, skyLight, color));

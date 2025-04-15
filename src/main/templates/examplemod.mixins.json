@@ -11,7 +11,9 @@
     "render.ModelBlockRendererMixin",
     "render.LiquidBlockRendererMixin",
     "render.LevelRendererMixin",
-    "render.AmbientOcclusionFaceMixin"
+    "render.AmbientOcclusionFaceMixin",
+    "render.EntityRendererMixin",
+    "render.BrightnessCombinerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
