@@ -2,7 +2,6 @@ package com.example.examplemod.client.debug;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.ColorRGB4;
-import com.example.examplemod.util.ColorRGB8;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;

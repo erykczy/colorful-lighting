@@ -7,8 +7,6 @@
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
-    "render.BufferBuilderMixin",
-    "render.ModelBlockRendererMixin",
     "render.LiquidBlockRendererMixin",
     "render.LevelRendererMixin",
     "render.AmbientOcclusionFaceMixin",
