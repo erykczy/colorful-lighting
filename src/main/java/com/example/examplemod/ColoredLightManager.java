@@ -53,27 +53,6 @@ public class ColoredLightManager {
     }
 
     /**
-     * Mixes light color from blocks neighbouring given position using arithmetic average.
-     */
-    /*public ColorRGB8 sampleSimpleInterpolationLightColor(Vec3 pos) {
-        Vector3i centerPos = new Vector3i((int)Math.round(pos.x), (int)Math.round(pos.y), (int)Math.round(pos.z));
-        Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
-        int coefficientsCount = 0;
-        ColorRGB8 finalColor = ColorRGB8.fromRGB8(0, 0, 0);
-        for(int ox = 0; ox <= 1; ++ox) {
-            for(int oy = 0; oy <= 1; ++oy) {
-                for(int oz = 0; oz <= 1; ++oz) {
-                    ColorRGB8 coefficient = ColorRGB8.fromRGB4(sampleLightColor(cornerPos.x + ox, cornerPos.y + oy, cornerPos.z + oz));
-                    if(coefficient.red == 0 && coefficient.green == 0 && coefficient.blue == 0) continue;
-                    finalColor = finalColor.add(coefficient);
-                    ++coefficientsCount;
-                }
-            }
-        }
-        return coefficientsCount == 0 ? ColorRGB8.fromRGB8(0, 0, 0) : finalColor.intDivide(coefficientsCount);
-    }*/
-
-    /**
      * Mixes light color from blocks neighbouring given position using trilinear interpolation.
      */
     public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
@@ -93,10 +72,6 @@ public class ColoredLightManager {
         double y = (pos.y - (double) cornerY) / 2.0;
         double z = (pos.z - (double) cornerZ) / 2.0;
 
-        /*ColorRGB8 c00 = c000.mul(1.0 - x).add(c100.mul(x));
-        ColorRGB8 c01 = c001.mul(1.0 - x).add(c101.mul(x));
-        ColorRGB8 c11 = c011.mul(1.0 - x).add(c111.mul(x));
-        ColorRGB8 c10 = c010.mul(1.0 - x).add(c110.mul(x));*/
         ColorRGB8 c00 = linearInterpolation(c000, c100, x);
         ColorRGB8 c01 = linearInterpolation(c001, c101, x);
         ColorRGB8 c11 = linearInterpolation(c011, c111, x);
@@ -113,12 +88,6 @@ public class ColoredLightManager {
         if(b.isZero()) return a;
         return a.mul(1.0 - x).add(b.mul(x));
     }
-
-    /*public ColorRGB4 sampleTrilinearLightColorAtLocalPlayer() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if(player == null) return ColorRGB4.fromRGB4(0, 0, 0);
-        return sampleTrilinearLightColor(player.getEyePosition());
-    }*/
 
     private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
         if(increase) {

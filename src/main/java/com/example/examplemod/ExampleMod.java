@@ -1,7 +1,5 @@
 package com.example.examplemod;
 
-import com.example.examplemod.block.ModBlocks;
-import com.example.examplemod.client.debug.ModKeyBinds;
 import com.example.examplemod.client.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -28,8 +26,8 @@ public class ExampleMod
 
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer)
     {
-        ModBlocks.register(modEventBus);
-        ModKeyBinds.register(modEventBus);
+        //ModBlocks.register(modEventBus);
+        //ModKeyBinds.register(modEventBus);
         ModResourceManagers.register(modEventBus);
     }
 
