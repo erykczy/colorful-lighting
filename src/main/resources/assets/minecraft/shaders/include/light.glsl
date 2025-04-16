@@ -17,21 +17,18 @@ vec4 minecraft_sample_vanilla_lightmap(sampler2D lightMap, ivec2 uv) {
 vec4 minecraft_sample_lightmap(sampler2D lightMap, ivec2 uv) {
     int leastSignificantShort = uv.x;
     int mostSignificantShort = uv.y;
-    int blockLight = (mostSignificantShort) & 0xF;
-    int skyLight = (mostSignificantShort >> 4) & 0xF;
-    int red4 = (leastSignificantShort) & 0xF;
-    int green4 = (leastSignificantShort >> 4) & 0xF;
-    int blue4 = (leastSignificantShort >> 8) & 0xF;
-    int alpha4 = (leastSignificantShort >> 12) & 0xF;
-    /**if(mostSignificantShort == 240 && leastSignificantShort == 240) {
-        return minecraft_sample_vanilla_lightmap(lightMap, uv);
-    }*/
-    if(alpha4 == 0) {
+    int red8 = (leastSignificantShort >> 0) & 0xFF;
+    int green8 = (leastSignificantShort >> 8) & 0xFF;
+    int skyLight4 = (mostSignificantShort >> 0) & 0xF;
+    int blue8 = (mostSignificantShort >> 4) & 0xFF;
+    int alpha4 = (mostSignificantShort >> 12) & 0xF;
+    if(alpha4 != 0xF) {
         return minecraft_sample_vanilla_lightmap(lightMap, uv);
     }
-    vec3 blockLightColor = vec3(red4*0.06666, green4*0.06666, blue4*0.06666);
+    const float divideBy255 = 0.003921;
+    vec3 blockLightColor = vec3(red8*divideBy255, green8*divideBy255, blue8*divideBy255);
 
-    vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, uv.y)).xyz;
+    vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, skyLight4)).xyz;
     vec3 block = pow(blockLightColor, vec3(1.3));
     return vec4(sky + block, 1.0);
 }

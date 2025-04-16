@@ -55,7 +55,7 @@ public class ColoredLightManager {
     /**
      * Mixes light color from blocks neighbouring given position using arithmetic average.
      */
-    public ColorRGB8 sampleSimpleInterpolationLightColor(Vec3 pos) {
+    /*public ColorRGB8 sampleSimpleInterpolationLightColor(Vec3 pos) {
         Vector3i centerPos = new Vector3i((int)Math.round(pos.x), (int)Math.round(pos.y), (int)Math.round(pos.z));
         Vector3i cornerPos = new Vector3i(centerPos.x - 1, centerPos.y - 1, centerPos.z - 1);
         int coefficientsCount = 0;
@@ -71,12 +71,12 @@ public class ColoredLightManager {
             }
         }
         return coefficientsCount == 0 ? ColorRGB8.fromRGB8(0, 0, 0) : finalColor.intDivide(coefficientsCount);
-    }
+    }*/
 
     /**
      * Mixes light color from blocks neighbouring given position using trilinear interpolation.
      */
-    public ColorRGB4 sampleTrilinearLightColor(Vec3 pos) {
+    public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
         int cornerX = (int)Math.round(pos.x) - 1;
         int cornerY = (int)Math.round(pos.y) - 1;
         int cornerZ = (int)Math.round(pos.z) - 1;
@@ -105,7 +105,7 @@ public class ColoredLightManager {
         ColorRGB8 c0 = linearInterpolation(c00, c10, y);
         ColorRGB8 c1 = linearInterpolation(c01, c11, y);
 
-        return ColorRGB4.fromRGB8(linearInterpolation(c0, c1, z));
+        return linearInterpolation(c0, c1, z);
     }
 
     private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
@@ -114,11 +114,11 @@ public class ColoredLightManager {
         return a.mul(1.0 - x).add(b.mul(x));
     }
 
-    public ColorRGB4 sampleTrilinearLightColorAtLocalPlayer() {
+    /*public ColorRGB4 sampleTrilinearLightColorAtLocalPlayer() {
         LocalPlayer player = Minecraft.getInstance().player;
         if(player == null) return ColorRGB4.fromRGB4(0, 0, 0);
         return sampleTrilinearLightColor(player.getEyePosition());
-    }
+    }*/
 
     private void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force) {
         if(increase) {

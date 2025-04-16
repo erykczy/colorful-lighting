@@ -1,37 +1,35 @@
 package com.example.examplemod.util;
 
 public class PackedLightData {
-    public int blockLight;
-    public int skyLight;
-    public int red4;
-    public int blue4;
-    public int green4;
+    public int skyLight4;
+    public int red8;
+    public int blue8;
+    public int green8;
     public int alpha4;
 
-    public static int packData(int blockLight, int skyLight, ColorRGB4 color) { return packData(blockLight, skyLight, color.red4, color.green4, color.blue4); }
-    public static int packData(int blockLight, int skyLight, int red4, int green4, int blue4) {
-        blockLight = Math.clamp(blockLight, 0, 15);
-        skyLight = Math.clamp(skyLight, 0, 15);
-        red4 = Math.clamp(red4, 0, 15);
-        green4 = Math.clamp(green4, 0, 15);
-        blue4 = Math.clamp(blue4, 0, 15);
-        int alpha = 15;
+    public static int packData(int skyLight4, ColorRGB8 color) { return packData(skyLight4, color.red, color.green, color.blue); }
+    public static int packData(int skyLight4, int red8, int green8, int blue8) {
+        //blockLight = Math.clamp(blockLight, 0, 15);
+        skyLight4 = Math.clamp(skyLight4, 0, 15);
+        red8 = Math.clamp(red8, 0, 255);
+        green8 = Math.clamp(green8, 0, 255);
+        blue8 = Math.clamp(blue8, 0, 255);
+        int alpha4 = 15;
         // TODO: big-endian
-        return skyLight << 20 | blockLight << 16 | red4 << 0 | green4 << 4 | blue4 << 8 | alpha << 12;
+        return red8 | green8 << 8 | skyLight4 << 16 | blue8 << 20 | alpha4 << 28;
     }
 
     public static PackedLightData unpackData(int packedData) {
         PackedLightData data = new PackedLightData();
-        data.red4 = (packedData) & 0xF;
-        data.green4 = (packedData >>> 4) & 0xF;
-        data.blue4 = (packedData >>> 8) & 0xF;
-        data.alpha4 = (packedData >>> 12) & 0xF;
-        data.blockLight = (packedData >>> 16) & 0xF;
-        data.skyLight = (packedData >>> 20) & 0xF;
+        data.red8 = (packedData) & 0xFF;
+        data.green8 = (packedData >>> 8) & 0xFF;
+        data.skyLight4 = (packedData >>> 16) & 0xF;
+        data.blue8 = (packedData >>> 20) & 0xFF;
+        data.alpha4 = (packedData >>> 28) & 0xF;
         return data;
     }
 
-    public static boolean isEmpty(int packedData) {
-        return packedData == 0xF000 || packedData == 0;
+    public static boolean isBlack(int packedData) {
+        return packedData == 0xF0000000 || packedData == 0;
     }
 }

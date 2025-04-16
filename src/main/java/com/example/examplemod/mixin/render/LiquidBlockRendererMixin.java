@@ -18,12 +18,12 @@ public class LiquidBlockRendererMixin {
         int lightColorAbove = LevelRenderer.getLightColor(level, pos.above());
         PackedLightData data = PackedLightData.unpackData(lightColor);
         PackedLightData dataAbove = PackedLightData.unpackData(lightColorAbove);
-        int blockLight = Math.max(data.blockLight, dataAbove.blockLight);
-        int skyLight = Math.max(data.skyLight, dataAbove.skyLight);
-        int red4 = Math.max(data.red4, dataAbove.red4);
-        int green4 = Math.max(data.green4, dataAbove.green4);
-        int blue4 = Math.max(data.blue4, dataAbove.blue4);
+        //int blockLight = Math.max(data.blockLight, dataAbove.blockLight);
+        int skyLight = Math.max(data.skyLight4, dataAbove.skyLight4);
+        int red8 = Math.max(data.red8, dataAbove.red8);
+        int green8 = Math.max(data.green8, dataAbove.green8);
+        int blue8 = Math.max(data.blue8, dataAbove.blue8);
 
-        cir.setReturnValue(PackedLightData.packData(blockLight, skyLight, red4, green4, blue4));
+        cir.setReturnValue(PackedLightData.packData(skyLight, red8, green8, blue8));
     }
 }

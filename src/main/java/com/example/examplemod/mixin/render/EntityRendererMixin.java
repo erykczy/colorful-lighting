@@ -1,7 +1,7 @@
 package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.util.ColorRGB8;
 import com.example.examplemod.util.PackedLightData;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
@@ -17,10 +17,10 @@ public class EntityRendererMixin {
     @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
     private <T extends Entity>void coloredLights$getPackedLightCoords(T entity, float partialTicks, CallbackInfoReturnable<Integer> cir) {
         BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
-        int blockLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, blockpos);
+        //int blockLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, blockpos);
         int skyLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.SKY, blockpos);
-        ColorRGB4 color = ColoredLightManager.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
+        ColorRGB8 color = ColoredLightManager.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
 
-        cir.setReturnValue(PackedLightData.packData(blockLight, skyLight, color));
+        cir.setReturnValue(PackedLightData.packData(skyLight, color));
     }
 }

@@ -2,6 +2,7 @@ package com.example.examplemod.mixin.render;
 
 import com.example.examplemod.ColoredLightManager;
 import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.util.ColorRGB8;
 import com.example.examplemod.util.PackedLightData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -18,10 +19,10 @@ public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void coloredLights$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
-        int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
+        //int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
 
         ColorRGB4 color = ColoredLightManager.getInstance().sampleLightColor(pos);
-        cir.setReturnValue(PackedLightData.packData(blockLight, skyLight, color));
+        cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color)));
     }
 
 
