@@ -17,8 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LightEngine.class)
 public class LightEngineMixin {
-    @Inject(method = "hasDifferentLightProperties", at = @At("HEAD"), cancellable = true)
-    private static void colorfullighting$hasDifferentLightProperties(BlockGetter level, BlockPos pos, BlockState state1, BlockState state2, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "hasDifferentLightProperties(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)Z", at = @At("HEAD"), cancellable = true)
+    private static void coloredLights$hasDifferentLightProperties(BlockGetter level, BlockPos pos, BlockState state1, BlockState state2, CallbackInfoReturnable<Boolean> cir) {
         LevelAccessor clientLevel = ColorfulLighting.clientAccessor.getLevel();
         BlockStateAccessor blockState1 = new BlockStateWrapper(state1);
         BlockStateAccessor blockState2 = new BlockStateWrapper(state2);
