@@ -1,6 +1,6 @@
 #version 150
 
-#moj_import <light.glsl>
+#moj_import <minecraft:light.glsl>
 
 in vec3 Position;
 in vec4 Color;
