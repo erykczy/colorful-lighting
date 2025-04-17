@@ -15,9 +15,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LightEngineMixin {
     @Inject(method = "hasDifferentLightProperties", at = @At("HEAD"), cancellable = true)
     private static void coloredLights$hasDifferentLightProperties(BlockGetter level, BlockPos pos, BlockState state1, BlockState state2, CallbackInfoReturnable<Boolean> cir) {
-        ColorRGB4 color1 = Config.getEmissionColor(level, pos, state1);
-        ColorRGB4 color2 = Config.getEmissionColor(level, pos, state2);
-        if(!color1.equals(color2))
+        ColorRGB4 color1 = Config.getColorEmission(level, pos, state1);
+        ColorRGB4 color2 = Config.getColorEmission(level, pos, state2);
+        if(!color1.equals(color2)) {
             cir.setReturnValue(true);
+            return;
+        }
+        color1 = Config.getColoredLightTransmittance(level, pos, state1);
+        color2 = Config.getColoredLightTransmittance(level, pos, state2);
+        if(!color1.equals(color2)) {
+            cir.setReturnValue(true);
+            return;
+        }
     }
 }
