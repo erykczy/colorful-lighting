@@ -1,29 +1,7 @@
 package com.example.examplemod.client.debug;
 
-import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.util.ColorRGB4;
-import com.mojang.blaze3d.platform.InputConstants;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.SectionPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.CommonColors;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.lighting.LayerLightSectionStorage;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.util.Lazy;
-import org.lwjgl.glfw.GLFW;
-
 public class ModKeyBinds {
-    public static boolean debug_test2 = true;
+    /*public static boolean debug_test2 = true;
 
     public static final Lazy<KeyMapping> CLEAR_SECTIONS = Lazy.of(() -> new KeyMapping(
             "key.examplemod.clear_sections",
@@ -129,8 +107,8 @@ public class ModKeyBinds {
                         )
                 );
             }
-            LayerLightSectionStorage.SectionType type = level.getLightEngine().blockEngine.getDebugSectionType(sectionPos.asLong());
-            player.sendSystemMessage(Component.literal(type.toString()).withColor(CommonColors.WHITE));
+            //LayerLightSectionStorage.SectionType type = level.getLightEngine().blockEngine.getDebugSectionType(sectionPos.asLong());
+            //player.sendSystemMessage(Component.literal(type.toString()).withColor(CommonColors.WHITE));
         }
 
         while (PROPAGATE_INCREASE_TEST.get().consumeClick()) {
@@ -177,5 +155,5 @@ public class ModKeyBinds {
             }
             //int red = ColoredLightManager.getInstance().sampleLightColor(pos).red;
         }
-    }
+    }*/
 }

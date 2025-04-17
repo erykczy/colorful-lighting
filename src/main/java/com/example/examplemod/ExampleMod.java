@@ -26,8 +26,6 @@ public class ExampleMod
 
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer)
     {
-        //ModBlocks.register(modEventBus);
-        //ModKeyBinds.register(modEventBus);
         ModResourceManagers.register(modEventBus);
     }
 
