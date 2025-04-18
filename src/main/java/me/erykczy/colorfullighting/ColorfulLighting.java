@@ -7,6 +7,7 @@ import me.erykczy.colorfullighting.event.ClientEventListener;
 import me.erykczy.colorfullighting.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
@@ -14,7 +15,7 @@ import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 
-@Mod(ColorfulLighting.MOD_ID)
+@Mod(value = ColorfulLighting.MOD_ID, dist = Dist.CLIENT)
 public class ColorfulLighting
 {
     public static final String MOD_ID = "colorfullighting";
