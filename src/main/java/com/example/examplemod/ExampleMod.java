@@ -30,6 +30,6 @@ public class ExampleMod
 
     private void onLoadingComplete(FMLLoadCompleteEvent event) {
         clientAccessor = new MinecraftWrapper(Minecraft.getInstance());
-        new ColoredLightEngine(clientAccessor);
+        ColoredLightEngine.create(clientAccessor);
     }
 }

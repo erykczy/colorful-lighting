@@ -42,12 +42,14 @@ public class ColoredLightEngine {
     public static ColoredLightEngine getInstance() {
         return instance;
     }
+    public static void create(ClientAccessor clientAccessor) {
+        instance = new ColoredLightEngine(clientAccessor);
+    }
 
-    public ColoredLightEngine(ClientAccessor clientAccessor) {
+    private ColoredLightEngine(ClientAccessor clientAccessor) {
         this.clientAccessor = clientAccessor;
         handleNewChunksThread = new Thread(new PropagateLightInNewChunks());
         handleNewChunksThread.start();
-        instance = this;
     }
 
     public ColorRGB4 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
