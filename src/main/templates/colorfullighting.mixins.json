@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "me.erykczy.colorfullighting.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [
+    "BlockLightEngineMixin",
+    "LevelLightEngineMixin",
+    "LightEngineMixin",
+    "render.LiquidBlockRendererMixin",
+    "render.LevelRendererMixin",
+    "render.AmbientOcclusionFaceMixin",
+    "render.EntityRendererMixin",
+    "render.BrightnessCombinerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
