@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Class responsible for managing light color values in the client's world and sampling those values.
@@ -334,12 +335,14 @@ public class ColoredLightEngine {
     }
 
     private class PropagateLightInNewChunks implements Runnable {
+        private static int MIN_WAIT = 10;
+        private int nextWait = 0;
 
         @Override
         public void run() {
             while (true) {
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(Math.max(MIN_WAIT, nextWait));
                 }
                 catch (Exception e) {
                     System.err.println(e.getMessage());
@@ -372,7 +375,12 @@ public class ColoredLightEngine {
             newChunks.remove(nearestChunkPos);
 
             // find light sources and request their propagation
-            level.findLightSources(nearestChunkPos, (blockPos -> requestLightPropagation(blockPos, Config.getColorEmission(level, blockPos), true, false)));
+            AtomicInteger lightSources = new AtomicInteger();
+            level.findLightSources(nearestChunkPos, (blockPos -> {
+                requestLightPropagation(blockPos, Config.getColorEmission(level, blockPos), true, false);
+                lightSources.incrementAndGet();
+            }));
+            nextWait = lightSources.get() / 50;
         }
     }
 }
