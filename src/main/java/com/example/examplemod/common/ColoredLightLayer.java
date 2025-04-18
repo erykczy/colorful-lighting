@@ -7,7 +7,7 @@ import com.example.examplemod.common.util.ColorRGB4;
  * Stores light color for each block in the section
  */
 public class ColoredLightLayer {
-    private static final int LAYER_SIZE = 6144; // = 16 * 16 * 16 * 1.5
+    private static final int LAYER_SIZE = 16 * 16 * 16 * 2;
     public byte[] data;
 
     public ColoredLightLayer() {}
@@ -28,15 +28,11 @@ public class ColoredLightLayer {
         if(data == null)
             return ColorRGB4.fromRGB4(0, 0, 0);
         else  {
-            int startBit = colorIndex * 12;
-            int bitOffset = (startBit & 0x7);
-            int byteIndex = startBit >> 3;
-            int rawData = ((data[byteIndex] << 8) & 0xFFFF) | (data[byteIndex + 1] & 0xFF);
-            int offsetData = (rawData << bitOffset);
+            int startByte = colorIndex << 1;
 
-            int red = (offsetData >>> 12) & 0x0F;
-            int green = (offsetData >>> 8) & 0x0F;
-            int blue = (offsetData >>> 4) & 0x0F;
+            int red = (data[startByte] >>> 4) & 0x0F;
+            int green = (data[startByte]) & 0x0F;
+            int blue = (data[startByte + 1]) & 0x0F;
             return ColorRGB4.fromRGB4(red, green, blue);
         }
     }
@@ -49,18 +45,10 @@ public class ColoredLightLayer {
             throw new IllegalArgumentException("Invalid ColoredLightLayer.Entry: "+value);
         }
 
-        int startBit = colorIndex * 12;
-        int byteIndex = startBit >> 3;
-        int bitOffset = (startBit & 0x7);
+        int startByte = colorIndex << 1;
 
-        if(bitOffset == 0) { // whether startBit is divisible by 8 (this means that the color starts at the beginning of the byte)
-            data[byteIndex] = (byte) ((value.red4 << 4) | value.green4);
-            data[byteIndex + 1] = (byte) (value.blue4 << 4 | (data[byteIndex + 1] & 0x0F));
-        }
-        else {
-            data[byteIndex] = (byte) ((data[byteIndex] & 0xF0) | value.red4);
-            data[byteIndex + 1] = (byte) ((value.green4 << 4) | value.blue4);
-        }
+        data[startByte] = (byte) ((value.red4 << 4) | value.green4);
+        data[startByte + 1] = (byte) value.blue4;
     }
 
 
