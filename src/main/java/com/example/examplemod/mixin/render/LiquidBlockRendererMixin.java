@@ -1,6 +1,6 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.util.PackedLightData;
+import com.example.examplemod.common.util.PackedLightData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.core.BlockPos;

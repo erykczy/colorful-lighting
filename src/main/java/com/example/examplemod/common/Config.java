@@ -1,7 +1,7 @@
-package com.example.examplemod;
+package com.example.examplemod.common;
 
-import com.example.examplemod.util.ColorRGB4;
-import com.example.examplemod.util.JsonHelper;
+import com.example.examplemod.common.util.ColorRGB4;
+import com.example.examplemod.common.util.JsonHelper;
 import com.google.gson.JsonElement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;

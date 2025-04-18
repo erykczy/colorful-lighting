@@ -1,6 +1,6 @@
 package com.example.examplemod.mixin;
 
-import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.common.ColoredLightEngine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +15,6 @@ public class LevelLightEngineMixin {
         if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LevelLightEngine engine = (LevelLightEngine)(Object)this;
 
-        ColoredLightManager.getInstance().runLightUpdates(engine.blockEngine.chunkSource.getLevel());
+        ColoredLightEngine.getInstance().runLightUpdates(engine.blockEngine.chunkSource.getLevel());
     }
 }

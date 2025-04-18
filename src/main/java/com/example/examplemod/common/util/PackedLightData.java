@@ -1,4 +1,4 @@
-package com.example.examplemod.util;
+package com.example.examplemod.common.util;
 
 public class PackedLightData {
     public int skyLight4;

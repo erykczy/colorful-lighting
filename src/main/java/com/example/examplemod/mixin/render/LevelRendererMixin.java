@@ -1,9 +1,9 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.util.ColorRGB4;
-import com.example.examplemod.util.ColorRGB8;
-import com.example.examplemod.util.PackedLightData;
+import com.example.examplemod.common.ColoredLightEngine;
+import com.example.examplemod.common.util.ColorRGB4;
+import com.example.examplemod.common.util.ColorRGB8;
+import com.example.examplemod.common.util.PackedLightData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -21,7 +21,7 @@ public class LevelRendererMixin {
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
         //int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
 
-        ColorRGB4 color = ColoredLightManager.getInstance().sampleLightColor(pos);
+        ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
         cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color)));
     }
 

@@ -1,14 +1,16 @@
-package com.example.examplemod;
+package com.example.examplemod.common;
 
-import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.common.util.ColorRGB4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Class responsible for storing light color values for each block in each section of the world
+ */
 public class ColoredLightStorage {
-    // stores ColoredLightLayer for every loaded section
     private ConcurrentHashMap<Long, ColoredLightLayer> map = new ConcurrentHashMap<>();
 
     @Nullable

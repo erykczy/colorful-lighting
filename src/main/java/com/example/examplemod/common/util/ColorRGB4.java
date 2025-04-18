@@ -1,4 +1,4 @@
-package com.example.examplemod.util;
+package com.example.examplemod.common.util;
 
 public class ColorRGB4 {
     public static final int SIZE = 12;

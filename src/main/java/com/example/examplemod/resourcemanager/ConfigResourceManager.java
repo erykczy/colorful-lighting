@@ -1,7 +1,7 @@
-package com.example.examplemod.client.resourcemanager;
+package com.example.examplemod.resourcemanager;
 
-import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.Config;
+import com.example.examplemod.common.ColoredLightEngine;
+import com.example.examplemod.common.Config;
 import com.example.examplemod.ExampleMod;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,6 +70,6 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
         Config.setColorEmitters(emitters);
         Config.setColorFilters(filters);
-        ColoredLightManager.getInstance().refreshLevel();
+        ColoredLightEngine.getInstance().refreshLevel();
     }
 }

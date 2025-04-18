@@ -1,4 +1,4 @@
-package com.example.examplemod.client.resourcemanager;
+package com.example.examplemod.resourcemanager;
 
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;

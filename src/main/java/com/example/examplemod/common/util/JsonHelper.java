@@ -1,4 +1,4 @@
-package com.example.examplemod.util;
+package com.example.examplemod.common.util;
 
 import com.google.gson.JsonElement;
 import net.minecraft.world.item.DyeColor;

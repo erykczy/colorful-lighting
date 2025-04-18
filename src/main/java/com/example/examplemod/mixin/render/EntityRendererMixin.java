@@ -1,8 +1,8 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.ColoredLightManager;
-import com.example.examplemod.util.ColorRGB8;
-import com.example.examplemod.util.PackedLightData;
+import com.example.examplemod.common.ColoredLightEngine;
+import com.example.examplemod.common.util.ColorRGB8;
+import com.example.examplemod.common.util.PackedLightData;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
@@ -19,7 +19,7 @@ public class EntityRendererMixin {
         BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
         //int blockLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, blockpos);
         int skyLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.SKY, blockpos);
-        ColorRGB8 color = ColoredLightManager.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
+        ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
 
         cir.setReturnValue(PackedLightData.packData(skyLight, color));
     }

@@ -1,6 +1,6 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.util.PackedLightData;
+import com.example.examplemod.common.util.PackedLightData;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.blockentity.BrightnessCombiner;

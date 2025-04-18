@@ -1,6 +1,6 @@
 package com.example.examplemod.mixin;
 
-import com.example.examplemod.ColoredLightManager;
+import com.example.examplemod.common.ColoredLightEngine;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -19,9 +19,9 @@ public abstract class BlockLightEngineMixin {
         SectionPos sectionPos = SectionPos.of(BlockPos.of(packedPos));
         for(int x = -1; x <= 1; ++x) {
             for(int z = -1; z <= 1; ++z) {
-                if(!ColoredLightManager.getInstance().storage.containsSection(sectionPos.offset(x, 0, z).asLong())) return;
+                if(!ColoredLightEngine.getInstance().storage.containsSection(sectionPos.offset(x, 0, z).asLong())) return;
             }
         }
-        ColoredLightManager.getInstance().onBlockLightPropertiesChanged(lightEngine.chunkSource.getLevel(), BlockPos.of(packedPos));
+        ColoredLightEngine.getInstance().onBlockLightPropertiesChanged(lightEngine.chunkSource.getLevel(), BlockPos.of(packedPos));
     }
 }

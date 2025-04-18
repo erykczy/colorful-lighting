@@ -1,6 +1,6 @@
 package com.example.examplemod.mixin.render;
 
-import com.example.examplemod.util.PackedLightData;
+import com.example.examplemod.common.util.PackedLightData;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

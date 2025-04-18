@@ -1,7 +1,7 @@
 package com.example.examplemod.mixin;
 
-import com.example.examplemod.Config;
-import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.common.Config;
+import com.example.examplemod.common.util.ColorRGB4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;

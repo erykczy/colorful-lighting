@@ -1,7 +1,7 @@
-package com.example.examplemod;
+package com.example.examplemod.common;
 
-import com.example.examplemod.util.ColorRGB4;
-import com.example.examplemod.util.ColorRGB8;
+import com.example.examplemod.common.util.ColorRGB4;
+import com.example.examplemod.common.util.ColorRGB8;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -20,7 +20,13 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-public class ColoredLightManager {
+/**
+ * Class responsible for managing light color values in the client's world and sampling those values.
+ * It propagates increases (e.g. new light source has been placed)
+ * It propagates decreases (e.g. light source has been destroyed, solid block has been placed in the path of light)
+ * It has a thread that finds light sources on newly loaded chunks and requests light propagation
+ */
+public class ColoredLightEngine {
     public ColoredLightStorage storage = new ColoredLightStorage();
     // light increase propagation requests
     private Queue<LightUpdateRequest> propagateIncreases = new ConcurrentLinkedQueue<>();
@@ -34,12 +40,12 @@ public class ColoredLightManager {
     // thread that finds light sources in newly loaded chunks and adds propagation requests for those blocks (it is slow task so it is executed in other thread)
     private Thread handleNewChunksThread;
 
-    private static ColoredLightManager instance = new ColoredLightManager();
-    public static ColoredLightManager getInstance() {
+    private static ColoredLightEngine instance = new ColoredLightEngine();
+    public static ColoredLightEngine getInstance() {
         return instance;
     }
 
-    public ColoredLightManager() {
+    public ColoredLightEngine() {
         handleNewChunksThread = new Thread(new PropagateLightInNewChunks());
         handleNewChunksThread.start();
     }

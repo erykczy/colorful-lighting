@@ -1,8 +1,11 @@
-package com.example.examplemod;
+package com.example.examplemod.common;
 
-import com.example.examplemod.util.ColorRGB4;
+import com.example.examplemod.common.util.ColorRGB4;
 
 // TODO optimize storage
+/**
+ * Stores light color for each block in the section
+ */
 public class ColoredLightLayer {
     private static final int LAYER_SIZE = 16 * 16 * 16 * ColorRGB4.SIZE;
     public byte[] data;
