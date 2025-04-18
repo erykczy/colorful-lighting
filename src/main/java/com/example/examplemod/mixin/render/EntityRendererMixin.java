@@ -17,7 +17,6 @@ public class EntityRendererMixin {
     @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
     private <T extends Entity>void coloredLights$getPackedLightCoords(T entity, float partialTicks, CallbackInfoReturnable<Integer> cir) {
         BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
-        //int blockLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, blockpos);
         int skyLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.SKY, blockpos);
         ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
 

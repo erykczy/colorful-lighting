@@ -32,4 +32,48 @@ public class PackedLightData {
     public static boolean isBlack(int packedData) {
         return packedData == 0xF0000000 || packedData == 0;
     }
+
+    public static int blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3) {
+        if (isBlack(lightColor0)) lightColor0 = lightColor3;
+        if (isBlack(lightColor1)) lightColor1 = lightColor3;
+        if (isBlack(lightColor2)) lightColor2 = lightColor3;
+
+        var data0 = unpackData(lightColor0);
+        var data1 = unpackData(lightColor1);
+        var data2 = unpackData(lightColor2);
+        var data3 = unpackData(lightColor3);
+
+        return packData(
+                (data0.skyLight4 + data1.skyLight4 + data2.skyLight4 + data3.skyLight4) >> 2,
+                (data0.red8 + data1.red8 + data2.red8 + data3.red8) >> 2,
+                (data0.green8 + data1.green8 + data2.green8 + data3.green8) >> 2,
+                (data0.blue8 + data1.blue8 + data2.blue8 + data3.blue8) >> 2
+        );
+    }
+
+    public static int blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3, float weight0, float weight1, float weight2, float weight3) {
+        var data0 = unpackData(lightColor0);
+        var data1 = unpackData(lightColor1);
+        var data2 = unpackData(lightColor2);
+        var data3 = unpackData(lightColor3);
+
+        return packData(
+                (int)(data0.skyLight4 * weight0 + data1.skyLight4 * weight1 + data2.skyLight4 * weight2 + data3.skyLight4 * weight3),
+                (int)(data0.red8 * weight0 + data1.red8 * weight1 + data2.red8 * weight2 + data3.red8 * weight3),
+                (int)(data0.green8 * weight0 + data1.green8 * weight1 + data2.green8 * weight2 + data3.green8 * weight3),
+                (int)(data0.blue8 * weight0 + data1.blue8 * weight1 + data2.blue8 * weight2 + data3.blue8 * weight3)
+        );
+    }
+
+    public static int max(int lightColor0, int lightColor1) {
+        var firstData = unpackData(lightColor0);
+        var secondData = unpackData(lightColor1);
+
+        return packData(
+                Math.max(firstData.skyLight4, secondData.skyLight4),
+                Math.max(firstData.red8, secondData.red8),
+                Math.max(firstData.green8, secondData.green8),
+                Math.max(firstData.blue8, secondData.blue8)
+        );
+    }
 }

@@ -17,15 +17,7 @@ public class BrightnessCombinerMixin {
         cir.setReturnValue(value -> {
             int firstLight = LevelRenderer.getLightColor(first.getLevel(), first.getBlockPos());
             int secondLight = LevelRenderer.getLightColor(second.getLevel(), second.getBlockPos());
-            var firstData = PackedLightData.unpackData(firstLight);
-            var secondData = PackedLightData.unpackData(secondLight);
-            //int blockLight = Math.max(firstData.blockLight, secondData.blockLight);
-            int skyLight = Math.max(firstData.skyLight4, secondData.skyLight4);
-            int red4 = Math.max(firstData.red8, secondData.red8);
-            int green4 = Math.max(firstData.green8, secondData.green8);
-            int blue4 = Math.max(firstData.blue8, secondData.blue8);
-
-            return PackedLightData.packData(skyLight, red4, green4, blue4);
+            return PackedLightData.max(firstLight, secondLight);
         });
     }
 }

@@ -19,11 +19,9 @@ public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void coloredLights$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
-        //int blockLight = level.getBrightness(LightLayer.BLOCK, pos);
 
         ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
         cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color)));
     }
-
 
 }

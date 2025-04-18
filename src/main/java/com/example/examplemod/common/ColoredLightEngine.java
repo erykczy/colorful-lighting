@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * It has a thread that finds light sources on newly loaded chunks and requests light propagation
  */
 public class ColoredLightEngine {
-    public ColoredLightStorage storage = new ColoredLightStorage();
     public ClientAccessor clientAccessor;
+    private ColoredLightStorage storage = new ColoredLightStorage();
     // light increase propagation requests
     private Queue<LightUpdateRequest> propagateIncreases = new ConcurrentLinkedQueue<>();
     // light decrease propagation requests
@@ -210,8 +210,13 @@ public class ColoredLightEngine {
     public void onBlockLightPropertiesChanged(BlockPos blockPos) {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
+
+        // light shouldn't be propagated when neighbour sections are not loaded, because propagation can affect neighbour sections
+        // light will be propagated when neighbour chunks are loaded
+        SectionPos sectionPos = SectionPos.of(blockPos);
+        if(!ColoredLightEngine.getInstance().isChunkAndNeighboursLoaded(sectionPos.x(), sectionPos.z())) return;
         ColorRGB4 lightColor = storage.getEntry(blockPos);
-        if(lightColor == null) return; // if storage doesn't contain data for blockPos
+        assert lightColor != null;
 
         // TODO
         if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
@@ -256,26 +261,13 @@ public class ColoredLightEngine {
         }
 
         // add fully loaded chunks (that have all neighbours loaded) to newChunks collection
-        // for each neighbour
-        for(int x = -1; x <= 1; ++x) {
-            for (int z = -1; z <= 1; ++z) {
+        for(int x = chunkPos.x-1; x <= chunkPos.x+1; ++x) {
+            for (int z = chunkPos.z-1; z <= chunkPos.z+1; ++z) {
                 // check if neighbour's neighbours are loaded
-                boolean allNeighboursLoaded = true;
-                for(int neighbourX = -1; neighbourX <= 1; ++neighbourX) {
-                    for (int neighbourZ = -1; neighbourZ <= 1; ++neighbourZ) {
-                        // if neighbour's neighbour is not loaded
-                        if(!storage.containsSection(SectionPos.asLong(chunkPos.x + x + neighbourX, level.getMinSectionY(), chunkPos.z + z + neighbourZ))) {
-                            allNeighboursLoaded = false;
-                            break;
-                        }
-                    }
-                    if(!allNeighboursLoaded) break;
-                }
-                if(allNeighboursLoaded) {
-                    ChunkPos chunk1 = new ChunkPos(chunkPos.x + x, chunkPos.z + z);
-                    newChunks.add(chunk1);
-                    fullyLoadedChunks.add(chunk1);
-                }
+                if(!isChunkAndNeighboursLoaded(x, z)) continue;
+                ChunkPos neighbourPos = new ChunkPos(x, z);
+                newChunks.add(neighbourPos);
+                fullyLoadedChunks.add(neighbourPos);
             }
         }
     }
@@ -307,6 +299,24 @@ public class ColoredLightEngine {
             }
         }
         newChunks.addAll(fullyLoadedChunks);
+    }
+
+    public boolean isChunkLoaded(int x, int z) {
+        LevelAccessor level = clientAccessor.getLevel();
+        if(level == null) return false;
+        return storage.containsSection(SectionPos.asLong(x, level.getMinSectionY(), z));
+    }
+
+    public boolean isChunkAndNeighboursLoaded(int x, int z) {
+        LevelAccessor level = clientAccessor.getLevel();
+        if(level == null) return false;
+        for(int ox = x - 1; ox <= x + 1; ++ox) {
+            for(int oz = z - 1; oz <= z + 1; ++oz) {
+                if(!storage.containsSection(SectionPos.asLong(ox, level.getMinSectionY(), oz)))
+                    return false;
+            }
+        }
+        return true;
     }
 
     private static class LightUpdateRequest {
