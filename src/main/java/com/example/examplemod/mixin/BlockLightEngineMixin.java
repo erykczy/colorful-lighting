@@ -22,6 +22,6 @@ public abstract class BlockLightEngineMixin {
                 if(!ColoredLightEngine.getInstance().storage.containsSection(sectionPos.offset(x, 0, z).asLong())) return;
             }
         }
-        ColoredLightEngine.getInstance().onBlockLightPropertiesChanged(lightEngine.chunkSource.getLevel(), BlockPos.of(packedPos));
+        ColoredLightEngine.getInstance().onBlockLightPropertiesChanged(BlockPos.of(packedPos));
     }
 }

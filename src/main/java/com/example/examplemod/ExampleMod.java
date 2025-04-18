@@ -1,5 +1,8 @@
 package com.example.examplemod;
 
+import com.example.examplemod.accessors.MinecraftWrapper;
+import com.example.examplemod.common.ColoredLightEngine;
+import com.example.examplemod.common.accessors.ClientAccessor;
 import com.example.examplemod.event.ClientEventListener;
 import com.example.examplemod.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
@@ -14,9 +17,11 @@ public class ExampleMod
 {
     public static final String MOD_ID = "examplemod";
     public static final Logger LOGGER = LogUtils.getLogger();
+    public static ClientAccessor clientAccessor = new MinecraftWrapper();
 
     public ExampleMod(IEventBus modEventBus, ModContainer modContainer)
     {
+        new ColoredLightEngine(clientAccessor);
         ModResourceManagers.register(modEventBus);
         NeoForge.EVENT_BUS.register(new ClientEventListener());
     }

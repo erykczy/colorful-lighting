@@ -1,17 +1,16 @@
 package com.example.examplemod.common;
 
+import com.example.examplemod.common.accessors.BlockStateAccessor;
+import com.example.examplemod.common.accessors.LevelAccessor;
 import com.example.examplemod.common.util.ColorRGB4;
 import com.example.examplemod.common.util.JsonHelper;
 import com.google.gson.JsonElement;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 
 public class Config {
@@ -27,11 +26,11 @@ public class Config {
         colorFilters = filters;
     }
 
-    public static ColorRGB4 getColorEmission(@NotNull BlockGetter level, BlockPos pos) { return getColorEmission(level, pos, level.getBlockState(pos)); }
-    public static ColorRGB4 getColorEmission(@NotNull BlockGetter level, BlockPos pos, @NotNull BlockState blockState) {
+    public static ColorRGB4 getColorEmission(@NotNull LevelAccessor level, BlockPos pos) { return getColorEmission(level, pos, level.getBlockState(pos)); }
+    public static ColorRGB4 getColorEmission(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         float lightEmission = blockState.getLightEmission(level, pos)/15.0f;
 
-        ResourceKey<Block> blockResourceKey = blockState.getBlockHolder().getKey();
+        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
         if(blockResourceKey != null) {
             ColorEmitter config = colorEmitters.get(blockResourceKey.location());
@@ -41,22 +40,18 @@ public class Config {
         return defaultColor.mul(lightEmission);
     }
 
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull BlockGetter level, BlockPos pos) { return getColoredLightTransmittance(level, pos, level.getBlockState(pos)); }
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull BlockGetter level, BlockPos pos, @NotNull BlockState blockState) {
-        ResourceKey<Block> blockResourceKey = blockState.getBlockHolder().getKey();
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos) { return getColoredLightTransmittance(level, pos, level.getBlockState(pos)); }
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
+        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
         ColorFilter config = colorFilters.get(blockResourceKey.location());
         if(config == null) return ColorRGB4.fromRGB4(15, 15, 15);
         return config.transmittance;
     }
 
-    public static int getEmissionBrightness(BlockGetter level, BlockPos pos) { return getEmissionBrightness(level, pos, null); }
-    public static int getEmissionBrightness(BlockGetter level, BlockPos pos, @Nullable BlockState blockState) {
-        if(level == null) return 0;
-        if(blockState == null)
-            blockState = level.getBlockState(pos);
-
-        ResourceKey<Block> blockResourceKey = blockState.getBlockHolder().getKey();
+    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos) { return getEmissionBrightness(level, pos, level.getBlockState(pos)); }
+    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
+        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
         if(blockResourceKey != null) {
             ColorEmitter config = colorEmitters.get(blockResourceKey.location());
@@ -64,6 +59,15 @@ public class Config {
                 return config.overriddenBrightness4;
         }
         return blockState.getLightEmission(level, pos);
+    }
+    public static int getEmissionBrightness(BlockStateAccessor blockState) {
+        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
+        if(blockResourceKey != null) {
+            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+            if(config != null && config.overriddenBrightness4 >= 0)
+                return config.overriddenBrightness4;
+        }
+        return blockState.getLightEmission();
     }
 
     /**

@@ -9,13 +9,13 @@ public class ClientEventListener {
     @SubscribeEvent
     private void onChunkLoad(ChunkEvent.Load event) {
         if(!event.getLevel().isClientSide()) return;
-        ColoredLightEngine.getInstance().onChunkLoad(event.getLevel().getChunkSource(), event.getChunk());
+        ColoredLightEngine.getInstance().onChunkLoad(event.getChunk().getPos());
     }
 
     @SubscribeEvent
     private void onChunkUnload(ChunkEvent.Unload event) {
         if(!event.getLevel().isClientSide()) return;
-        ColoredLightEngine.getInstance().onChunkUnload(event.getChunk());
+        ColoredLightEngine.getInstance().onChunkUnload(event.getChunk().getPos());
     }
 
     @SubscribeEvent

@@ -13,8 +13,6 @@ public class LevelLightEngineMixin {
     @Inject(method = "runLightUpdates", at = @At("TAIL"))
     private void coloredLights$runLightUpdates(CallbackInfoReturnable<Integer> cir) {
         if(!Minecraft.getInstance().isSameThread()) return; // only client side
-        LevelLightEngine engine = (LevelLightEngine)(Object)this;
-
-        ColoredLightEngine.getInstance().runLightUpdates(engine.blockEngine.chunkSource.getLevel());
+        ColoredLightEngine.getInstance().runLightUpdates();
     }
 }

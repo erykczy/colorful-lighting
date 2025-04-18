@@ -1,8 +1,8 @@
 package com.example.examplemod.resourcemanager;
 
+import com.example.examplemod.ExampleMod;
 import com.example.examplemod.common.ColoredLightEngine;
 import com.example.examplemod.common.Config;
-import com.example.examplemod.ExampleMod;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
