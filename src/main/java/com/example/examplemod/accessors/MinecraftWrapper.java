@@ -4,11 +4,16 @@ import com.example.examplemod.common.accessors.ClientAccessor;
 import com.example.examplemod.common.accessors.LevelAccessor;
 import com.example.examplemod.common.accessors.PlayerAccessor;
 import net.minecraft.client.Minecraft;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
 public class MinecraftWrapper implements ClientAccessor {
-    private final Minecraft minecraft = Minecraft.getInstance();
+    private final Minecraft minecraft;
+
+    public MinecraftWrapper(@NotNull Minecraft minecraft) {
+        this.minecraft = minecraft;
+    }
 
     @Override
     public @Nullable LevelAccessor getLevel() {
