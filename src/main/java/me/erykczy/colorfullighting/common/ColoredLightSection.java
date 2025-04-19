@@ -2,22 +2,14 @@ package me.erykczy.colorfullighting.common;
 
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 
-// TODO optimize storage
 /**
  * Stores light color for each block in the section
  */
-public class ColoredLightLayer {
+public class ColoredLightSection {
     private static final int LAYER_SIZE = 6144; // = 16 * 16 * 16 * 1.5
     public byte[] data;
 
-    public ColoredLightLayer() {}
-
-    /*public ColoredLightLayer(byte[] data) {
-        this.data = data;
-        if (data.length != LAYER_SIZE) {
-            throw new IllegalArgumentException("ColoredLightLayer should be "+ LAYER_SIZE +" bytes not: " + data.length);
-        }
-    }*/
+    public ColoredLightSection() {}
 
     public int getColorIndex(int x, int y, int z) {
         return (y << 8 | z << 4 | x);
@@ -46,7 +38,7 @@ public class ColoredLightLayer {
         if(data == null)
             data = new byte[LAYER_SIZE];
         if(!value.isInValidState()) {
-            throw new IllegalArgumentException("Invalid ColoredLightLayer.Entry: "+value);
+            throw new IllegalArgumentException("Invalid ColoredLightSection.Entry: "+value);
         }
 
         int startBit = colorIndex * 12;
@@ -67,8 +59,4 @@ public class ColoredLightLayer {
     public void clear() {
         this.data = null;
     }
-
-    /*public ColoredLightLayer copy() {
-        return this.data == null ? new ColoredLightLayer() : new ColoredLightLayer(this.data.clone());
-    }*/
 }
