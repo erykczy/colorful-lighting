@@ -28,7 +28,7 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
         resourceManager.listPacks().forEach((pack) -> {
             for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "lights/emitters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/emitters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
@@ -38,16 +38,16 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                                 emitters.put(key, Config.ColorEmitter.fromJsonElement(entry.getValue()));
                             }
                             catch (Exception e) {
-                                LOGGER.warn("Failed to load light colors entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
+                                LOGGER.warn("Failed to load light emitter entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
                             }
                         }
                     }
                     catch (Exception e) {
-                        LOGGER.warn("Failed to load light colors from pack {}", resource.sourcePackId(), e);
+                        LOGGER.warn("Failed to load light emitters from pack {}", resource.sourcePackId(), e);
                     }
                 }
 
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "lights/filters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/filters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
@@ -57,12 +57,12 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                                 filters.put(key, Config.ColorFilter.fromJsonElement(entry.getValue()));
                             }
                             catch (Exception e) {
-                                LOGGER.warn("Failed to load color filter entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
+                                LOGGER.warn("Failed to load light color filter entry {} from pack {}", entry.toString(), resource.sourcePackId(), e);
                             }
                         }
                     }
                     catch (Exception e) {
-                        LOGGER.warn("Failed to load color filters from pack {}", resource.sourcePackId(), e);
+                        LOGGER.warn("Failed to load light color filters from pack {}", resource.sourcePackId(), e);
                     }
                 }
             }
