@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 @Mod(value = ColorfulLighting.MOD_ID, dist = Dist.CLIENT)
 public class ColorfulLighting
 {
-    public static final String MOD_ID = "colorfullighting";
+    public static final String MOD_ID = "colorful_lighting";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static ClientAccessor clientAccessor;
 
