@@ -44,7 +44,7 @@ public abstract class JsonHelper {
     public static Integer getInt4FromJsonElement(JsonElement element) {
         int value;
         try {
-            value = element.getAsBigInteger().intValue();
+            value = element.getAsBigInteger().intValue()/17;
         }
         catch (NumberFormatException e) {
             value = (int)(element.getAsFloat()*15.0f);
