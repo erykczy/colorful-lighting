@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class ModelBlockRendererMixin {
     @Redirect(method = "tesselateWithAO(Lnet/minecraft/world/level/BlockAndTintGetter;Ljava/util/List;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/function/Function;ZI)V",
             at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/client/model/ao/EnhancedAoRenderStorage;newInstance()Lnet/minecraft/client/renderer/block/ModelBlockRenderer$AmbientOcclusionRenderStorage;"))
-    private ModelBlockRenderer.AmbientOcclusionRenderStorage coloredLights$tesselateWithAO() {
+    private ModelBlockRenderer.AmbientOcclusionRenderStorage colorfulLighting$tesselateWithAO() {
         return new ModelBlockRenderer.AmbientOcclusionRenderStorage();
     }
 }
