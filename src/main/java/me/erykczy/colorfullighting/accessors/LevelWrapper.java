@@ -34,7 +34,7 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public int getMinSectionY() {
-        return level.getMinSection();
+        return level.getMinSectionY();
     }
 
     @Override
