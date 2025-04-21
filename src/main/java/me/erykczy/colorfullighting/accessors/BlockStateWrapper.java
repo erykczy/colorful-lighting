@@ -28,7 +28,7 @@ public class BlockStateWrapper implements BlockStateAccessor {
 
     @Override
     public int getLightBlock() {
-        return blockState.getLightBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+        return blockState.getLightBlock();
     }
 
     @Override
@@ -40,8 +40,6 @@ public class BlockStateWrapper implements BlockStateAccessor {
 
     @Override
     public int getLightBlock(LevelAccessor level, BlockPos pos) {
-        if(level instanceof LevelWrapper levelWrapper)
-            return blockState.getLightBlock(levelWrapper.getWrappedLevel(), pos);
         return getLightBlock();
     }
 }
