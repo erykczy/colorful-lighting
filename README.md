@@ -1,25 +1,42 @@
+> [!CAUTION]
+> Due to my busy schedule, **the project is not currently in active development**.
 
-Installation information
-=======
+![a creeper in a cave lit by lava](https://cdn.modrinth.com/data/cached_images/db98e8b5f28311e2c7edcd6e9cd00a82ba62f22b_0.webp)
+The mod adds colored lighting to the game. Other mods that add colored lights can use it as a dependency.\
+The mod is not compatible with Sodium!
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+# Features
+- Different blocks can emit different colors
+- Light that passes through stained glass is also colored
+- Emitted colors, and filtered colors can be customized in resource packs
+- The mod is client side - you can play with it on any server and you won't have any problems removing it from your world
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+# Resource Pack Tutorial
+In your resourcepack's namespace folder (where folders like `textures` and `models` are located) create a `light` folder. There, you can create an `emitters.json` file, which defines what light colors blocks emit. Example:
+\
+_assets\\example\\light\\emitters.json_
+```json
+{
+	"minecraft:torch": "#00FF00", // color in hex
+	"minecraft:red_candle": "red", // dye name
+	"minecraft:redstone_lamp": [ 0, 255, 255 ],
+	"minecraft:soul_torch": "purple;10", // override light level emission
+	"minecraft:oak_leaves": "light_blue;F" // value after ';' is a hex number from 0 to F
+}
+```
+You can also create `filters.json`, where you define what light color passes through a given block. Example:\
+_assets\\example\\light\\filters.json_
+```json
+{
+	"minecraft:red_stained_glass": "#00FF00", // color in hex
+	"minecraft:green_stained_glass": "red", // dye name
+	"minecraft:glass": [ 0, 255, 255 ]
+}
+```
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+# Compatible Mods
+Colorful Glowstone: (will be released soon)
+https://modrinth.com/project/colorful-glowstone
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+# Compatible Resource Packs
+Colorful Candles: [colorful-candles.zip](https://github.com/erykczy/colorful-lighting/raw/e372648afdd442e96340f0d8ee477d6ae8138739/addons/colorful-candles.zip)
