@@ -79,7 +79,7 @@ public class Config {
             ColorRGB4 color = getColorFromJsonElement(value);
             Integer brightness = getBrightnessFromJsonElement(value);
             if(color == null) throw new IllegalArgumentException("Invalid color.");
-            if(brightness == null) throw new IllegalArgumentException("Invalid brightness");
+            if(brightness == null) throw new IllegalArgumentException("Invalid brightness.");
             return new ColorEmitter(color, brightness);
         }
 
@@ -101,7 +101,9 @@ public class Config {
             String[] args = value.getAsString().split(";");
             if(args.length < 2) return -1;
             try {
-                return Integer.parseInt(args[1], 16);
+                int brightness = Integer.parseInt(args[1], 16);
+                if(brightness >= 0 && brightness <= 15) return brightness;
+                return null;
             }
             catch (NumberFormatException ignore) {
                 return null;

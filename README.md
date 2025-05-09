@@ -20,7 +20,7 @@ _assets\\example\\light\\emitters.json_
 	"minecraft:torch": "#00FF00", // color in hex
 	"minecraft:red_candle": "red", // dye name
 	"minecraft:redstone_lamp": [ 0, 255, 255 ],
-	"minecraft:soul_torch": "purple;10", // override light level emission
+	"minecraft:soul_torch": "purple;5", // override light level emission
 	"minecraft:oak_leaves": "light_blue;F" // value after ';' is a hex number from 0 to F
 }
 ```
