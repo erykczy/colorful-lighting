@@ -34,9 +34,9 @@ _assets\\example\\light\\filters.json_
 }
 ```
 
-# Compatible Mods
-Colorful Glowstone: (will be released soon)
-https://modrinth.com/project/colorful-glowstone
-
 # Compatible Resource Packs
 Colorful Candles: [colorful-candles.zip](https://github.com/erykczy/colorful-lighting/raw/e372648afdd442e96340f0d8ee477d6ae8138739/addons/colorful-candles.zip)
+
+# Example Mods
+Colorful Glowstone:
+https://github.com/erykczy/colorful-glowstone
