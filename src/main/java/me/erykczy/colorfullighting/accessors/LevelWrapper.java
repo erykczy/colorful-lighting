@@ -39,7 +39,7 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public int getMaxSectionY() {
-        return level.getMaxSection()-1;
+        return level.getMaxSectionY();
     }
 
     @Override

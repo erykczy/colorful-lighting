@@ -1,30 +1,26 @@
 package me.erykczy.colorfullighting.mixin.render;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalIntRef;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.Config;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
-import net.minecraft.client.renderer.entity.DragonFireballRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ExperienceOrb;
-import net.minecraft.world.entity.GlowSquid;
-import net.minecraft.world.entity.animal.allay.Allay;
-import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.entity.monster.Blaze;
-import net.minecraft.world.entity.monster.MagmaCube;
-import net.minecraft.world.entity.projectile.DragonFireball;
-import net.minecraft.world.entity.projectile.EyeOfEnder;
-import net.minecraft.world.entity.projectile.ShulkerBullet;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
@@ -70,5 +66,29 @@ public class EntityRendererMixin {
         }
 
         cir.setReturnValue(PackedLightData.packData(skyLight, color));
+    }
+
+    @Redirect(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;getBlockLightLevel(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;)I"))
+    private <T extends Entity>int colorfullighting$extractRenderState(EntityRenderer instance, T entity, BlockPos pos) {
+        int skyLight = entity.level().getBrightness(LightLayer.SKY, pos);
+        ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(pos.getCenter());
+        if(entity.isOnFire() || FIRE_LIT_ENTITIES.contains(entity.getType())) {
+            ColorRGB8 fireColor = ColorRGB8.fromRGB4(Config.getLightColor(Blocks.FIRE.builtInRegistryHolder().getKey()));
+            color = ColorRGB8.fromRGB8(
+                    Math.max(fireColor.red, color.red),
+                    Math.max(fireColor.green, color.green),
+                    Math.max(fireColor.blue, color.blue)
+            );
+        }
+        if(LIT_ENTITIES.contains(entity.getType())) {
+            color = ColorRGB8.fromRGB8(255, 255, 255);
+        }
+
+        return PackedLightData.packData(skyLight, color);
+    }
+
+    @Inject(method = "addVertexPair", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/renderer/LightTexture;pack(II)I"))
+    private static void colorfullighting$addVertexPair(VertexConsumer p_352095_, Matrix4f p_352142_, float p_352462_, float p_352226_, float p_352086_, float p_352293_, float p_352138_, float p_352315_, float p_352162_, int p_352406_, boolean p_352079_, EntityRenderState.LeashState p_418052_, CallbackInfo ci, @Local(ordinal = 3) LocalIntRef k) {
+        k.set(p_418052_.startBlockLight);
     }
 }
