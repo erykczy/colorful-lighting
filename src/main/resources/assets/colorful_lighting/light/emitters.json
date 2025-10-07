@@ -89,5 +89,15 @@
 	"minecraft:warped_fungus": "cyan;A",
 	"minecraft:twisting_vines_plant": "cyan;F",
 	"minecraft:crimson_nylium": "red;A",
-	"minecraft:weeping_vines_plant": "red;F"
+	"minecraft:weeping_vines_plant": "red;F",
+	"minecraft:copper_torch": "#c7ffbf",
+	"minecraft:copper_wall_torch": "#c7ffbf",
+	"minecraft:copper_lantern": "#c7ffbf",
+	"minecraft:exposed_copper_lantern": "#c7ffbf",
+	"minecraft:weathered_copper_lantern": "#c7ffbf",
+	"minecraft:oxidized_copper_lantern": "#c7ffbf",
+	"minecraft:waxed_copper_lantern": "#c7ffbf",
+	"minecraft:waxed_exposed_copper_lantern": "#c7ffbf",
+	"minecraft:waxed_weathered_copper_lantern": "#c7ffbf",
+	"minecraft:waxed_oxidized_copper_lantern": "#c7ffbf"
 }
