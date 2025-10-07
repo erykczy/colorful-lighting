@@ -86,9 +86,4 @@ public class EntityRendererMixin {
 
         return PackedLightData.packData(skyLight, color);
     }
-
-    @Inject(method = "addVertexPair", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/renderer/LightTexture;pack(II)I"))
-    private static void colorfullighting$addVertexPair(VertexConsumer p_352095_, Matrix4f p_352142_, float p_352462_, float p_352226_, float p_352086_, float p_352293_, float p_352138_, float p_352315_, float p_352162_, int p_352406_, boolean p_352079_, EntityRenderState.LeashState p_418052_, CallbackInfo ci, @Local(ordinal = 3) LocalIntRef k) {
-        k.set(p_418052_.startBlockLight);
-    }
 }

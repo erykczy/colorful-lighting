@@ -12,7 +12,8 @@
     "render.AmbientOcclusionFaceMixin",
     "render.EntityRendererMixin",
     "render.BrightnessCombinerMixin",
-    "render.ModelBlockRendererMixin"
+    "render.ModelBlockRendererMixin",
+    "render.LeashFeatureRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
