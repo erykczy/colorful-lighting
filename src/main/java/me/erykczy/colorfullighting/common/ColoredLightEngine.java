@@ -6,6 +6,7 @@ import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import me.erykczy.colorfullighting.common.accessors.PlayerAccessor;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -135,9 +136,9 @@ public class ColoredLightEngine {
                 int lightBlocked = Math.max(1, neighbourState.getLightBlock(level, neighbourPos)); // vanilla light block
                 ColorRGB4 coloredLightTransmittance = Config.getColoredLightTransmittance(level, neighbourPos, neighbourState); // rgb transmittance (example: red stained glass can let only red light through)
                 ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
-                        Math.clamp(request.lightColor.red4 - lightBlocked, 0, coloredLightTransmittance.red4),
-                        Math.clamp(request.lightColor.green4 - lightBlocked, 0, coloredLightTransmittance.green4),
-                        Math.clamp(request.lightColor.blue4 - lightBlocked, 0, coloredLightTransmittance.blue4)
+                        MathExt.clamp(request.lightColor.red4 - lightBlocked, 0, coloredLightTransmittance.red4),
+                        MathExt.clamp(request.lightColor.green4 - lightBlocked, 0, coloredLightTransmittance.green4),
+                        MathExt.clamp(request.lightColor.blue4 - lightBlocked, 0, coloredLightTransmittance.blue4)
                 );
                 // if no more color to propagate
                 if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;

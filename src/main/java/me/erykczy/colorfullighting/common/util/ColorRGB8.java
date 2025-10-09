@@ -29,9 +29,9 @@ public class ColorRGB8 {
 
     public ColorRGB8 clamp() {
         return new ColorRGB8(
-            Math.clamp(red, 0, 255),
-            Math.clamp(green, 0, 255),
-            Math.clamp(blue, 0, 255)
+            MathExt.clamp(red, 0, 255),
+            MathExt.clamp(green, 0, 255),
+            MathExt.clamp(blue, 0, 255)
         );
     }
 

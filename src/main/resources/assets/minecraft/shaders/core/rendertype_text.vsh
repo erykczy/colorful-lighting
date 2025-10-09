@@ -22,7 +22,7 @@ out vec2 texCoord0;
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
-    vertexDistance = fog_distance(Position, FogShape);
+    vertexDistance = fog_distance(ModelViewMat, Position, FogShape);
     vertexColor = Color * sample_lightmap_colored(Sampler2, UV2);
     texCoord0 = UV0;
 }

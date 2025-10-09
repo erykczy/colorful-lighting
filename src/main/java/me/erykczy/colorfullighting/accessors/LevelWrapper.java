@@ -39,9 +39,6 @@ public class LevelWrapper implements LevelAccessor {
     public void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer) {
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         chunk.findBlocks(
-                blockState -> // block state filter
-                        blockState.hasDynamicLightEmission() ||
-                        Config.getEmissionBrightness(new BlockStateWrapper(blockState)) != 0,
                 (blockState, blockPos) -> // individual block filter
                         blockState.getLightEmission(chunk, blockPos) != 0 ||
                         Config.getEmissionBrightness(this, blockPos) != 0,

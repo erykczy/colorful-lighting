@@ -28,7 +28,7 @@ out vec2 texCoord1;
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
-    vertexDistance = fog_distance(Position, FogShape);
+    vertexDistance = fog_distance(ModelViewMat, Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color) * sample_lightmap_colored(Sampler2, UV2);
     texCoord0 = UV0;
     texCoord1 = UV1;

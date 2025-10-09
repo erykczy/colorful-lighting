@@ -28,12 +28,12 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
         resourceManager.listPacks().forEach((pack) -> {
             for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/emitters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.tryBuild(namespace, "light/emitters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
                             try {
-                                var key = ResourceLocation.parse(entry.getKey());
+                                var key = ResourceLocation.tryParse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
                                 emitters.put(key, Config.ColorEmitter.fromJsonElement(entry.getValue()));
                             }
@@ -47,12 +47,12 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                     }
                 }
 
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/filters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.tryBuild(namespace, "light/filters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
                             try {
-                                var key = ResourceLocation.parse(entry.getKey());
+                                var key = ResourceLocation.tryParse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
                                 filters.put(key, Config.ColorFilter.fromJsonElement(entry.getValue()));
                             }
