@@ -58,7 +58,7 @@ public class EntityRendererMixin {
         int skyLight = entity.level().getBrightness(LightLayer.SKY, blockpos);
         ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
         if(entity.isOnFire() || FIRE_LIT_ENTITIES.contains(entity.getType())) {
-            ColorRGB8 fireColor = ColorRGB8.fromRGB4(Config.getLightColor(Blocks.FIRE.builtInRegistryHolder().getKey()));
+            ColorRGB8 fireColor = ColorRGB8.fromRGB4(Config.getLightColor(Blocks.FIRE.builtInRegistryHolder().key()));
             color = ColorRGB8.fromRGB8(
                 Math.max(fireColor.red, color.red),
                 Math.max(fireColor.green, color.green),

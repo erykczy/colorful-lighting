@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -63,9 +63,6 @@ public class LevelWrapper implements LevelAccessor {
     public void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer) {
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         chunk.findBlocks(
-                blockState -> // block state filter
-                        blockState.hasDynamicLightEmission() ||
-                        Config.getEmissionBrightness(new BlockStateWrapper(blockState)) != 0,
                 (blockState, blockPos) -> // individual block filter
                         blockState.getLightEmission(chunk, blockPos) != 0 ||
                         Config.getEmissionBrightness(this, blockPos, new BlockStateWrapper(blockState)) != 0,

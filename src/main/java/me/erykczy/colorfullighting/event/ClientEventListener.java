@@ -1,20 +1,17 @@
 package me.erykczy.colorfullighting.event;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.ViewArea;
-import net.minecraft.client.Minecraft;
-import net.minecraft.core.SectionPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ClientEventListener {
     @SubscribeEvent
-    private void onTick(ClientTickEvent.Post event) {
+    public void onTick(TickEvent.ClientTickEvent event) {
+        if(event.phase == TickEvent.Phase.START) return;
         var player = ColorfulLighting.clientAccessor.getPlayer();
         if(player == null) return;
         ChunkPos pos = player.getChunkPos();
@@ -29,7 +26,7 @@ public class ClientEventListener {
     }
 
     @SubscribeEvent
-    private void onLevelUnload(LevelEvent.Unload event) {
+    public void onLevelUnload(LevelEvent.Unload event) {
         if(!event.getLevel().isClientSide()) return;
         ColoredLightEngine.getInstance().reset();
     }
