@@ -36,6 +36,16 @@ public class LevelWrapper implements LevelAccessor {
     }
 
     @Override
+    public int getMaxSectionY() {
+        return level.getMaxSection()-1;
+    }
+
+    @Override
+    public boolean hasChunk(ChunkPos chunkPos) {
+        return level.getChunkSource().hasChunk(chunkPos.x, chunkPos.z);
+    }
+
+    @Override
     public void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer) {
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         chunk.findBlocks(

@@ -1,5 +1,8 @@
 package me.erykczy.colorfullighting.common;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -11,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Class responsible for storing light color values for each block in each section of the world
  */
 public class ColoredLightStorage {
-    private ConcurrentHashMap<Long, ColoredLightSection> map = new ConcurrentHashMap<>();
+    private Long2ObjectMap<ColoredLightSection> map = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
 
     @Nullable
     public ColorRGB4 getEntry(BlockPos blockPos) { return getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ()); }

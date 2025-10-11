@@ -8,6 +8,8 @@ import java.util.function.Consumer;
 public interface LevelAccessor {
     int getSectionsCount();
     int getMinSectionY();
+    int getMaxSectionY();
+    boolean hasChunk(ChunkPos chunkPos);
     void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer);
     BlockStateAccessor getBlockState(BlockPos pos);
     boolean isInBounds(BlockPos pos);

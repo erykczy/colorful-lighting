@@ -7,4 +7,6 @@ public interface ClientAccessor {
     LevelAccessor getLevel();
     @Nullable
     PlayerAccessor getPlayer();
+
+    int getRenderDistance();
 }
