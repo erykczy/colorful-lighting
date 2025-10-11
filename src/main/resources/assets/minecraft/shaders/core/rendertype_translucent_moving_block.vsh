@@ -1,6 +1,7 @@
 #version 150
 
 #moj_import <light.glsl>
+#moj_import <colorful_lighting:colored_light.glsl>
 
 in vec3 Position;
 in vec4 Color;
@@ -19,6 +20,6 @@ out vec2 texCoord0;
 void main() {
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
-    vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
+    vertexColor = Color * sample_lightmap_colored(Sampler2, UV2);
     texCoord0 = UV0;
 }

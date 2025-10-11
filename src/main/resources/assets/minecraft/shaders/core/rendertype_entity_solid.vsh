@@ -1,6 +1,7 @@
 #version 150
 
 #moj_import <light.glsl>
+#moj_import <colorful_lighting:colored_light.glsl>
 #moj_import <fog.glsl>
 
 in vec3 Position;
@@ -34,5 +35,5 @@ void main() {
     overlayColor = texelFetch(Sampler1, UV1, 0);
     texCoord0 = UV0;
 
-    lightMapColor = minecraft_sample_lightmap(Sampler2, UV2);//calculateLightColor(Sampler2, UV2, BlockLightColor);
+    lightMapColor = sample_lightmap_colored(Sampler2, UV2);//calculateLightColor(Sampler2, UV2, BlockLightColor);
 }

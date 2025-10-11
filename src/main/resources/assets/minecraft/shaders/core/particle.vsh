@@ -1,6 +1,6 @@
 #version 150
 
-#moj_import <light.glsl>
+#moj_import <colorful_lighting:colored_light.glsl>
 #moj_import <fog.glsl>
 
 in vec3 Position;
@@ -24,5 +24,5 @@ void main() {
     vertexDistance = fog_distance(Position, FogShape);
     texCoord0 = UV0;
 
-    vertexColor = Color * minecraft_sample_lightmap(Sampler2, UV2);
+    vertexColor = Color * sample_lightmap_colored(Sampler2, UV2);
 }
