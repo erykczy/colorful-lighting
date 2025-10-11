@@ -1,5 +1,5 @@
 > [!CAUTION]
-> Due to my busy schedule, **the project is not currently in active development**.
+> Due to my busy schedule, **the project's development is slowed down**.
 
 ![a creeper in a cave lit by lava](https://cdn.modrinth.com/data/cached_images/db98e8b5f28311e2c7edcd6e9cd00a82ba62f22b_0.webp)
 The mod adds colored lighting to the game. Other mods that add colored lights can use it as a dependency.\
@@ -35,7 +35,7 @@ _assets\\example\\light\\filters.json_
 ```
 
 # Compatible Resource Packs
-Colorful Candles: [colorful-candles.zip](https://github.com/erykczy/colorful-lighting/raw/e372648afdd442e96340f0d8ee477d6ae8138739/addons/colorful-candles.zip)
+~~Colorful Candles: [colorful-candles.zip](https://github.com/erykczy/colorful-lighting/raw/e372648afdd442e96340f0d8ee477d6ae8138739/addons/colorful-candles.zip)~~ (colorful candles are now enabled by default)
 
 # Example Mods
 Colorful Glowstone:
