@@ -39,6 +39,16 @@ public class Config {
         }
         return defaultColor.mul(lightEmission);
     }
+    public static ColorRGB4 getLightColor(@NotNull BlockStateAccessor blockState) {
+        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
+
+        if(blockResourceKey != null) {
+            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+            if(config != null)
+                return config.color();
+        }
+        return defaultColor;
+    }
 
     public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos) { return getColoredLightTransmittance(level, pos, level.getBlockState(pos)); }
     public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {

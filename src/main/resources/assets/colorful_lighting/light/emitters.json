@@ -77,7 +77,7 @@
 	"minecraft:large_amethyst_bud": "magenta;A",
 	"minecraft:medium_amethyst_bud": "magenta;5",
 	"minecraft:small_amethyst_bud": "magenta;3",
-	"minecraft:magma_block": "orange",
+	"minecraft:magma_block": "orange;8",
 	"minecraft:brewing_stand": "yellow",
 	"minecraft:brown_mushroom": "white",
 	"minecraft:calibrated_sculk_sensor": "blue",
