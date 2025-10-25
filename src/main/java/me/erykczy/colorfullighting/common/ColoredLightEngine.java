@@ -1,21 +1,17 @@
 package me.erykczy.colorfullighting.common;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import me.erykczy.colorfullighting.common.accessors.BlockStateAccessor;
 import me.erykczy.colorfullighting.common.accessors.ClientAccessor;
 import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import me.erykczy.colorfullighting.common.accessors.PlayerAccessor;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -27,7 +23,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ColoredLightEngine {
     public ClientAccessor clientAccessor;
     private ColoredLightStorage storage = new ColoredLightStorage();
-    // sections that were modified by requests
     private ConcurrentLinkedQueue<Long> dirtySections = new ConcurrentLinkedQueue<>();
     private LightPropagator lightPropagator;
     private ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
@@ -53,7 +48,6 @@ public class ColoredLightEngine {
         if(entry == null) return ColorRGB4.fromRGB4(0, 0, 0);
         return entry;
     }
-
     /**
      * Mixes light color from blocks neighbouring given position using trilinear interpolation.
      */
@@ -84,54 +78,16 @@ public class ColoredLightEngine {
 
         return linearInterpolation(c0, c1, z);
     }
-
     private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
         if(a.isZero()) return b;
         if(b.isZero()) return a;
         return a.mul(1.0 - x).add(b.mul(x));
     }
 
-    public void onBlockLightPropertiesChanged(BlockPos blockPos) {
-        LevelAccessor level = clientAccessor.getLevel();
-        if(level == null) return;
-
-        // light shouldn't be propagated when neighbour sections are not loaded, because propagation can affect neighbour sections
-        // light will be propagated when neighbour chunks are loaded
-        SectionPos sectionPos = SectionPos.of(blockPos);
-        if(!isChunkAndNeighboursLoaded(sectionPos.x(), sectionPos.z())) return;
-        ColorRGB4 lightColor = storage.getEntry(blockPos);
-        assert lightColor != null;
-
-        // TODO
-        if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
-            lightPropagator.requestLightPullIn(blockPos, true);
-        else
-            lightPropagator.requestLightPropagation(blockPos, lightColor, false, false, true);
-
-        // propagate light if new blockState emits light
-        if(Config.getEmissionBrightness(level, blockPos) > 0)
-            lightPropagator.requestLightPropagation(blockPos, Config.getColorEmission(level, blockPos), true, false, true);
-    }
-
-    public void runLightUpdates() {
-        LevelAccessor level = clientAccessor.getLevel();
-        if(level == null) return;
-
-        // set all modified sections dirty
-        var iterator = dirtySections.iterator();
-        while (iterator.hasNext()) {
-            SectionPos sectionPos = SectionPos.of(iterator.next());
-            level.setSectionDirtyWithNeighbours(sectionPos.x(), sectionPos.y(), sectionPos.z());
-            iterator.remove();
-        }
-        lightPropagator.waitForPriorityPropagations();
-    }
-
     private void setLightColor(BlockPos blockPos, ColorRGB4 color) {
         storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), color);
         dirtySections.add(SectionPos.asLong(blockPos));
     }
-
     public void updateViewArea(ViewArea newArea) {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
@@ -164,23 +120,7 @@ public class ColoredLightEngine {
         viewArea = newArea;
     }
 
-    public void onLevelUnload() {
-        chunksWaitingForPropagation.clear();
-        storage.clear();
-        viewArea = new ViewArea();
-    }
-
-    public void refreshLevel() {
-        LevelAccessor level = clientAccessor.getLevel();
-        if(level == null) return;
-        chunksWaitingForPropagation.clear();
-        storage.clear();
-        ViewArea area = new ViewArea(viewArea);
-        viewArea = new ViewArea();
-        updateViewArea(area);
-    }
-
-    public boolean isChunkAndNeighboursLoaded(int x, int z) {
+    private boolean isChunkAndNeighboursLoaded(int x, int z) {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return false;
         for(int ox = x - 1; ox <= x + 1; ++ox) {
@@ -190,6 +130,55 @@ public class ColoredLightEngine {
             }
         }
         return true;
+    }
+
+    public void onBlockLightPropertiesChanged(BlockPos blockPos) {
+        LevelAccessor level = clientAccessor.getLevel();
+        if(level == null) return;
+
+        // light shouldn't be propagated when neighbour sections are not loaded, because propagation can affect neighbour sections
+        // light will be propagated when neighbour chunks are loaded
+        SectionPos sectionPos = SectionPos.of(blockPos);
+        if(!isChunkAndNeighboursLoaded(sectionPos.x(), sectionPos.z())) return;
+        ColorRGB4 lightColor = storage.getEntry(blockPos);
+        assert lightColor != null;
+
+        // TODO
+        if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
+            lightPropagator.requestLightPullIn(blockPos, true);
+        else
+            lightPropagator.requestLightPropagation(blockPos, lightColor, false, false, true);
+
+        // propagate light if new blockState emits light
+        if(Config.getEmissionBrightness(level, blockPos) > 0)
+            lightPropagator.requestLightPropagation(blockPos, Config.getColorEmission(level, blockPos), true, false, true);
+    }
+    public void onLightUpdate() {
+        LevelAccessor level = clientAccessor.getLevel();
+        if(level == null) return;
+
+        // set all modified sections dirty
+        var iterator = dirtySections.iterator();
+        while (iterator.hasNext()) {
+            SectionPos sectionPos = SectionPos.of(iterator.next());
+            level.setSectionDirtyWithNeighbours(sectionPos.x(), sectionPos.y(), sectionPos.z());
+            iterator.remove();
+        }
+        lightPropagator.waitForPriorityPropagations();
+    }
+    public void onLevelUnload() {
+        chunksWaitingForPropagation.clear();
+        storage.clear();
+        viewArea = new ViewArea();
+    }
+    public void onResourcesReload() {
+        LevelAccessor level = clientAccessor.getLevel();
+        if(level == null) return;
+        chunksWaitingForPropagation.clear();
+        storage.clear();
+        ViewArea area = new ViewArea(viewArea);
+        viewArea = new ViewArea();
+        updateViewArea(area);
     }
 
     private class LightPropagator extends Thread {
@@ -223,7 +212,7 @@ public class ColoredLightEngine {
 
         public void waitForPriorityPropagations() {
             //while (!priorityPropagateIncreases.isEmpty() || !priorityPropagateDecreases.isEmpty()) {}
-            executePropagationRequests(true);
+            //executePropagationRequests(true);
         }
 
         @Override
@@ -233,7 +222,7 @@ public class ColoredLightEngine {
                 requestPropagationForWaitingSections();
                 executePropagationRequests(false);
                 try {
-                    Thread.sleep(1);
+                    Thread.sleep(1); // TODO
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

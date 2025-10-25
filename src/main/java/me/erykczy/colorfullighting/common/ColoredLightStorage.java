@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Class responsible for storing light color values for each block in each section of the world
  */
 public class ColoredLightStorage {
-    private Long2ObjectMap<ColoredLightSection> map = Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>());
+    private ConcurrentHashMap<Long, ColoredLightSection> map = new ConcurrentHashMap<>();
 
     @Nullable
     public ColorRGB4 getEntry(BlockPos blockPos) { return getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ()); }
@@ -33,14 +33,15 @@ public class ColoredLightStorage {
     public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
     public void setEntry(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        ColoredLightSection layer = getSection(sectionPos);
-        if(layer == null) return;
-        layer.set(
-                SectionPos.sectionRelative(x),
-                SectionPos.sectionRelative(y),
-                SectionPos.sectionRelative(z),
-                value
-        );
+        map.computeIfPresent(sectionPos, (pos, layer) -> {
+            layer.set(
+                    SectionPos.sectionRelative(x),
+                    SectionPos.sectionRelative(y),
+                    SectionPos.sectionRelative(z),
+                    value
+            );
+            return layer;
+        });
     }
 
     public boolean containsEntry(BlockPos blockPos) { return containsEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ()); }
