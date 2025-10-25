@@ -5,6 +5,8 @@ import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.ViewArea;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.SectionPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -37,7 +39,15 @@ public class ClientEventListener {
                 pos.x + renderDistance,
                 pos.z + renderDistance
         );
-        //if(!InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_G)) return;
+        // TODO
+        if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_G)) {
+            ColorfulLighting.clientAccessor.getLevel().setSectionDirtyWithNeighbours(player.getPlayerChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getPlayerChunkPos().z);
+        }
+        if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_H)) {
+            var pl = Minecraft.getInstance().player;
+            var color = ColoredLightEngine.getInstance().sampleLightColor(pl.blockPosition().below());
+            pl.sendSystemMessage(Component.literal("color: " + color.red4 + ", " + color.green4 + ", " + color.blue4));
+        }
         ColoredLightEngine.getInstance().updateViewArea(viewArea);
     }
 
