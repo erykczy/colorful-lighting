@@ -30,7 +30,7 @@ public class ColoredLightStorage {
         );
     }
 
-    public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
+    /*public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
     public void setEntry(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         map.computeIfPresent(sectionPos, (pos, layer) -> {
@@ -42,6 +42,17 @@ public class ColoredLightStorage {
             );
             return layer;
         });
+    }*/
+    public void setEntryUnsafe(BlockPos blockPos, ColorRGB4 value) { setEntryUnsafe(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
+    public void setEntryUnsafe(int x, int y, int z, ColorRGB4 value) {
+        long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
+        var layer = map.get(sectionPos);
+        layer.set(
+                SectionPos.sectionRelative(x),
+                SectionPos.sectionRelative(y),
+                SectionPos.sectionRelative(z),
+                value
+        );
     }
 
     public boolean containsEntry(BlockPos blockPos) { return containsEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ()); }

@@ -10,9 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
-import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 public class ClientEventListener {
     /*@SubscribeEvent
@@ -31,7 +29,7 @@ public class ClientEventListener {
     private void onTick(ClientTickEvent.Post event) {
         var player = ColorfulLighting.clientAccessor.getPlayer();
         if(player == null) return;
-        ChunkPos pos = player.getPlayerChunkPos();
+        ChunkPos pos = player.getChunkPos();
         int renderDistance = ColorfulLighting.clientAccessor.getRenderDistance();
         ViewArea viewArea = new ViewArea(
                 pos.x - renderDistance,
@@ -41,7 +39,7 @@ public class ClientEventListener {
         );
         // TODO
         if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_G)) {
-            ColorfulLighting.clientAccessor.getLevel().setSectionDirtyWithNeighbours(player.getPlayerChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getPlayerChunkPos().z);
+            ColorfulLighting.clientAccessor.getLevel().setSectionDirtyWithNeighbours(player.getChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getChunkPos().z);
         }
         if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_H)) {
             var pl = Minecraft.getInstance().player;

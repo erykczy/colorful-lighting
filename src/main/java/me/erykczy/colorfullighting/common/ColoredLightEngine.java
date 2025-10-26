@@ -13,7 +13,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -98,6 +97,7 @@ public class ColoredLightEngine {
                 for(int y = level.getMinSectionY(); y <= level.getMaxSectionY(); y++) {
                     storage.removeSection(SectionPos.asLong(x, y, z));
                 }
+                chunksWaitingForPropagation.remove(new ChunkPos(x, z));
             }
         }
         // load sections
@@ -141,7 +141,7 @@ public class ColoredLightEngine {
         ColorRGB4 lightColor = storage.getEntry(blockPos); // TODO what if some light is not propagated yet
         assert lightColor != null;
 
-        LightUpdateRequestsGroup requestsGroup = new LightUpdateRequestsGroup();
+        LightUpdateRequestsGroup requestsGroup = new LightUpdateRequestsGroup(blockPos);
         // TODO
         if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
             requestLightPullIn(requestsGroup, blockPos);
@@ -169,7 +169,6 @@ public class ColoredLightEngine {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
 
-        lightPropagator.updateSections();
         // set all modified sections dirty
         var iterator = dirtySections.iterator();
         while (iterator.hasNext()) {
@@ -194,32 +193,9 @@ public class ColoredLightEngine {
     }
 
     private class LightPropagator extends Thread {
-        // light increase propagation requests
         private ConcurrentLinkedQueue<LightUpdateRequest> newSectionsIncreaseRequests = new ConcurrentLinkedQueue<>();
         private ConcurrentLinkedQueue<LightUpdateRequestsGroup> priorityRequestGroups = new ConcurrentLinkedQueue<>();
         private HashMap<BlockPos, ColorRGB4> lightChangesInProgress = new HashMap<>();
-        private ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesReadyToGo = new ConcurrentHashMap<>();
-        //private AtomicInteger lightChangesReadyToGo = new AtomicInteger(0);
-
-        /*public void requestLightPropagation(BlockPos originPos, ColorRGB4 lightColor, boolean increase, boolean force, boolean priority) {
-            if(increase) {
-                (priority ? priorityPropagateIncreases : propagateIncreases).add(new LightUpdateRequest(originPos, lightColor, force));
-            }
-            else {
-                (priority ? priorityPropagateDecreases : propagateDecreases).add(new LightUpdateRequest(originPos, lightColor, force));
-            }
-        }*/
-
-        public void updateSections() {
-           /* assert lightChanges.size() >= lightChangesReadyToGo.get();
-            int count = lightChangesReadyToGo.getAndSet(0);
-            System.out.println("light changes: " + count);
-            for(int i = 0; i < count; ++i) {
-                LightChange change = lightChanges.poll();
-                storage.setEntry(change.pos(), change.color());
-                //dirtySections.add(SectionPos.asLong(change.pos()));
-            }*/
-        }
 
         public void addRequestGroup(LightUpdateRequestsGroup group) {
             priorityRequestGroups.add(group);
@@ -228,7 +204,6 @@ public class ColoredLightEngine {
         @Override
         public void run() {
             while (true) {
-                //if(!InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_H)) continue;
                 requestPropagationForWaitingSections();
                 executePropagationRequests();
                 try {
@@ -241,8 +216,6 @@ public class ColoredLightEngine {
 
         private void setLightColor(BlockPos blockPos, ColorRGB4 color) {
             lightChangesInProgress.put(blockPos, color);
-            /*storage.setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), color);
-            dirtySections.add(SectionPos.asLong(blockPos));*/
         }
 
         private ColorRGB4 getLightColor(BlockPos blockPos) {
@@ -265,7 +238,7 @@ public class ColoredLightEngine {
             while (iterator.hasNext()) {
                 ChunkPos chunkPos = iterator.next();
                 if(!level.hasChunk(chunkPos)) continue;
-                int distance = chunkPos.getChessboardDistance(playerAccessor.getPlayerChunkPos());
+                int distance = chunkPos.getChessboardDistance(playerAccessor.getChunkPos());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestChunkPos = chunkPos;
@@ -283,60 +256,57 @@ public class ColoredLightEngine {
         }
 
         private void pushLightChanges() {
-            /*lightChangesReadyToGo.putAll(lightChangesInProgress);
-            lightChangesInProgress.clear();*/
-            var it = lightChangesInProgress.entrySet().iterator();
-            while(it.hasNext()) {
-                var entry = it.next();
-                it.remove();
-                storage.setEntry(entry.getKey(), entry.getValue());
+            for (Map.Entry<BlockPos, ColorRGB4> entry : lightChangesInProgress.entrySet()) {
+                //storage.setEntry(entry.getKey(), entry.getValue());
+                storage.setEntryUnsafe(entry.getKey(), entry.getValue());
                 dirtySections.add(SectionPos.asLong(entry.getKey()));
             }
+            lightChangesInProgress.clear();
         }
 
         private void executePropagationRequests() {
             LevelAccessor level = clientAccessor.getLevel();
             if(level == null) return;
+            PlayerAccessor playerAccessor = clientAccessor.getPlayer();
+            if(playerAccessor == null) return;
 
             // handle increase and decrease requests
             while (!priorityRequestGroups.isEmpty() || !newSectionsIncreaseRequests.isEmpty()) {
-                if(!priorityRequestGroups.isEmpty()) {
-                    LightUpdateRequestsGroup group = priorityRequestGroups.poll();
+                boolean shouldUpdate = false;
+                while(!priorityRequestGroups.isEmpty()) {
+                    var iterator = priorityRequestGroups.iterator();
+                    int minDistance = Integer.MAX_VALUE;
+                    LightUpdateRequestsGroup group = null;
+                    while(iterator.hasNext()) {
+                        var element = iterator.next();
+                        int distance = element.origin.distManhattan(playerAccessor.getBlockPos());
+                        if(distance < minDistance){
+                            minDistance = distance;
+                            group = element;
+                        }
+                    }
+                    priorityRequestGroups.remove(group);
+                    //System.out.println("group: " + minDistance);
+
+                    //LightUpdateRequestsGroup group = priorityRequestGroups.poll();
+                    long groupSection = SectionPos.asLong(group.origin);
+                    if(!viewArea.contains(SectionPos.x(groupSection), SectionPos.z(groupSection)))
+                        break;
                     propagateDecreases(group.decreaseRequests, group.increaseRequests);
                     propagateIncreases(group.increaseRequests);
+                    //System.out.println("push");
                     pushLightChanges();
+                    shouldUpdate = true;
                 }
+                if(shouldUpdate) {
+                    //pushLightChanges();
+                }
+                //newSectionsIncreaseRequests.clear();
                 if(!newSectionsIncreaseRequests.isEmpty()) {
                     propagateIncrease(newSectionsIncreaseRequests, newSectionsIncreaseRequests.poll(), level);
-                    //System.out.println(newSectionsIncreaseRequests.size());
                 }
             }
             pushLightChanges();
-
-            /*var it = lightChangesReadyToGo.entrySet().iterator();
-            while(it.hasNext()) {
-                var entry = it.next();
-                it.remove();
-                storage.setEntry(entry.getKey(), entry.getValue());
-                dirtySections.add(SectionPos.asLong(entry.getKey()));
-            }*/
-
-            /*try {
-                assert lightChanges.size() >= lightChangesReadyToGo.get();
-                int count = lightChangesReadyToGo.getAndSet(0);
-                System.out.println("light changes: " + count);
-                var iterator = lightChanges.entrySet().iterator();
-                for(int i = 0; i < count; ++i) {
-                    var entry = iterator.next();
-                    iterator.remove(); // TODO concurrency
-                    storage.setEntry(entry.getKey(), entry.getValue());
-                    dirtySections.add(SectionPos.asLong(entry.getKey()));
-                }
-            }
-            catch (NoSuchElementException exception) {
-                throw exception;
-            }*/
-
         }
 
         /**
@@ -457,7 +427,10 @@ public class ColoredLightEngine {
     }
 
     private static class LightUpdateRequestsGroup {
+        public BlockPos origin;
         public ConcurrentLinkedQueue<LightUpdateRequest> increaseRequests = new ConcurrentLinkedQueue<>();
         public ConcurrentLinkedQueue<LightUpdateRequest> decreaseRequests = new ConcurrentLinkedQueue<>();
+
+        public LightUpdateRequestsGroup(BlockPos originSection) { this.origin = originSection; }
     }
 }
