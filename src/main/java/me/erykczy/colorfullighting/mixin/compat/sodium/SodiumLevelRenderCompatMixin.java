@@ -1,4 +1,3 @@
-// src/main/java/me/erykczy/colorfullighting/mixin/compat/sodium/CL_EnsureWhiteVertexColors.java
 package me.erykczy.colorfullighting.mixin.compat.sodium;
 
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
@@ -16,11 +15,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = BlockRenderer.class, remap = false)
-public abstract class SodiumCompatMixin {
+public abstract class SodiumLevelRenderCompatMixin {
     @Inject(
             method = "getVertexColors",
             at = @At("RETURN"),
-            cancellable = true
+            cancellable = true,
+            require = 0
     )
     private void colorfullighting$ensureWhiteAndTint(BlockRenderContext ctx, ColorProvider<BlockState> colorProvider, BakedQuadView quad, CallbackInfoReturnable<int[]> cir) {
         int[] colors = cir.getReturnValue();

@@ -4,17 +4,21 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "colorful_lighting.refmap.json",
   "mixins": [
-    "compat.sodium.SodiumCompatMixin"
+    "compat.sodium.SodiumLevelRenderCompatMixin"
   ],
   "client": [
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
+    "compat.sodium.SodiumCompatBlockEntitiesMixin",
+    "compat.sodium.SodiumCompatFirstPersonHandItemsMixin",
+    "compat.sodium.SodiumEntityColorCompat",
     "render.AmbientOcclusionFaceMixin",
     "render.BrightnessCombinerMixin",
     "render.EntityRendererMixin",
     "render.LevelRendererMixin",
-    "render.LiquidBlockRendererMixin"
+    "render.LiquidBlockRendererMixin",
+    "render.TintChestRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
