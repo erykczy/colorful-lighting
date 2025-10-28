@@ -21,14 +21,13 @@ public class EntityRendererMixin {
         if (ModList.get().isLoaded("embeddium")) {
             BlockPos pos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
             int block = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.BLOCK, pos);
-            int sky   = entity.level().getBrightness(LightLayer.SKY, pos);
+            int sky = entity.level().getBrightness(LightLayer.SKY, pos);
             cir.setReturnValue(LightTexture.pack(block, sky));
-            return;
+        } else {
+            BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
+            int skyLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.SKY, blockpos);
+            ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
+            cir.setReturnValue(PackedLightData.packData(skyLight, color));
         }
-
-        BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
-        int skyLight = entity.isOnFire() ? 15 : entity.level().getBrightness(LightLayer.SKY, blockpos);
-        ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));
-        cir.setReturnValue(PackedLightData.packData(skyLight, color));
     }
 }

@@ -23,25 +23,29 @@ public class BrightnessCombinerMixin {
                 Math.max(unpackSky(a),   unpackSky(b)));
     }
 
-    @Inject(method = "acceptDouble(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lit/unimi/dsi/fastutil/ints/Int2IntFunction;", at = @At("HEAD"), cancellable = true)
-    private <S extends BlockEntity> void colorfullighting$acceptDouble(S first, S second, CallbackInfoReturnable<Int2IntFunction> cir) {
-        if(ModList.get().isLoaded("embeddium")) {
-            if (first == null || second == null) return;
-            Level lf = first.getLevel();
-            Level ls = second.getLevel();
-            if (lf == null || ls == null) return;
+    private static int safeLight(BlockEntity be) {
+        if (be == null) return 0;
+        Level lvl = be.getLevel();
+        if (lvl == null) return 0;
+        return LevelRenderer.getLightColor(lvl, be.getBlockPos());
+    }
 
-            final int a = LevelRenderer.getLightColor(lf, first.getBlockPos());
-            final int b = LevelRenderer.getLightColor(ls, second.getBlockPos());
-            final int both = maxPacked(a, b);
+    @Inject(
+            method = "acceptDouble(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lit/unimi/dsi/fastutil/ints/Int2IntFunction;",
+            at = @At("HEAD"),
+            cancellable = true
+    )
+    private <S extends BlockEntity> void cl$acceptDouble(S first, S second, CallbackInfoReturnable<Int2IntFunction> cir) {
+        final int a = safeLight(first);
+        final int b = safeLight(second);
 
-            cir.setReturnValue(base -> maxPacked(base, both));
+        if (ModList.get().isLoaded("embeddium")) {
+            cir.setReturnValue(base -> maxPacked(maxPacked(base, a), b));
+            cir.cancel();
         } else {
-            cir.setReturnValue(value -> {
-                int firstLight = LevelRenderer.getLightColor(first.getLevel(), first.getBlockPos());
-                int secondLight = LevelRenderer.getLightColor(second.getLevel(), second.getBlockPos());
-                return PackedLightData.max(firstLight, secondLight);
-            });
+            cir.setReturnValue(base -> PackedLightData
+                    .max(PackedLightData.max(base, a), b));
+            cir.cancel();
         }
     }
 
@@ -51,14 +55,16 @@ public class BrightnessCombinerMixin {
             cancellable = true
     )
     private <S extends BlockEntity> void cl$acceptSingle(S be, CallbackInfoReturnable<Int2IntFunction> cir) {
-        if (ModList.get().isLoaded("embeddium")) {
-            if (be == null) return;
-            Level level = be.getLevel();
-            if (level == null) return;
+        final int beLight = safeLight(be);
 
-            final int beLight = LevelRenderer.getLightColor(level, be.getBlockPos());
+        if (ModList.get().isLoaded("embeddium")) {
             cir.setReturnValue(base -> maxPacked(base, beLight));
+            cir.cancel();
+        } else {
+            cir.setReturnValue(base -> PackedLightData.max(base, beLight));
+            cir.cancel();
         }
     }
 }
+
 

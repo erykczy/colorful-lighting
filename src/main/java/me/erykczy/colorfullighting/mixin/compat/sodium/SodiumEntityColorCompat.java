@@ -7,6 +7,7 @@ import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -30,6 +31,10 @@ public abstract class SodiumEntityColorCompat {
             PoseStack poseStack, MultiBufferSource buffers, int packedLight,
             CallbackInfo ci
     ) {
+        if (entity instanceof FallingBlockEntity) {
+            return;
+        }
+
         var eng = ColoredLightEngine.getInstance();
         if (eng == null || entity == null) return;
 

@@ -10,15 +10,16 @@
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
-    "compat.sodium.SodiumCompatBlockEntitiesMixin",
+    "compat.sodium.BlockEntityRenderDispatcherRedirectMixin",
+    "compat.sodium.BlockEntityRendererMixin",
+    "compat.sodium.FallingBlockRendererMixin",
     "compat.sodium.SodiumCompatFirstPersonHandItemsMixin",
     "compat.sodium.SodiumEntityColorCompat",
     "render.AmbientOcclusionFaceMixin",
     "render.BrightnessCombinerMixin",
     "render.EntityRendererMixin",
     "render.LevelRendererMixin",
-    "render.LiquidBlockRendererMixin",
-    "render.TintChestRendererMixin"
+    "render.LiquidBlockRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
