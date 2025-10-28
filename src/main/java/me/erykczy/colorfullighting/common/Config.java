@@ -50,7 +50,10 @@ public class Config {
         return defaultColor;
     }
 
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos) { return getColoredLightTransmittance(level, pos, level.getBlockState(pos)); }
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, ColorRGB4 defaultValue) {
+        var blockState = level.getBlockState(pos);
+        return blockState == null ? defaultValue : getColoredLightTransmittance(level, pos, blockState);
+    }
     public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
@@ -59,7 +62,10 @@ public class Config {
         return config.transmittance;
     }
 
-    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos) { return getEmissionBrightness(level, pos, level.getBlockState(pos)); }
+    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos, int defaultValue) {
+        var blockState = level.getBlockState(pos);
+        return blockState == null ? defaultValue : getEmissionBrightness(level, pos, blockState);
+    }
     public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 

@@ -47,6 +47,7 @@ public class ColoredLightStorage {
     public void setEntryUnsafe(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         var layer = map.get(sectionPos);
+        if(layer == null) return;
         layer.set(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),

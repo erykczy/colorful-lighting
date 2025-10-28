@@ -6,8 +6,10 @@ import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -54,7 +56,7 @@ public class LevelWrapper implements LevelAccessor {
                         Config.getEmissionBrightness(new BlockStateWrapper(blockState)) != 0,
                 (blockState, blockPos) -> // individual block filter
                         blockState.getLightEmission(chunk, blockPos) != 0 ||
-                        Config.getEmissionBrightness(this, blockPos) != 0,
+                        Config.getEmissionBrightness(this, blockPos, new BlockStateWrapper(blockState)) != 0,
                 (blockPos, blockState) -> // for each found light source
                         consumer.accept(new BlockPos(blockPos))
         );
@@ -62,7 +64,12 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public BlockStateAccessor getBlockState(BlockPos pos) {
-        return new BlockStateWrapper(level.getBlockState(pos));
+        var chunk = level.getChunkSource().getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()), ChunkStatus.FULL, false);
+        if(chunk == null) {
+            return null;
+        }
+        var section = chunk.getSection(chunk.getSectionIndex(pos.getY()));
+        return new BlockStateWrapper(section.getBlockState(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15)); //level.getBlockState(pos)
     }
 
     @Override
