@@ -70,6 +70,7 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
         Config.setColorEmitters(emitters);
         Config.setColorFilters(filters);
-        ColoredLightEngine.getInstance().onResourcesReload();
+        if(ColorfulLighting.clientAccessor.getLevel() != null)
+            ColoredLightEngine.getInstance().resetLightPropagator();
     }
 }
