@@ -14,7 +14,11 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class responsible for managing light color values in the client's world and sampling those values.
@@ -42,6 +46,7 @@ public class ColoredLightEngine {
 
     private ColoredLightEngine(ClientAccessor clientAccessor) {
         this.clientAccessor = clientAccessor;
+        resetLightPropagator();
     }
 
     public ColorRGB4 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
@@ -171,6 +176,8 @@ public class ColoredLightEngine {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
 
+        lightPropagator.pullLightChanges();
+
         // set all modified sections dirty
         var iterator = dirtySections.iterator();
         while (iterator.hasNext()) {
@@ -201,7 +208,9 @@ public class ColoredLightEngine {
     private class LightPropagator implements Runnable {
         private ConcurrentLinkedQueue<LightUpdateRequest> newChunkIncreaseRequests = new ConcurrentLinkedQueue<>();
         private ChunkPos newChunkPosition = null;
-        private HashMap<BlockPos, ColorRGB4> lightChangesInProgress = new HashMap<>();
+        private ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesInProgress = new ConcurrentHashMap<>();
+        private volatile ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesReady = new ConcurrentHashMap<>();
+        private final Lock lightChangesLock = new ReentrantLock();
         private volatile boolean running;
 
         public void stop() {
@@ -215,9 +224,9 @@ public class ColoredLightEngine {
                 requestPropagationForWaitingSections();
                 executePropagationRequests();
                 try {
-                    Thread.sleep(1); // TODO
-                } catch (InterruptedException ignored) {
-                    //throw new RuntimeException(e);
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -227,7 +236,7 @@ public class ColoredLightEngine {
         }
 
         private ColorRGB4 getLightColor(BlockPos blockPos) {
-            return lightChangesInProgress.getOrDefault(blockPos, storage.getEntry(blockPos));
+            return lightChangesInProgress.getOrDefault(blockPos, lightChangesReady.getOrDefault(blockPos, storage.getEntry(blockPos)));
         }
 
         private boolean requestPropagationForWaitingSections() {
@@ -262,7 +271,25 @@ public class ColoredLightEngine {
             return true;
         }
 
+        private void pullLightChanges() {
+            lightChangesLock.lock();
+            var it = lightChangesReady.entrySet().iterator();
+            while(it.hasNext()) {
+                var entry = it.next();
+                storage.setEntryUnsafe(entry.getKey(), entry.getValue());
+                dirtySections.add(SectionPos.asLong(entry.getKey()));
+                it.remove();
+            }
+            lightChangesLock.unlock();
+        }
+
         private void pushLightChanges() {
+            lightChangesLock.lock();
+            lightChangesReady.putAll(lightChangesInProgress);
+            lightChangesLock.unlock();
+            lightChangesInProgress = new ConcurrentHashMap<>();
+        }
+        private void pushLightChangesDirectly() {
             for (Map.Entry<BlockPos, ColorRGB4> entry : lightChangesInProgress.entrySet()) {
                 //storage.setEntry(entry.getKey(), entry.getValue());
                 storage.setEntryUnsafe(entry.getKey(), entry.getValue());
@@ -308,7 +335,7 @@ public class ColoredLightEngine {
             }
             propagateIncreases(newChunkIncreaseRequests);
             newChunkPosition = null;
-            pushLightChanges();
+            pushLightChangesDirectly();
         }
 
         /**
