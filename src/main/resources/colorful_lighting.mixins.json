@@ -13,6 +13,8 @@
     "compat.sodium.BlockEntityRenderDispatcherRedirectMixin",
     "compat.sodium.BlockEntityRendererMixin",
     "compat.sodium.FallingBlockRendererMixin",
+    "compat.sodium.ItemFrameRendererMixin",
+    "compat.sodium.PaintingRendererMixin",
     "compat.sodium.SignRendererMixin",
     "compat.sodium.SodiumCompatFirstPersonHandItemsMixin",
     "compat.sodium.SodiumEntityColorCompat",

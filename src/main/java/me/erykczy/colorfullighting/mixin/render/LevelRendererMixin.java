@@ -26,10 +26,15 @@ public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         if (ModList.get().isLoaded("embeddium")) {
-                int sky   = level.getBrightness(LightLayer.SKY, pos);
-                int block = level.getBrightness(LightLayer.BLOCK, pos);
-                if (state.emissiveRendering(level, pos)) block = 15;
-                cir.setReturnValue(LightTexture.pack(block, sky));
+            int sky = level.getBrightness(LightLayer.SKY, pos);
+            int block = level.getBrightness(LightLayer.BLOCK, pos);
+            int emission = state.getLightEmission(level, pos);
+            block = Math.max(block, emission);
+            if (state.emissiveRendering(level, pos)) {
+                block = 15;
+                sky = 15;
+            }
+            cir.setReturnValue(LightTexture.pack(block, sky));
         } else {
             int skyLight = level.getBrightness(LightLayer.SKY, pos);
 
