@@ -15,5 +15,5 @@ public interface LevelAccessor {
     @Nullable
     BlockStateAccessor getBlockState(BlockPos pos);
     boolean isInBounds(BlockPos pos);
-    void setSectionDirtyWithNeighbours(int x, int y, int z);
+    void setSectionDirty(int x, int y, int z);
 }

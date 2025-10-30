@@ -29,7 +29,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ColoredLightEngine {
     public ClientAccessor clientAccessor;
     private ColoredLightStorage storage = new ColoredLightStorage();
-    private ConcurrentLinkedQueue<Long> dirtySections = new ConcurrentLinkedQueue<>();
+    private final Set<Long> dirtySections = new HashSet<>();
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
     private ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
@@ -179,11 +179,12 @@ public class ColoredLightEngine {
         lightPropagator.pullLightChanges();
 
         // set all modified sections dirty
-        var iterator = dirtySections.iterator();
-        while (iterator.hasNext()) {
-            SectionPos sectionPos = SectionPos.of(iterator.next());
-            level.setSectionDirtyWithNeighbours(sectionPos.x(), sectionPos.y(), sectionPos.z());
-            iterator.remove();
+        synchronized (dirtySections) {
+            for (Long dirtySection : dirtySections) {
+                SectionPos sectionPos = SectionPos.of(dirtySection);
+                level.setSectionDirty(sectionPos.x(), sectionPos.y(), sectionPos.z());
+            }
+            dirtySections.clear();
         }
     }
     public void resetLightPropagator() {
@@ -274,11 +275,13 @@ public class ColoredLightEngine {
         private void pullLightChanges() {
             lightChangesLock.lock();
             var it = lightChangesReady.entrySet().iterator();
-            while(it.hasNext()) {
-                var entry = it.next();
-                storage.setEntryUnsafe(entry.getKey(), entry.getValue());
-                dirtySections.add(SectionPos.asLong(entry.getKey()));
-                it.remove();
+            synchronized (dirtySections) {
+                while(it.hasNext()) {
+                    var entry = it.next();
+                    storage.setEntryUnsafe(entry.getKey(), entry.getValue());
+                    SectionPos.aroundAndAtBlockPos(entry.getKey(), dirtySections::add);
+                    it.remove();
+                }
             }
             lightChangesLock.unlock();
         }
@@ -293,7 +296,10 @@ public class ColoredLightEngine {
             for (Map.Entry<BlockPos, ColorRGB4> entry : lightChangesInProgress.entrySet()) {
                 //storage.setEntry(entry.getKey(), entry.getValue());
                 storage.setEntryUnsafe(entry.getKey(), entry.getValue());
-                dirtySections.add(SectionPos.asLong(entry.getKey()));
+                synchronized (dirtySections) {
+                    SectionPos.aroundAndAtBlockPos(entry.getKey(), dirtySections::add);
+                }
+                //dirtySections.add(SectionPos.asLong(entry.getKey()));
             }
             lightChangesInProgress.clear();
         }

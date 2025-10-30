@@ -39,7 +39,7 @@ public class ClientEventListener {
         );
         // TODO
         if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_G)) {
-            ColorfulLighting.clientAccessor.getLevel().setSectionDirtyWithNeighbours(player.getChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getChunkPos().z);
+            ColorfulLighting.clientAccessor.getLevel().setSectionDirty(player.getChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getChunkPos().z);
         }
         if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_H)) {
             var pl = Minecraft.getInstance().player;

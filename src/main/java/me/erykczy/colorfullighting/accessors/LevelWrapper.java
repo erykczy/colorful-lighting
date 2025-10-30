@@ -78,7 +78,7 @@ public class LevelWrapper implements LevelAccessor {
     }
 
     @Override
-    public void setSectionDirtyWithNeighbours(int x, int y, int z) {
-        levelRenderer.setSectionDirtyWithNeighbors(x, y, z);
+    public void setSectionDirty(int x, int y, int z) {
+        levelRenderer.setSectionDirty(x, y, z);
     }
 }
