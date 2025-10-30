@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
+import oshi.util.tuples.Pair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +34,6 @@ public class ColoredLightEngine {
     private final ConcurrentLinkedQueue<LightUpdateRequest> newChunkIncreaseRequests = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<BlockUpdateRequestGroup> blockLightUpdates = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
-    private ChunkPos newChunkPosition = null;
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
 
@@ -206,7 +206,6 @@ public class ColoredLightEngine {
         newChunkIncreaseRequests.clear();
         blockLightUpdates.clear();
         chunksWaitingForPropagation.clear();
-        newChunkPosition = null;
         lightPropagator = new LightPropagator();
         lightPropagatorThread = new Thread(lightPropagator);
         lightPropagatorThread.start();
@@ -227,7 +226,6 @@ public class ColoredLightEngine {
         public void run() {
             running = true;
             while (running) {
-                requestPropagationForWaitingChunks();
                 executePropagationRequests();
                 try {
                     Thread.sleep(1);
@@ -245,13 +243,7 @@ public class ColoredLightEngine {
             return lightChangesInProgress.getOrDefault(blockPos, lightChangesReady.getOrDefault(blockPos, storage.getEntry(blockPos)));
         }
 
-        private boolean requestPropagationForWaitingChunks() {
-            LevelAccessor level = clientAccessor.getLevel();
-            if(level == null) return false;
-
-            PlayerAccessor playerAccessor = clientAccessor.getPlayer();
-            if(playerAccessor == null) return false;
-
+        private Pair<ChunkPos, Integer> findNearestChunk(LevelAccessor level, PlayerAccessor player) {
             // find chunk nearest player
             var iterator = chunksWaitingForPropagation.iterator();
             int minDistance = Integer.MAX_VALUE;
@@ -259,22 +251,28 @@ public class ColoredLightEngine {
             while (iterator.hasNext()) {
                 ChunkPos chunkPos = iterator.next();
                 if(!isChunkAndNeighboursPresent(level, chunkPos)) continue; // chunk and neighbours must have available block state data
-                int distance = chunkPos.getChessboardDistance(playerAccessor.getChunkPos());
+                int distance = chunkPos.getChessboardDistance(player.getChunkPos());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestChunkPos = chunkPos;
                 }
             }
-            if(nearestChunkPos == null) return false;
-            // remove chunk from queue
-            chunksWaitingForPropagation.remove(nearestChunkPos);
+            return nearestChunkPos == null ? null : new Pair<>(nearestChunkPos, minDistance * 16);
+        }
 
-            // find light sources and request their propagation
-            level.findLightSources(nearestChunkPos, (blockPos -> {
-                newChunkIncreaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
-            }));
-            newChunkPosition = nearestChunkPos;
-            return true;
+        private Pair<BlockUpdateRequestGroup, Integer> findNearestBlockUpdate(PlayerAccessor player) {
+            var iterator = blockLightUpdates.iterator();
+            int minDistance = Integer.MAX_VALUE;
+            BlockUpdateRequestGroup closestGroup = null;
+            while(iterator.hasNext()) {
+                var element = iterator.next();
+                int distance = element.origin.distManhattan(player.getBlockPos());
+                if(distance < minDistance){
+                    minDistance = distance;
+                    closestGroup = element;
+                }
+            }
+            return closestGroup == null ? null : new Pair<>(closestGroup, minDistance);
         }
 
         private void pullLightChanges() {
@@ -299,12 +297,10 @@ public class ColoredLightEngine {
         }
         private void pushLightChangesDirectly() {
             for (Map.Entry<BlockPos, ColorRGB4> entry : lightChangesInProgress.entrySet()) {
-                //storage.setEntry(entry.getKey(), entry.getValue());
                 storage.setEntryUnsafe(entry.getKey(), entry.getValue());
                 synchronized (dirtySections) {
                     SectionPos.aroundAndAtBlockPos(entry.getKey(), dirtySections::add);
                 }
-                //dirtySections.add(SectionPos.asLong(entry.getKey()));
             }
             lightChangesInProgress.clear();
         }
@@ -312,41 +308,34 @@ public class ColoredLightEngine {
         private void executePropagationRequests() {
             LevelAccessor level = clientAccessor.getLevel();
             if(level == null) return;
-            PlayerAccessor playerAccessor = clientAccessor.getPlayer();
-            if(playerAccessor == null) return;
+            PlayerAccessor player = clientAccessor.getPlayer();
+            if(player == null) return;
 
             // handle increase and decrease requests
-            if(blockLightUpdates.isEmpty() && newChunkIncreaseRequests.isEmpty()) return;
-            var iterator = blockLightUpdates.iterator();
-            int minDistance = Integer.MAX_VALUE;
-            BlockUpdateRequestGroup closestGroup = null;
-            while(iterator.hasNext()) {
-                var element = iterator.next();
-                int distance = element.origin.distManhattan(playerAccessor.getBlockPos());
-                if(distance < minDistance){
-                    minDistance = distance;
-                    closestGroup = element;
-                }
-            }
-            if(closestGroup != null) {
-                long section = SectionPos.asLong(closestGroup.origin);
-                if(viewArea.contains(SectionPos.x(section), SectionPos.z(section))) {
-                    if(newChunkPosition == null || minDistance < newChunkPosition.getChessboardDistance(playerAccessor.getChunkPos())) {
-                        blockLightUpdates.remove(closestGroup);
-                        propagateDecreases(closestGroup.decreaseRequests, closestGroup.increaseRequests);
-                        propagateIncreases(closestGroup.increaseRequests);
+            if(blockLightUpdates.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
+            var nearestChunkResult = findNearestChunk(level, player);
+            var nearestBlockUpdateResult = findNearestBlockUpdate(player);
 
-                        pushLightChanges();
-                        return;
-                    }
-                }
-                else {
-                    blockLightUpdates.remove(closestGroup);
-                }
+            if(nearestChunkResult != null && (nearestBlockUpdateResult == null || nearestChunkResult.getB() < nearestBlockUpdateResult.getB())) {
+                ChunkPos chunkPos = nearestChunkResult.getA();
+                // remove chunk from queue
+                chunksWaitingForPropagation.remove(chunkPos);
+
+                // find light sources and request their propagation
+                level.findLightSources(chunkPos, (blockPos -> {
+                    newChunkIncreaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
+                }));
+                propagateIncreases(newChunkIncreaseRequests);
+                pushLightChangesDirectly();
             }
-            propagateIncreases(newChunkIncreaseRequests);
-            newChunkPosition = null;
-            pushLightChangesDirectly();
+            else if(nearestBlockUpdateResult != null) {
+                BlockUpdateRequestGroup group = nearestBlockUpdateResult.getA();
+                blockLightUpdates.remove(group);
+                propagateDecreases(group.decreaseRequests, group.increaseRequests);
+                propagateIncreases(group.increaseRequests);
+
+                pushLightChanges();
+            }
         }
 
         /**
