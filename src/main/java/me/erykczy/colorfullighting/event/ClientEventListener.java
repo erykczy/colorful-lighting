@@ -52,6 +52,6 @@ public class ClientEventListener {
     @SubscribeEvent
     private void onLevelUnload(LevelEvent.Unload event) {
         if(!event.getLevel().isClientSide()) return;
-        ColoredLightEngine.getInstance().resetLightPropagator();
+        ColoredLightEngine.getInstance().reset();
     }
 }

@@ -1,7 +1,15 @@
 package me.erykczy.colorfullighting.common;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+
 import java.util.Objects;
 
+/// View area is a rectangular area of chunks.
+/// It consists of inner chunks and a border (of 1 chunk thickness).
+/// Inner chunks actively receive propagation requests.
+/// Border chunks are not updated but contain light data.
+/// Such a division exists because full propagation of light source's light needs light source's chunk and neighbouring chunks.
 public class ViewArea {
     public int minX;
     public int minZ;
@@ -31,6 +39,9 @@ public class ViewArea {
     }
     public boolean containsInner(int x, int z) {
         return x > this.minX && x < this.maxX && z > this.minZ && z < this.maxZ;
+    }
+    public boolean containsBlockInner(BlockPos pos) {
+        return containsInner(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
     }
 
     @Override
