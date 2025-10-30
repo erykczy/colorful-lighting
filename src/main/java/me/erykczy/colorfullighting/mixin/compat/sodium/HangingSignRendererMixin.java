@@ -5,6 +5,7 @@ import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.TintingBufferSource;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.HangingSignRenderer;
 import net.minecraft.client.renderer.blockentity.SignRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
@@ -15,8 +16,8 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(SignRenderer.class)
-public abstract class SignRendererMixin {
+@Mixin(HangingSignRenderer.class)
+public abstract class HangingSignRendererMixin {
 
     @Unique
     private static float[] cl$mulFromPos(BlockPos pos) {
@@ -33,7 +34,6 @@ public abstract class SignRendererMixin {
         return new float[]{mr, mg, mb};
     }
 
-    // render(SignBlockEntity, float, PoseStack, MultiBufferSource, int, int)
     @ModifyVariable(
             method = "render(Lnet/minecraft/world/level/block/entity/SignBlockEntity;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V",
             at = @At("HEAD"),
@@ -53,29 +53,6 @@ public abstract class SignRendererMixin {
     )
     private MultiBufferSource cl$wrapBuffers_render_i4(MultiBufferSource original, SignBlockEntity be, float pt, PoseStack pose) {
         float[] m = (be != null) ? cl$mulFromPos(be.getBlockPos()) : null;
-        return m != null ? new TintingBufferSource(original, m[0], m[1], m[2]) : original;
-    }
-
-    // renderSignText(BlockPos, SignText, PoseStack, MultiBufferSource, int, int, int, boolean)
-    @ModifyVariable(
-            method = "renderSignText(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V",
-            at = @At("HEAD"),
-            argsOnly = true,
-            index = 4
-    )
-    private MultiBufferSource cl$wrapBuffers_text_i3(MultiBufferSource original, BlockPos pos, SignText text, PoseStack pose) {
-        float[] m = cl$mulFromPos(pos);
-        return m != null ? new TintingBufferSource(original, m[0], m[1], m[2]) : original;
-    }
-
-    @ModifyVariable(
-            method = "renderSignText(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/SignText;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;IIIZ)V",
-            at = @At("HEAD"),
-            argsOnly = true,
-            index = 4
-    )
-    private MultiBufferSource cl$wrapBuffers_text_i4(MultiBufferSource original, BlockPos pos, SignText text, PoseStack pose) {
-        float[] m = cl$mulFromPos(pos);
         return m != null ? new TintingBufferSource(original, m[0], m[1], m[2]) : original;
     }
 }

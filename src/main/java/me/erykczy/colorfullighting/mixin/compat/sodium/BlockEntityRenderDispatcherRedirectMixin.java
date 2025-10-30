@@ -16,6 +16,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
@@ -51,7 +53,7 @@ public abstract class BlockEntityRenderDispatcherRedirectMixin {
             int packedLight, int overlay
     ) {
         var engine = ColoredLightEngine.getInstance();
-        if (!cl$skip() || be == null || be.getLevel() == null || engine == null) {
+        if (!cl$skip() || be == null || be.getLevel() == null || engine == null || be instanceof SignBlockEntity || be instanceof SkullBlockEntity) {
             renderer.render(be, pt, pose, buffers, packedLight, overlay);
             return;
         }
