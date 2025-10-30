@@ -31,8 +31,7 @@ public class ColoredLightEngine {
     private ColoredLightStorage storage = new ColoredLightStorage();
     private ViewArea viewArea = new ViewArea();
     private final Set<Long> dirtySections = new HashSet<>();
-    private final ConcurrentLinkedQueue<LightUpdateRequest> newChunkIncreaseRequests = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<BlockUpdateRequestGroup> blockLightUpdates = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<BlockPos> blocksWaitingForUpdate = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
@@ -99,7 +98,7 @@ public class ColoredLightEngine {
 
         // unload sections
         // remove propagation requests which are not in newArea's inner area
-        blockLightUpdates.removeIf(group -> !newArea.containsBlockInner(group.origin));
+        blocksWaitingForUpdate.removeIf(blockPos -> !newArea.containsBlockInner(blockPos));
         chunksWaitingForPropagation.removeIf(chunkPos -> !newArea.containsInner(chunkPos.x, chunkPos.z));
         // remove sections from storage
         for(int x = viewArea.minX; x <= viewArea.maxX; ++x) {
@@ -150,32 +149,9 @@ public class ColoredLightEngine {
         // as full propagation needs light source's chunk and neighbours
         if(!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
 
-        BlockUpdateRequestGroup requestGroup = new BlockUpdateRequestGroup(blockPos);
-
-        ColorRGB4 lightColor = lightPropagator.getLatestLightColor(blockPos);
-        assert lightColor != null;
-        if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
-            requestLightPullIn(requestGroup, blockPos);  // block probably destroyed/replaced, light pull in might be needed
-        else
-            requestGroup.decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced, light might need to be decreased
-
-        // propagate light if new blockState emits light
-        if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
-            requestGroup.increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
-
-        blockLightUpdates.add(requestGroup);
+        blocksWaitingForUpdate.add(blockPos);
     }
-    private void requestLightPullIn(BlockUpdateRequestGroup group, BlockPos blockPos) {
-        for(var direction : Direction.values()) {
-            BlockPos neighbourPos = blockPos.relative(direction);
-            ColorRGB4 neighbourLight = lightPropagator.getLatestLightColor(neighbourPos);
-            if(neighbourLight == null) continue;
 
-            // if neighbour doesn't have any light
-            if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
-            group.increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true));
-        }
-    }
     public void onLightUpdate() {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
@@ -203,8 +179,7 @@ public class ColoredLightEngine {
         storage.clear();
         viewArea = new ViewArea();
         dirtySections.clear();
-        newChunkIncreaseRequests.clear();
-        blockLightUpdates.clear();
+        blocksWaitingForUpdate.clear();
         chunksWaitingForPropagation.clear();
         lightPropagator = new LightPropagator();
         lightPropagatorThread = new Thread(lightPropagator);
@@ -260,19 +235,19 @@ public class ColoredLightEngine {
             return nearestChunkPos == null ? null : new Pair<>(nearestChunkPos, minDistance * 16);
         }
 
-        private Pair<BlockUpdateRequestGroup, Integer> findNearestBlockUpdate(PlayerAccessor player) {
-            var iterator = blockLightUpdates.iterator();
+        private Pair<BlockPos, Integer> findNearestBlockUpdate(PlayerAccessor player) {
+            var iterator = blocksWaitingForUpdate.iterator();
             int minDistance = Integer.MAX_VALUE;
-            BlockUpdateRequestGroup closestGroup = null;
+            BlockPos closestBlock = null;
             while(iterator.hasNext()) {
                 var element = iterator.next();
-                int distance = element.origin.distManhattan(player.getBlockPos());
+                int distance = element.distManhattan(player.getBlockPos());
                 if(distance < minDistance){
                     minDistance = distance;
-                    closestGroup = element;
+                    closestBlock = element;
                 }
             }
-            return closestGroup == null ? null : new Pair<>(closestGroup, minDistance);
+            return closestBlock == null ? null : new Pair<>(closestBlock, minDistance);
         }
 
         private void pullLightChanges() {
@@ -312,7 +287,7 @@ public class ColoredLightEngine {
             if(player == null) return;
 
             // handle increase and decrease requests
-            if(blockLightUpdates.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
+            if(blocksWaitingForUpdate.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
             var nearestChunkResult = findNearestChunk(level, player);
             var nearestBlockUpdateResult = findNearestBlockUpdate(player);
 
@@ -321,20 +296,48 @@ public class ColoredLightEngine {
                 // remove chunk from queue
                 chunksWaitingForPropagation.remove(chunkPos);
 
+                Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
                 // find light sources and request their propagation
                 level.findLightSources(chunkPos, (blockPos -> {
-                    newChunkIncreaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
+                    increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
                 }));
-                propagateIncreases(newChunkIncreaseRequests);
+                propagateIncreases(increaseRequests);
                 pushLightChangesDirectly();
             }
             else if(nearestBlockUpdateResult != null) {
-                BlockUpdateRequestGroup group = nearestBlockUpdateResult.getA();
-                blockLightUpdates.remove(group);
-                propagateDecreases(group.decreaseRequests, group.increaseRequests);
-                propagateIncreases(group.increaseRequests);
+                BlockPos blockPos = nearestBlockUpdateResult.getA();
+                blocksWaitingForUpdate.remove(blockPos);
+                Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
+                Queue<LightUpdateRequest> decreaseRequests = new LinkedList<>();
+                handleBlockUpdate(level, increaseRequests, decreaseRequests, blockPos);
+                propagateDecreases(decreaseRequests, increaseRequests);
+                propagateIncreases(increaseRequests);
 
                 pushLightChanges();
+            }
+        }
+
+        private void handleBlockUpdate(LevelAccessor level, Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
+            ColorRGB4 lightColor = getLatestLightColor(blockPos);
+            assert lightColor != null;
+            if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
+                requestLightPullIn(increaseRequests, decreaseRequests, blockPos);  // block probably destroyed/replaced, light pull in might be needed
+            else
+                decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced, light might need to be decreased
+
+            // propagate light if new blockState emits light
+            if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
+                increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
+        }
+        private void requestLightPullIn(Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
+            for(var direction : Direction.values()) {
+                BlockPos neighbourPos = blockPos.relative(direction);
+                ColorRGB4 neighbourLight = lightPropagator.getLatestLightColor(neighbourPos);
+                if(neighbourLight == null) continue;
+
+                // if neighbour doesn't have any light
+                if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
+                increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true));
             }
         }
 
@@ -450,13 +453,5 @@ public class ColoredLightEngine {
             this.lightColor = lightColor;
             this.force = force;
         }
-    }
-
-    private static class BlockUpdateRequestGroup {
-        public BlockPos origin;
-        public ConcurrentLinkedQueue<LightUpdateRequest> increaseRequests = new ConcurrentLinkedQueue<>();
-        public ConcurrentLinkedQueue<LightUpdateRequest> decreaseRequests = new ConcurrentLinkedQueue<>();
-
-        public BlockUpdateRequestGroup(BlockPos originSection) { this.origin = originSection; }
     }
 }
