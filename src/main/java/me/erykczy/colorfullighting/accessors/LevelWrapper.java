@@ -48,6 +48,18 @@ public class LevelWrapper implements LevelAccessor {
     }
 
     @Override
+    public boolean hasChunkAndNeighbours(ChunkPos chunkPos) {
+        for(int ox = -1; ox <= 1; ++ox) {
+            for(int oz = -1; oz <= 1; ++oz) {
+                if(!hasChunk(new ChunkPos(chunkPos.x+ox, chunkPos.z+oz))) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
     public void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer) {
         ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
         chunk.findBlocks(

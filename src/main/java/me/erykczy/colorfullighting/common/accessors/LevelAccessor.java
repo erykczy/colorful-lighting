@@ -11,6 +11,7 @@ public interface LevelAccessor {
     int getMinSectionY();
     int getMaxSectionY();
     boolean hasChunk(ChunkPos chunkPos);
+    boolean hasChunkAndNeighbours(ChunkPos chunkPos);
     void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer);
     @Nullable
     BlockStateAccessor getBlockState(BlockPos pos);

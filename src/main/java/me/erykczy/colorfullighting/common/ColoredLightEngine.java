@@ -12,7 +12,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
-import oshi.util.tuples.Pair;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,9 +21,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Class responsible for managing light color values in the client's world and sampling those values.
- * It propagates increases (e.g. new light source has been placed)
- * It propagates decreases (e.g. light source has been destroyed, solid block has been placed in the path of light)
- * It has a thread that finds light sources on newly loaded chunks and requests light propagation
+ * Most work is delegated to LightPropagator thread.
  */
 public class ColoredLightEngine {
     public ClientAccessor clientAccessor;
@@ -75,21 +72,17 @@ public class ColoredLightEngine {
         double y = (pos.y - (double) cornerY) / 2.0;
         double z = (pos.z - (double) cornerZ) / 2.0;
 
-        ColorRGB8 c00 = linearInterpolation(c000, c100, x);
-        ColorRGB8 c01 = linearInterpolation(c001, c101, x);
-        ColorRGB8 c11 = linearInterpolation(c011, c111, x);
-        ColorRGB8 c10 = linearInterpolation(c010, c110, x);
+        ColorRGB8 c00 = ColorRGB8.linearInterpolation(c000, c100, x);
+        ColorRGB8 c01 = ColorRGB8.linearInterpolation(c001, c101, x);
+        ColorRGB8 c11 = ColorRGB8.linearInterpolation(c011, c111, x);
+        ColorRGB8 c10 = ColorRGB8.linearInterpolation(c010, c110, x);
 
-        ColorRGB8 c0 = linearInterpolation(c00, c10, y);
-        ColorRGB8 c1 = linearInterpolation(c01, c11, y);
+        ColorRGB8 c0 = ColorRGB8.linearInterpolation(c00, c10, y);
+        ColorRGB8 c1 = ColorRGB8.linearInterpolation(c01, c11, y);
 
-        return linearInterpolation(c0, c1, z);
+        return ColorRGB8.linearInterpolation(c0, c1, z);
     }
-    private ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
-        if(a.isZero()) return b;
-        if(b.isZero()) return a;
-        return a.mul(1.0 - x).add(b.mul(x));
-    }
+
 
     public void updateViewArea(ViewArea newArea) {
         LevelAccessor level = clientAccessor.getLevel();
@@ -129,17 +122,6 @@ public class ColoredLightEngine {
         viewArea = newArea;
     }
 
-    private boolean isChunkAndNeighboursPresent(LevelAccessor level, ChunkPos chunkPos) {
-        for(int ox = -1; ox <= 1; ++ox) {
-            for(int oz = -1; oz <= 1; ++oz) {
-                if(!level.hasChunk(new ChunkPos(chunkPos.x+ox, chunkPos.z+oz))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     public void onBlockLightPropertiesChanged(BlockPos blockPos) {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
@@ -156,7 +138,7 @@ public class ColoredLightEngine {
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
 
-        lightPropagator.pullLightChanges();
+        lightPropagator.applyReadyLightChanges();
 
         // set all modified sections dirty
         synchronized (dirtySections) {
@@ -187,21 +169,23 @@ public class ColoredLightEngine {
         ColorfulLighting.LOGGER.info("Colored light engine reset");
     }
 
+    /// LightPropagator calculates and makes changes to light values. It runs on another thread to avoid lag on the main thread.
+    /// It propagates increases (increases of light values, e.g. new light source has been placed).
+    /// It propagates decreases (decreases of light values, e.g. light source has been destroyed, solid block has been placed in the path of light).
     private class LightPropagator implements Runnable {
+        /// light changes that are not yet ready to be visible on main thread (this is to avoid flickering of light)
         private ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesInProgress = new ConcurrentHashMap<>();
+        /// light changes ready to be visible on main thread
         private final ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesReady = new ConcurrentHashMap<>();
         private final Lock lightChangesReadyLock = new ReentrantLock();
         private volatile boolean running;
-
-        public void stop() {
-            running = false;
-        }
 
         @Override
         public void run() {
             running = true;
             while (running) {
                 executePropagationRequests();
+
                 try {
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
@@ -210,7 +194,11 @@ public class ColoredLightEngine {
             }
         }
 
-        private void setLightColorInProgress(BlockPos blockPos, ColorRGB4 color) {
+        public void stop() {
+            running = false;
+        }
+
+        private void addLightColorChange(BlockPos blockPos, ColorRGB4 color) {
             lightChangesInProgress.put(blockPos, color);
         }
 
@@ -218,24 +206,26 @@ public class ColoredLightEngine {
             return lightChangesInProgress.getOrDefault(blockPos, lightChangesReady.getOrDefault(blockPos, storage.getEntry(blockPos)));
         }
 
-        private Pair<ChunkPos, Integer> findNearestChunk(LevelAccessor level, PlayerAccessor player) {
+        private record NearestChunkResult(ChunkPos chunkPos, int distanceBlocks) {}
+        private NearestChunkResult getNearestWaitingChunk(LevelAccessor level, PlayerAccessor player) {
             // find chunk nearest player
             var iterator = chunksWaitingForPropagation.iterator();
             int minDistance = Integer.MAX_VALUE;
             ChunkPos nearestChunkPos = null;
             while (iterator.hasNext()) {
                 ChunkPos chunkPos = iterator.next();
-                if(!isChunkAndNeighboursPresent(level, chunkPos)) continue; // chunk and neighbours must have available block state data
+                if(!level.hasChunkAndNeighbours(chunkPos)) continue; // chunk and neighbours must have available block state data
                 int distance = chunkPos.getChessboardDistance(player.getChunkPos());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestChunkPos = chunkPos;
                 }
             }
-            return nearestChunkPos == null ? null : new Pair<>(nearestChunkPos, minDistance * 16);
+            return nearestChunkPos == null ? null : new NearestChunkResult(nearestChunkPos, minDistance * 16); // distanceBlocks is in blocks
         }
 
-        private Pair<BlockPos, Integer> findNearestBlockUpdate(PlayerAccessor player) {
+        private record NearestBlockUpdateResult(BlockPos blockPos, int distanceBlocks) {}
+        private NearestBlockUpdateResult getNearestWaitingBlockUpdate(PlayerAccessor player) {
             var iterator = blocksWaitingForUpdate.iterator();
             int minDistance = Integer.MAX_VALUE;
             BlockPos closestBlock = null;
@@ -247,31 +237,33 @@ public class ColoredLightEngine {
                     closestBlock = element;
                 }
             }
-            return closestBlock == null ? null : new Pair<>(closestBlock, minDistance);
+            return closestBlock == null ? null : new NearestBlockUpdateResult(closestBlock, minDistance);
         }
 
-        private void pullLightChanges() {
+        /// apply ready light changes to storage
+        private void applyReadyLightChanges() {
             lightChangesReadyLock.lock();
-            var it = lightChangesReady.entrySet().iterator();
             synchronized (dirtySections) {
-                while(it.hasNext()) {
-                    var entry = it.next();
+                for (var entry : lightChangesReady.entrySet()) {
                     storage.setEntryUnsafe(entry.getKey(), entry.getValue());
                     SectionPos.aroundAndAtBlockPos(entry.getKey(), dirtySections::add);
-                    it.remove();
                 }
+                lightChangesReady.clear();
             }
             lightChangesReadyLock.unlock();
         }
 
-        private void pushLightChanges() {
+        /// move light changes in progress to collection of ready light changes
+        private void markLightChangesReady() {
             lightChangesReadyLock.lock();
             lightChangesReady.putAll(lightChangesInProgress);
             lightChangesReadyLock.unlock();
             lightChangesInProgress = new ConcurrentHashMap<>();
         }
-        private void pushLightChangesDirectly() {
-            for (Map.Entry<BlockPos, ColorRGB4> entry : lightChangesInProgress.entrySet()) {
+
+        /// apply light changes in progress directly to storage
+        private void applyLightChangesDirectly() {
+            for (var entry : lightChangesInProgress.entrySet()) {
                 storage.setEntryUnsafe(entry.getKey(), entry.getValue());
                 synchronized (dirtySections) {
                     SectionPos.aroundAndAtBlockPos(entry.getKey(), dirtySections::add);
@@ -280,20 +272,20 @@ public class ColoredLightEngine {
             lightChangesInProgress.clear();
         }
 
+        /// propagate light in chunks and handle block light updates
         private void executePropagationRequests() {
             LevelAccessor level = clientAccessor.getLevel();
             if(level == null) return;
             PlayerAccessor player = clientAccessor.getPlayer();
             if(player == null) return;
 
-            // handle increase and decrease requests
             if(blocksWaitingForUpdate.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
-            var nearestChunkResult = findNearestChunk(level, player);
-            var nearestBlockUpdateResult = findNearestBlockUpdate(player);
+            var nearestChunkResult = getNearestWaitingChunk(level, player);
+            var nearestBlockUpdateResult = getNearestWaitingBlockUpdate(player);
 
-            if(nearestChunkResult != null && (nearestBlockUpdateResult == null || nearestChunkResult.getB() < nearestBlockUpdateResult.getB())) {
-                ChunkPos chunkPos = nearestChunkResult.getA();
-                // remove chunk from queue
+            if(nearestChunkResult != null && (nearestBlockUpdateResult == null || nearestChunkResult.distanceBlocks() < nearestBlockUpdateResult.distanceBlocks())) {
+                // propagate chunk
+                ChunkPos chunkPos = nearestChunkResult.chunkPos();
                 chunksWaitingForPropagation.remove(chunkPos);
 
                 Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
@@ -301,19 +293,21 @@ public class ColoredLightEngine {
                 level.findLightSources(chunkPos, (blockPos -> {
                     increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
                 }));
-                propagateIncreases(increaseRequests);
-                pushLightChangesDirectly();
+                propagateIncreases(level, increaseRequests);
+                // new chunks' light propagation is not synchronized with main thread
+                applyLightChangesDirectly();
             }
             else if(nearestBlockUpdateResult != null) {
-                BlockPos blockPos = nearestBlockUpdateResult.getA();
+                // propagate block update
+                BlockPos blockPos = nearestBlockUpdateResult.blockPos();
                 blocksWaitingForUpdate.remove(blockPos);
                 Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
                 Queue<LightUpdateRequest> decreaseRequests = new LinkedList<>();
                 handleBlockUpdate(level, increaseRequests, decreaseRequests, blockPos);
-                propagateDecreases(decreaseRequests, increaseRequests);
-                propagateIncreases(increaseRequests);
+                propagateDecreases(level, decreaseRequests, increaseRequests);
+                propagateIncreases(level, increaseRequests);
 
-                pushLightChanges();
+                markLightChangesReady();
             }
         }
 
@@ -321,21 +315,20 @@ public class ColoredLightEngine {
             ColorRGB4 lightColor = getLatestLightColor(blockPos);
             assert lightColor != null;
             if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
-                requestLightPullIn(increaseRequests, decreaseRequests, blockPos);  // block probably destroyed/replaced, light pull in might be needed
+                requestLightPullIn(increaseRequests, blockPos);  // block probably destroyed/replaced with transparent, light pull in might be needed
             else
-                decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced, light might need to be decreased
+                decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced with non-transparent, light might need to be decreased
 
             // propagate light if new blockState emits light
             if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
                 increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
         }
-        private void requestLightPullIn(Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
+        private void requestLightPullIn(Queue<LightUpdateRequest> increaseRequests, BlockPos blockPos) {
             for(var direction : Direction.values()) {
                 BlockPos neighbourPos = blockPos.relative(direction);
-                ColorRGB4 neighbourLight = lightPropagator.getLatestLightColor(neighbourPos);
+                ColorRGB4 neighbourLight = getLatestLightColor(neighbourPos);
                 if(neighbourLight == null) continue;
 
-                // if neighbour doesn't have any light
                 if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
                 increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true));
             }
@@ -344,8 +337,7 @@ public class ColoredLightEngine {
         /**
          * Handles all increase propagation requests.
          */
-        private void propagateIncreases(Queue<LightUpdateRequest> requests) {
-            LevelAccessor level = clientAccessor.getLevel();
+        private void propagateIncreases(LevelAccessor level, Queue<LightUpdateRequest> requests) {
             while(!requests.isEmpty()) {
                 propagateIncrease(requests, requests.poll(), level);
             }
@@ -362,7 +354,7 @@ public class ColoredLightEngine {
 
             // if light color didn't change (check is ignored if request is forced)
             if(!request.force && newLightColor.red4 == oldLightColor.red4 && newLightColor.green4 == oldLightColor.green4 && newLightColor.blue4 == oldLightColor.blue4) return true;
-            setLightColorInProgress(request.blockPos, newLightColor);
+            addLightColorChange(request.blockPos, newLightColor);
 
             for(var direction : Direction.values()) {
                 BlockPos neighbourPos = request.blockPos.relative(direction);
@@ -389,8 +381,7 @@ public class ColoredLightEngine {
         /**
          * Handles all decrease propagation requests.
          */
-        private void propagateDecreases(Queue<LightUpdateRequest> decreaseRequests, Queue<LightUpdateRequest> increaseRequests) {
-            LevelAccessor level = clientAccessor.getLevel();
+        private void propagateDecreases(LevelAccessor level, Queue<LightUpdateRequest> decreaseRequests, Queue<LightUpdateRequest> increaseRequests) {
             while(!decreaseRequests.isEmpty()) {
                 propagateDecrease(increaseRequests, decreaseRequests, decreaseRequests.poll(), level);
             }
@@ -402,7 +393,7 @@ public class ColoredLightEngine {
 
             // if light color didn't change (check is ignored if request is forced)
             if(!request.force && oldLightColor.red4 == 0 && oldLightColor.green4 == 0 && oldLightColor.blue4 == 0) return true;
-            setLightColorInProgress(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
+            addLightColorChange(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
 
             BlockStateAccessor blockState = level.getBlockState(request.blockPos);
             if(blockState == null) return false; // section might have got unloaded and propagation should stop
