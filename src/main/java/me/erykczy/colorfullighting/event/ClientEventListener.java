@@ -13,18 +13,6 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 
 public class ClientEventListener {
-    /*@SubscribeEvent
-    private void onChunkLoad(ChunkEvent.Load event) {
-        if(!event.getLevel().isClientSide()) return;
-        ColoredLightEngine.getInstance().onChunkLoad(event.getChunk().getPos());
-    }
-
-    @SubscribeEvent
-    private void onChunkUnload(ChunkEvent.Unload event) {
-        if(!event.getLevel().isClientSide()) return;
-        ColoredLightEngine.getInstance().onChunkUnload(event.getChunk().getPos());
-    }*/
-
     @SubscribeEvent
     private void onTick(ClientTickEvent.Post event) {
         var player = ColorfulLighting.clientAccessor.getPlayer();
@@ -37,15 +25,6 @@ public class ClientEventListener {
                 pos.x + renderDistance,
                 pos.z + renderDistance
         );
-        // TODO
-        if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_G)) {
-            ColorfulLighting.clientAccessor.getLevel().setSectionDirty(player.getChunkPos().x, SectionPos.blockToSectionCoord(Minecraft.getInstance().player.position().y), player.getChunkPos().z);
-        }
-        if(InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), InputConstants.KEY_H)) {
-            var pl = Minecraft.getInstance().player;
-            var color = ColoredLightEngine.getInstance().sampleLightColor(pl.blockPosition().below());
-            pl.sendSystemMessage(Component.literal("color: " + color.red4 + ", " + color.green4 + ", " + color.blue4));
-        }
         ColoredLightEngine.getInstance().updateViewArea(viewArea);
     }
 

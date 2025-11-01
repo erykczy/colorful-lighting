@@ -24,12 +24,12 @@ import java.util.concurrent.locks.ReentrantLock;
  * Most work is delegated to LightPropagator thread.
  */
 public class ColoredLightEngine {
-    public ClientAccessor clientAccessor;
+    private ClientAccessor clientAccessor;
     private ColoredLightStorage storage = new ColoredLightStorage();
     private ViewArea viewArea = new ViewArea();
-    private final Set<Long> dirtySections = new HashSet<>();
     private final ConcurrentLinkedQueue<BlockPos> blocksWaitingForUpdate = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
+    private final Set<Long> dirtySections = new HashSet<>();
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
 
@@ -127,8 +127,8 @@ public class ColoredLightEngine {
         if(level == null) return;
 
         SectionPos sectionPos = SectionPos.of(blockPos);
-        // light should be propagated only in inner chunks
-        // as full propagation needs light source's chunk and neighbours
+        // light should be propagated only in inner chunks as
+        // full propagation needs light source's chunk and neighbours
         if(!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
 
         blocksWaitingForUpdate.add(blockPos);
@@ -149,6 +149,7 @@ public class ColoredLightEngine {
             dirtySections.clear();
         }
     }
+
     public void reset() {
         if(lightPropagator != null) {
             lightPropagator.stop();
@@ -169,13 +170,20 @@ public class ColoredLightEngine {
         ColorfulLighting.LOGGER.info("Colored light engine reset");
     }
 
-    /// LightPropagator calculates and makes changes to light values. It runs on another thread to avoid lag on the main thread.
-    /// It propagates increases (increases of light values, e.g. new light source has been placed).
-    /// It propagates decreases (decreases of light values, e.g. light source has been destroyed, solid block has been placed in the path of light).
+    /**
+     * LightPropagator calculates changes to light values. It runs on another thread to avoid lag on the main thread.
+     * It propagates increases (increases of light values, e.g. new light source has been placed).
+     * It propagates decreases (decreases of light values, e.g. light source has been destroyed, solid block has been placed in the path of light).
+     * Changes caused by block updates are applied on the main thread to avoid light flickering
+     */
     private class LightPropagator implements Runnable {
-        /// light changes that are not yet ready to be visible on main thread (this is to avoid flickering of light)
+        /**
+         * light changes that are not yet ready to be visible on main thread
+         */
         private ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesInProgress = new ConcurrentHashMap<>();
-        /// light changes ready to be visible on main thread
+        /**
+         * light changes ready to be visible on main thread
+         */
         private final ConcurrentHashMap<BlockPos, ColorRGB4> lightChangesReady = new ConcurrentHashMap<>();
         private final Lock lightChangesReadyLock = new ReentrantLock();
         private volatile boolean running;
@@ -184,7 +192,7 @@ public class ColoredLightEngine {
         public void run() {
             running = true;
             while (running) {
-                executePropagationRequests();
+                propagateLight();
 
                 try {
                     Thread.sleep(1);
@@ -240,7 +248,9 @@ public class ColoredLightEngine {
             return closestBlock == null ? null : new NearestBlockUpdateResult(closestBlock, minDistance);
         }
 
-        /// apply ready light changes to storage
+        /**
+         * apply ready light changes to storage
+         */
         private void applyReadyLightChanges() {
             lightChangesReadyLock.lock();
             synchronized (dirtySections) {
@@ -253,7 +263,9 @@ public class ColoredLightEngine {
             lightChangesReadyLock.unlock();
         }
 
-        /// move light changes in progress to collection of ready light changes
+        /**
+         * move light changes in progress to collection of ready light changes
+         */
         private void markLightChangesReady() {
             lightChangesReadyLock.lock();
             lightChangesReady.putAll(lightChangesInProgress);
@@ -261,7 +273,9 @@ public class ColoredLightEngine {
             lightChangesInProgress = new ConcurrentHashMap<>();
         }
 
-        /// apply light changes in progress directly to storage
+        /**
+         * apply light changes in progress directly to storage
+         */
         private void applyLightChangesDirectly() {
             for (var entry : lightChangesInProgress.entrySet()) {
                 storage.setEntryUnsafe(entry.getKey(), entry.getValue());
@@ -272,8 +286,10 @@ public class ColoredLightEngine {
             lightChangesInProgress.clear();
         }
 
-        /// propagate light in chunks and handle block light updates
-        private void executePropagationRequests() {
+        /**
+         * propagate light in the nearest waiting chunk, handle the nearest block light update
+         */
+        private void propagateLight() {
             LevelAccessor level = clientAccessor.getLevel();
             if(level == null) return;
             PlayerAccessor player = clientAccessor.getPlayer();

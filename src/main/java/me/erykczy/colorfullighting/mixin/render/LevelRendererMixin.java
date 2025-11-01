@@ -1,5 +1,6 @@
 package me.erykczy.colorfullighting.mixin.render;
 
+import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.accessors.BlockStateWrapper;
 import me.erykczy.colorfullighting.accessors.LevelWrapper;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
@@ -25,15 +26,14 @@ public class LevelRendererMixin {
     private static void colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
         if(state.emissiveRendering(level, pos)) {
-            LevelAccessor levelAccessor = ColoredLightEngine.getInstance().clientAccessor.getLevel();
-            BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
-            if(levelAccessor != null) {
-                var emission = Config.getLightColor(stateAccessor);
-                cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(emission)));
+            LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
+            if(levelAccessor == null) {
+                cir.setReturnValue(PackedLightData.packData(15, 255, 255, 255));
                 return;
             }
-            cir.setReturnValue(PackedLightData.packData(15, 255, 255, 255));
-            return;
+            BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
+            var emission = Config.getLightColor(stateAccessor);
+            cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(emission)));
         }
 
         ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
