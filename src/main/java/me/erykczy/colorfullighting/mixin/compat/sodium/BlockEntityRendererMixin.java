@@ -17,15 +17,10 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(BlockEntityRenderer.class)
 public interface BlockEntityRendererMixin extends CLRendererExtension {
 
-    @Unique
-    private static boolean colorfullighting$hasIncompatiblePipeline() {
-        return ModList.get().isLoaded("embeddium");
-    }
-
     @Override
     default void colorfullighting$render(BlockEntity be, float pt, PoseStack ps, MultiBufferSource bs,
                                          int packedLight, int overlay) {
-        if (colorfullighting$hasIncompatiblePipeline() || be == null || be.getLevel() == null) {
+        if (ModList.get().isLoaded("embeddium") || be == null || be.getLevel() == null) {
             @SuppressWarnings("unchecked")
             BlockEntityRenderer<BlockEntity> self = (BlockEntityRenderer<BlockEntity>) (Object) this;
             self.render(be, pt, ps, bs, packedLight, overlay);

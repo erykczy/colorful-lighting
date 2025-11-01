@@ -105,12 +105,22 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name = 'GeckoLib'
+        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        content {
+            includeGroupByRegex("software\\.bernie.*")
+            includeGroup("com.eliotlash.mclib")
+        }
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf("curse.maven:embeddium-908741:5681725")
+    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.8.2")
+    implementation("com.eliotlash.mclib:mclib:20")
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -132,6 +142,17 @@ tasks.named('processResources', ProcessResources).configure {
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand replaceProperties + [project: project]
     }
+
+    filesMatching("**/colorful_lighting.mixins.json") {
+        // if you use ${refmap} placeholder, otherwise keep the static name above
+        expand("refmap": "colorful_lighting.refmap.json")
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += [
+            "-AoutRefMap=${buildDir}/resources/main/colorful_lighting.refmap.json"
+    ]
 }
 
 mixin {

@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
+import software.bernie.geckolib.GeckoLib;
 
 @Mod(value = ColorfulLighting.MOD_ID)
 public class ColorfulLighting
@@ -24,6 +25,7 @@ public class ColorfulLighting
 
     public ColorfulLighting(FMLJavaModLoadingContext context)
     {
+        GeckoLib.initialize();
         DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> new DistExecutor.SafeRunnable() {
             @Override
             public void run() {
