@@ -10,7 +10,6 @@
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
-    "compat.geckolib.GeoEntityRendererMixin",
     "compat.sodium.BlockEntityRenderDispatcherRedirectMixin",
     "compat.sodium.BlockEntityRendererMixin",
     "compat.sodium.FallingBlockRendererMixin",
