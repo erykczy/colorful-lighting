@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.fml.ModList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -47,16 +48,20 @@ public abstract class SodiumEntityColorCompatMixin {
             E entity, float yaw, float tickDelta,
             PoseStack pose, MultiBufferSource buffers, int packedLight
     ) {
-        if (entity instanceof FallingBlockEntity) {
+        if (ModList.get().isLoaded("embeddium")) {
+            if (entity instanceof FallingBlockEntity) {
+                renderer.render(entity, yaw, tickDelta, pose, buffers, packedLight);
+                return;
+            }
+
+            float[] m = cl$mul(entity, tickDelta);
+            MultiBufferSource out = (m != null)
+                    ? new TintingBufferSource(buffers, m[0], m[1], m[2])
+                    : buffers;
+
+            renderer.render(entity, yaw, tickDelta, pose, out, packedLight);
+        } else {
             renderer.render(entity, yaw, tickDelta, pose, buffers, packedLight);
-            return;
         }
-
-        float[] m = cl$mul(entity, tickDelta);
-        MultiBufferSource out = (m != null)
-                ? new TintingBufferSource(buffers, m[0], m[1], m[2])
-                : buffers;
-
-        renderer.render(entity, yaw, tickDelta, pose, out, packedLight);
     }
 }

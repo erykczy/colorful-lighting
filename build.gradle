@@ -105,22 +105,12 @@ repositories {
             includeGroup "curse.maven"
         }
     }
-    maven {
-        name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
-        content {
-            includeGroupByRegex("software\\.bernie.*")
-            includeGroup("com.eliotlash.mclib")
-        }
-    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf("curse.maven:embeddium-908741:5681725")
-    implementation fg.deobf("software.bernie.geckolib:geckolib-forge-${minecraft_version}:4.8.2")
-    implementation("com.eliotlash.mclib:mclib:20")
 }
 
 tasks.named('processResources', ProcessResources).configure {
