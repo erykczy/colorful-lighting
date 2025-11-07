@@ -2,16 +2,29 @@
   "required": true,
   "package": "me.erykczy.colorfullighting.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "refmap": "colorful_lighting.refmap.json",
+  "mixins": [
+    "compat.sodium.SodiumLevelRenderCompatMixin"
+  ],
   "client": [
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
-    "render.LiquidBlockRendererMixin",
-    "render.LevelRendererMixin",
+    "compat.sodium.BlockEntityRenderDispatcherRedirectMixin",
+    "compat.sodium.BlockEntityRendererMixin",
+    "compat.sodium.FallingBlockRendererMixin",
+    "compat.sodium.HangingSignRendererMixin",
+    "compat.sodium.ItemFrameRendererMixin",
+    "compat.sodium.PaintingRendererMixin",
+    "compat.sodium.SignRendererMixin",
+    "compat.sodium.SkullRendererMixin",
+    "compat.sodium.SodiumCompatFirstPersonHandItemsMixin",
+    "compat.sodium.SodiumEntityColorCompatMixin",
     "render.AmbientOcclusionFaceMixin",
+    "render.BrightnessCombinerMixin",
     "render.EntityRendererMixin",
-    "render.BrightnessCombinerMixin"
+    "render.LevelRendererMixin",
+    "render.LiquidBlockRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
