@@ -27,7 +27,7 @@ public class ColoredLightEngine {
     private ClientAccessor clientAccessor;
     private ColoredLightStorage storage = new ColoredLightStorage();
     private ViewArea viewArea = new ViewArea();
-    private final ConcurrentLinkedQueue<BlockPos> blocksWaitingForUpdate = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<BlockUpdate> blockUpdatesWaitingForPropagation = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
     private final Set<Long> dirtySections = new HashSet<>();
     private LightPropagator lightPropagator;
@@ -91,7 +91,7 @@ public class ColoredLightEngine {
 
         // unload sections
         // remove propagation requests which are not in newArea's inner area
-        blocksWaitingForUpdate.removeIf(blockPos -> !newArea.containsBlockInner(blockPos));
+        blockUpdatesWaitingForPropagation.removeIf(blockUpdate -> !newArea.containsBlockInner(blockUpdate.pos));
         chunksWaitingForPropagation.removeIf(chunkPos -> !newArea.containsInner(chunkPos.x, chunkPos.z));
         // remove sections from storage
         for(int x = viewArea.minX; x <= viewArea.maxX; ++x) {
@@ -131,7 +131,32 @@ public class ColoredLightEngine {
         // full propagation needs light source's chunk and neighbours
         if(!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
 
-        blocksWaitingForUpdate.add(blockPos);
+        BlockUpdate blockUpdate = new BlockUpdate(blockPos);
+        handleBlockUpdate(level, blockUpdate.increaseRequests, blockUpdate.decreaseRequests, blockPos);
+
+        blockUpdatesWaitingForPropagation.add(blockUpdate);
+    }
+    private void handleBlockUpdate(LevelAccessor level, Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
+        ColorRGB4 lightColor = storage.getEntry(blockPos);
+        assert lightColor != null;
+        if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
+            requestLightPullIn(increaseRequests, blockPos);  // block probably destroyed/replaced with transparent, light pull in might be needed
+        else
+            decreaseRequests.add(new LightUpdateRequest(blockPos, ColorRGB4.fromRGB4(15, 15, 15), 0, false)); // block probably placed/replaced with non-transparent, light might need to be decreased
+
+        // propagate light if new blockState emits light
+        if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
+            increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), 0, false));
+    }
+    private void requestLightPullIn(Queue<LightUpdateRequest> increaseRequests, BlockPos blockPos) {
+        for(var direction : Direction.values()) {
+            BlockPos neighbourPos = blockPos.relative(direction);
+            ColorRGB4 neighbourLight = storage.getEntry(neighbourPos);
+            if(neighbourLight == null) continue;
+
+            if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
+            increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, 0, true));
+        }
     }
 
     public void onLightUpdate() {
@@ -162,7 +187,7 @@ public class ColoredLightEngine {
         storage.clear();
         viewArea = new ViewArea();
         dirtySections.clear();
-        blocksWaitingForUpdate.clear();
+        blockUpdatesWaitingForPropagation.clear();
         chunksWaitingForPropagation.clear();
         lightPropagator = new LightPropagator();
         lightPropagatorThread = new Thread(lightPropagator);
@@ -232,14 +257,14 @@ public class ColoredLightEngine {
             return nearestChunkPos == null ? null : new NearestChunkResult(nearestChunkPos, minDistance * 16); // distanceBlocks is in blocks
         }
 
-        private record NearestBlockUpdateResult(BlockPos blockPos, int distanceBlocks) {}
+        private record NearestBlockUpdateResult(BlockUpdate blockUpdate, int distanceBlocks) {}
         private NearestBlockUpdateResult getNearestWaitingBlockUpdate(PlayerAccessor player) {
-            var iterator = blocksWaitingForUpdate.iterator();
+            var iterator = blockUpdatesWaitingForPropagation.iterator();
             int minDistance = Integer.MAX_VALUE;
-            BlockPos closestBlock = null;
+            BlockUpdate closestBlock = null;
             while(iterator.hasNext()) {
                 var element = iterator.next();
-                int distance = element.distManhattan(player.getBlockPos());
+                int distance = element.pos.distManhattan(player.getBlockPos());
                 if(distance < minDistance){
                     minDistance = distance;
                     closestBlock = element;
@@ -295,7 +320,7 @@ public class ColoredLightEngine {
             PlayerAccessor player = clientAccessor.getPlayer();
             if(player == null) return;
 
-            if(blocksWaitingForUpdate.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
+            if(blockUpdatesWaitingForPropagation.isEmpty() && chunksWaitingForPropagation.isEmpty()) return;
             var nearestChunkResult = getNearestWaitingChunk(level, player);
             var nearestBlockUpdateResult = getNearestWaitingBlockUpdate(player);
 
@@ -307,7 +332,7 @@ public class ColoredLightEngine {
                 Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
                 // find light sources and request their propagation
                 level.findLightSources(chunkPos, (blockPos -> {
-                    increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
+                    increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), 0, false));
                 }));
                 propagateIncreases(level, increaseRequests);
                 // new chunks' light propagation is not synchronized with main thread
@@ -315,40 +340,23 @@ public class ColoredLightEngine {
             }
             else if(nearestBlockUpdateResult != null) {
                 // propagate block update
-                BlockPos blockPos = nearestBlockUpdateResult.blockPos();
-                blocksWaitingForUpdate.remove(blockPos);
-                Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
-                Queue<LightUpdateRequest> decreaseRequests = new LinkedList<>();
-                handleBlockUpdate(level, increaseRequests, decreaseRequests, blockPos);
-                propagateDecreases(level, decreaseRequests, increaseRequests);
-                propagateIncreases(level, increaseRequests);
+                BlockUpdate blockUpdate = nearestBlockUpdateResult.blockUpdate();
+                blockUpdatesWaitingForPropagation.remove(blockUpdate);
+                propagateDecreases(level, blockUpdate.decreaseRequests, blockUpdate.increaseRequests);
+                propagateIncreases(level, blockUpdate.increaseRequests);
 
                 markLightChangesReady();
+                // TODO
+                /*try {
+                    Thread.sleep(2000);
+                }
+                catch(Exception e) {
+                    System.out.println("Sleep interrupted: " + e);
+                }*/
             }
         }
 
-        private void handleBlockUpdate(LevelAccessor level, Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
-            ColorRGB4 lightColor = getLatestLightColor(blockPos);
-            assert lightColor != null;
-            if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
-                requestLightPullIn(increaseRequests, blockPos);  // block probably destroyed/replaced with transparent, light pull in might be needed
-            else
-                decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced with non-transparent, light might need to be decreased
 
-            // propagate light if new blockState emits light
-            if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
-                increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
-        }
-        private void requestLightPullIn(Queue<LightUpdateRequest> increaseRequests, BlockPos blockPos) {
-            for(var direction : Direction.values()) {
-                BlockPos neighbourPos = blockPos.relative(direction);
-                ColorRGB4 neighbourLight = getLatestLightColor(neighbourPos);
-                if(neighbourLight == null) continue;
-
-                if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
-                increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true));
-            }
-        }
 
         /**
          * Handles all increase propagation requests.
@@ -373,6 +381,7 @@ public class ColoredLightEngine {
             addLightColorChange(request.blockPos, newLightColor);
 
             for(var direction : Direction.values()) {
+                if(LightUpdateRequest.containsDirection(request.forbiddenDirections, direction)) continue;
                 BlockPos neighbourPos = request.blockPos.relative(direction);
                 if(!level.isInBounds(neighbourPos)) continue;
                 BlockStateAccessor neighbourState = level.getBlockState(neighbourPos);
@@ -389,7 +398,7 @@ public class ColoredLightEngine {
                 // if no more color to propagate
                 if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;
 
-                increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, false));
+                increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, LightUpdateRequest.withDirection(request.forbiddenDirections, direction.getOpposite()), false));
             }
             return true;
         }
@@ -408,14 +417,19 @@ public class ColoredLightEngine {
             if(oldLightColor == null) return false; // section might have got unloaded and propagation should stop
 
             // if light color didn't change (check is ignored if request is forced)
-            if(!request.force && oldLightColor.red4 == 0 && oldLightColor.green4 == 0 && oldLightColor.blue4 == 0) return true;
-            addLightColorChange(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
+            //if(!request.force && oldLightColor.red4 == 0 && oldLightColor.green4 == 0 && oldLightColor.blue4 == 0) return true;
+            //addLightColorChange(request.blockPos, ColorRGB4.fromRGB4(0, 0, 0));
+            /*addLightColorChange(request.blockPos, ColorRGB4.fromRGB4(
+                Math.max(0, oldLightColor.red4 -  request.lightColor.red4),
+                Math.max(0, oldLightColor.green4 - request.lightColor.green4),
+                Math.max(0, oldLightColor.blue4 - request.lightColor.blue4)
+            ));*/
 
             BlockStateAccessor blockState = level.getBlockState(request.blockPos);
             if(blockState == null) return false; // section might have got unloaded and propagation should stop
             // repropagate removed light
             if(Config.getEmissionBrightness(level, request.blockPos, blockState) > 0) {
-                increaseRequests.add(new LightUpdateRequest(request.blockPos, Config.getColorEmission(level, request.blockPos), false));
+                increaseRequests.add(new LightUpdateRequest(request.blockPos, Config.getColorEmission(level, request.blockPos), 0, false));
             }
 
             // attenuation
@@ -428,12 +442,13 @@ public class ColoredLightEngine {
             boolean repropagateNeighbours = neighbourLightDecrease.red4 == 0 && neighbourLightDecrease.green4 == 0 && neighbourLightDecrease.blue4 == 0;
 
             for(var direction : Direction.values()) {
+                if(LightUpdateRequest.containsDirection(request.forbiddenDirections, direction)) continue;
                 BlockPos neighbourPos = request.blockPos.relative(direction);
                 if(!level.isInBounds(neighbourPos)) continue;
 
                 if(!repropagateNeighbours) {
                     // propagate decrease
-                    decreaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightDecrease, false));
+                    decreaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightDecrease, LightUpdateRequest.withDirection(request.forbiddenDirections, direction.getOpposite()), false));
                 }
                 else {
                     ColorRGB4 neighbourLightColor = getLatestLightColor(neighbourPos);
@@ -443,10 +458,20 @@ public class ColoredLightEngine {
                         continue;
 
                     // force neighbour to propagate light to the region that has been just cleared (decreased)
-                    increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, true));
+                    increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, 0, true));
                 }
             }
             return true;
+        }
+    }
+
+    private class BlockUpdate {
+        public BlockPos pos;
+        public Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
+        public Queue<LightUpdateRequest> decreaseRequests = new  LinkedList<>();
+
+        public BlockUpdate(BlockPos pos) {
+            this.pos = pos;
         }
     }
 
@@ -454,11 +479,21 @@ public class ColoredLightEngine {
         BlockPos blockPos;
         ColorRGB4 lightColor;
         boolean force;
+        int forbiddenDirections;
 
-        public LightUpdateRequest(BlockPos blockPos, ColorRGB4 lightColor, boolean force) {
+        public LightUpdateRequest(BlockPos blockPos, ColorRGB4 lightColor, int forbiddenDirections, boolean force) {
             this.blockPos = blockPos;
             this.lightColor = lightColor;
             this.force = force;
+            this.forbiddenDirections = forbiddenDirections;
+        }
+
+        public static int withDirection(int value, Direction direction) {
+            return value | (1 << direction.ordinal());
+        }
+
+        public static boolean containsDirection(int value, Direction direction) {
+            return (value & (1 << direction.ordinal())) != 0;
         }
     }
 }
