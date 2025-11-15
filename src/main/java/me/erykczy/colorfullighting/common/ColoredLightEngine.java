@@ -10,7 +10,6 @@ import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 
@@ -28,9 +27,9 @@ public class ColoredLightEngine {
     private ClientAccessor clientAccessor;
     private ColoredLightStorage storage = new ColoredLightStorage();
     private ViewArea viewArea = new ViewArea();
-    private final ConcurrentLinkedQueue<IncreaseLightBlockUpdate> blockUpdateIncreaseRequests = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<LightUpdateRequest> blockUpdateDecreaseRequests = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<LightUpdateRequest> blockUpdateDecreaseRequests = new ConcurrentLinkedQueue<>(); // those first added will be executed first (this order is required by decrease propagation algorithm)
+    private final ConcurrentLinkedQueue<BlockRequests> blockUpdateIncreaseRequests = new ConcurrentLinkedQueue<>(); // those nearest to the player will be executed first
+    private final ConcurrentLinkedQueue<ChunkPos> chunksWaitingForPropagation = new ConcurrentLinkedQueue<>(); // those nearest to the player will be executed first
     private final Set<Long> dirtySections = new HashSet<>();
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
@@ -134,9 +133,9 @@ public class ColoredLightEngine {
         // full propagation needs light source's chunk and neighbours
         if(!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
 
-        IncreaseLightBlockUpdate increaseLightBlockUpdate = new IncreaseLightBlockUpdate(blockPos);
-        handleBlockUpdate(level, increaseLightBlockUpdate.increaseRequests, blockUpdateDecreaseRequests, blockPos);
-        if(!increaseLightBlockUpdate.increaseRequests.isEmpty()) blockUpdateIncreaseRequests.add(increaseLightBlockUpdate);
+        BlockRequests increaseRequests = new BlockRequests(blockPos);
+        handleBlockUpdate(level, increaseRequests.increaseRequests, blockUpdateDecreaseRequests, blockPos);
+        if(!increaseRequests.increaseRequests.isEmpty()) blockUpdateIncreaseRequests.add(increaseRequests);
     }
     private void handleBlockUpdate(LevelAccessor level, Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
         ColorRGB4 lightColor = storage.getEntry(blockPos);
@@ -242,21 +241,21 @@ public class ColoredLightEngine {
             return lightChangesInProgress.getOrDefault(blockPos, lightChangesReady.getOrDefault(blockPos, storage.getEntry(blockPos)));
         }
 
-        private record NearestBlockUpdateLightIncrease(IncreaseLightBlockUpdate blockUpdate, int distanceBlocks) {}
-        private NearestBlockUpdateLightIncrease getNearestBlockUpdateLightIncrease(PlayerAccessor player) {
+        private record NearestBlockRequestsResult(BlockRequests blockUpdate, int distanceBlocks) {}
+        private NearestBlockRequestsResult getNearestBlockRequests(PlayerAccessor player) {
             // find chunk nearest player
             var iterator = blockUpdateIncreaseRequests.iterator();
             int minDistance = Integer.MAX_VALUE;
-            IncreaseLightBlockUpdate nearestUpdate = null;
+            BlockRequests nearestUpdate = null;
             while (iterator.hasNext()) {
-                IncreaseLightBlockUpdate update = iterator.next();
+                BlockRequests update = iterator.next();
                 int distance = update.blockPos.distManhattan(player.getBlockPos());
                 if (distance < minDistance) {
                     minDistance = distance;
                     nearestUpdate = update;
                 }
             }
-            return nearestUpdate == null ? null : new NearestBlockUpdateLightIncrease(nearestUpdate, minDistance);
+            return nearestUpdate == null ? null : new NearestBlockRequestsResult(nearestUpdate, minDistance);
         }
 
         private record NearestChunkResult(ChunkPos chunkPos, int distanceBlocks) {}
@@ -316,7 +315,7 @@ public class ColoredLightEngine {
         }
 
         /**
-         * propagate light in the nearest waiting chunk, handle the nearest block light update
+         * propagate light in the nearest waiting chunk, handle block light updates
          */
         private void propagateLight() {
             LevelAccessor level = clientAccessor.getLevel();
@@ -324,6 +323,7 @@ public class ColoredLightEngine {
             PlayerAccessor player = clientAccessor.getPlayer();
             if(player == null) return;
 
+            // decrease requests are always executed
             if(!blockUpdateDecreaseRequests.isEmpty()) {
                 Queue<LightUpdateRequest> newIncreaseRequests = new LinkedList<>();
                 propagateDecreases(level, blockUpdateDecreaseRequests, newIncreaseRequests);
@@ -331,10 +331,11 @@ public class ColoredLightEngine {
 
                 markLightChangesReady();
             }
+            
             var nearestChunkResult = getNearestWaitingChunk(level, player);
-            var nearestBlockUpdate = getNearestBlockUpdateLightIncrease(player);
+            var nearestBlockRequests = getNearestBlockRequests(player);
 
-            if(nearestChunkResult != null && (nearestBlockUpdate == null || nearestChunkResult.distanceBlocks() < nearestBlockUpdate.distanceBlocks())) {
+            if(nearestChunkResult != null && (nearestBlockRequests == null || nearestChunkResult.distanceBlocks() < nearestBlockRequests.distanceBlocks())) {
                 // propagate chunk
                 ChunkPos chunkPos = nearestChunkResult.chunkPos();
                 chunksWaitingForPropagation.remove(chunkPos);
@@ -348,9 +349,9 @@ public class ColoredLightEngine {
                 // new chunks' light propagation is not synchronized with main thread
                 applyLightChangesDirectly();
             }
-            else if(nearestBlockUpdate != null) {
-                blockUpdateIncreaseRequests.remove(nearestBlockUpdate.blockUpdate);
-                propagateIncreases(level, nearestBlockUpdate.blockUpdate.increaseRequests);
+            else if(nearestBlockRequests != null) {
+                blockUpdateIncreaseRequests.remove(nearestBlockRequests.blockUpdate);
+                propagateIncreases(level, nearestBlockRequests.blockUpdate.increaseRequests);
                 markLightChangesReady();
             }
         }
@@ -455,11 +456,11 @@ public class ColoredLightEngine {
         }
     }
 
-    public class IncreaseLightBlockUpdate {
+    private static class BlockRequests {
         public BlockPos blockPos;
         public Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
 
-        public IncreaseLightBlockUpdate(BlockPos blockPos) {
+        public BlockRequests(BlockPos blockPos) {
             this.blockPos = blockPos;
         }
     }
