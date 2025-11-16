@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -40,10 +41,11 @@ public class Config {
         return defaultColor.mul(lightEmission);
     }
     public static ColorRGB4 getLightColor(@NotNull BlockStateAccessor blockState) {
-        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
-
-        if(blockResourceKey != null) {
-            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+        return getLightColor(blockState.getBlockKey());
+    }
+    public static ColorRGB4 getLightColor(@Nullable ResourceKey<Block> blockLocation) {
+        if(blockLocation != null) {
+            ColorEmitter config = colorEmitters.get(blockLocation.location());
             if(config != null)
                 return config.color();
         }
