@@ -143,7 +143,7 @@ public class ColoredLightEngine {
         if(lightColor.red4 == 0 && lightColor.green4 == 0 && lightColor.blue4 == 0)
             requestLightPullIn(increaseRequests, blockPos);  // block probably destroyed/replaced with transparent, light pull in might be needed
         else
-            decreaseRequests.add(new LightUpdateRequest(blockPos, ColorRGB4.fromRGB4(15, 15, 15), false)); // block probably placed/replaced with non-transparent, light might need to be decreased
+            decreaseRequests.add(new LightUpdateRequest(blockPos, lightColor, false)); // block probably placed/replaced with non-transparent, light might need to be decreased
 
         // propagate light if new blockState emits light
         if(Config.getEmissionBrightness(level, blockPos, 0) > 0)
