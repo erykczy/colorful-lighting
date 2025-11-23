@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +92,6 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public void setSectionDirty(int x, int y, int z) {
-        levelRenderer.setSectionDirty(x, y, z);
+        level.getChunkSource().onLightUpdate(LightLayer.BLOCK, SectionPos.of(x, y, z));
     }
 }
