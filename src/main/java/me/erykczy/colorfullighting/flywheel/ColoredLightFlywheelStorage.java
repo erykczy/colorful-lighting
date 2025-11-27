@@ -42,9 +42,6 @@ public class ColoredLightFlywheelStorage {
         arena.delete();
     }
 
-    private void beginTrackingSection(long section, int index) {
-    }
-
     private int indexForSection(long section) {
         int out = section2ArenaIndex.get(section);
 
@@ -52,9 +49,13 @@ public class ColoredLightFlywheelStorage {
         if (out == INVALID_SECTION) {
             out = arena.alloc();
             section2ArenaIndex.put(section, out);
-            beginTrackingSection(section, out);
         }
         return out;
+    }
+
+    public void removeSection(long section) {
+        arena.free(indexForSection(section));
+        section2ArenaIndex.remove(section);
     }
 
     public void collectSection(long section) {

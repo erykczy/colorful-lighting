@@ -1,3 +1,5 @@
+#include "flywheel:internal/light_lut.glsl"
+
 layout(std430, binding = 8) restrict readonly buffer ColoredLightSections {
     int coloredLightSections[];
 };
@@ -31,8 +33,15 @@ vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
 }
 
 
-int fetchLightDEBUG(ivec3 block) {
-    block += ivec3(1);
+int fetchLightDEBUG(ivec3 blockPos) {
+    /*block += ivec3(1);
     int index = (block.x + block.z * 18 + block.y * 18 * 18);
-    return coloredLightSections[index];
+    return coloredLightSections[index];*/
+    uint lightSectionIndex;
+    if (_flw_chunkCoordToSectionIndex(blockPos >> 4, lightSectionIndex)) {
+        return 0;
+    }
+    ivec3 blockPosRelative = ivec3((blockPos & 0xF) + 1);
+    int index = (blockPosRelative.x + blockPosRelative.z * 18 + blockPosRelative.y * 18 * 18);
+    return coloredLightSections[lightSectionIndex * 18 * 18 * 18 + index];
 }
