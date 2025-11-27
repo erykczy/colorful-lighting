@@ -1,13 +1,18 @@
+layout(std430, binding = 8) restrict readonly buffer ColoredLightSections {
+    int coloredLightSections[];
+};
+
 vec4 minecraft_sample_vanilla_lightmap(sampler2D lightMap, ivec2 uv) {
     return texture(lightMap, clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0)));
 }
 
-vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
+vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv, int overrideSky) {
     int leastSignificantShort = uv.x;
     int mostSignificantShort = uv.y;
     int red8 = (leastSignificantShort >> 0) & 0xFF;
     int green8 = (leastSignificantShort >> 8) & 0xFF;
     int skyLight4 = (mostSignificantShort >> 0) & 0xF;
+    if(overrideSky != -1) skyLight4 = overrideSky;
     int blue8 = (mostSignificantShort >> 4) & 0xFF;
     int alpha4 = (mostSignificantShort >> 12) & 0xF;
     if(alpha4 != 0xF) {
@@ -19,4 +24,15 @@ vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
     vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, skyLight4 << 4)).xyz;
     vec3 block = pow(blockLightColor, vec3(1.3));
     return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
+}
+
+vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
+    return sample_lightmap_colored(lightMap, uv, -1);
+}
+
+
+int fetchLightDEBUG(ivec3 block) {
+    block += ivec3(1);
+    int index = (block.x + block.z * 18 + block.y * 18 * 18);
+    return coloredLightSections[index];
 }

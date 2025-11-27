@@ -1,9 +1,11 @@
 package me.erykczy.colorfullighting;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import me.erykczy.colorfullighting.accessors.MinecraftWrapper;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.accessors.ClientAccessor;
 import me.erykczy.colorfullighting.event.ClientEventListener;
+import me.erykczy.colorfullighting.flywheel.ColoredLightFlywheelStorage;
 import me.erykczy.colorfullighting.resourcemanager.ModResourceManagers;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -21,12 +23,15 @@ public class ColorfulLighting
     public static final String MOD_ID = "colorful_lighting";
     public static final Logger LOGGER = LogUtils.getLogger();
     public static ClientAccessor clientAccessor;
+    public static ColoredLightFlywheelStorage flywheelColoredLightStorage;
 
     public ColorfulLighting(IEventBus modEventBus, ModContainer modContainer)
     {
         ModResourceManagers.register(modEventBus);
         NeoForge.EVENT_BUS.register(new ClientEventListener());
         modEventBus.addListener(this::onLoadingComplete);
+
+        RenderSystem.recordRenderCall(() -> flywheelColoredLightStorage = new ColoredLightFlywheelStorage());
     }
 
     private void onLoadingComplete(FMLLoadCompleteEvent event) {

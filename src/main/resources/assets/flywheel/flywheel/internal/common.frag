@@ -122,13 +122,26 @@ void _flw_main() {
 
     vec4 lightColor = vec4(1.);
     if (flw_material.useLight) {
-        int u = floatBitsToInt(flw_vertexLight[0]);
-        int v = floatBitsToInt(flw_vertexLight[1]);
+        ivec3 blockPos = ivec3(floor(flw_vertexPos.xyz)) + flw_renderOrigin;
+        int fetchedLight = fetchLightDEBUG(blockPos);
+
+        int u,v;
+        if(fetchedLight == 0) {
+            u = floatBitsToInt(flw_vertexLight[0]);
+            v = floatBitsToInt(flw_vertexLight[1]);
+        }
+        else {
+            u = fetchedLight & 0xFFFF;
+            v = (fetchedLight >> 16) & 0xFFFF;
+        }
         //if(u == 13) lightColor = vec4(0.0, 1.0, 0.0, 1.0);
         //else lightColor = vec4(1.0, 0.0, 0.0, 1.0);
         //lightColor = vec4(u/16.0, 0.0, 0.0, 1.0);
 
-        lightColor = sample_lightmap_colored(flw_lightTex, ivec2(u, v));
+
+        lightColor = sample_lightmap_colored(flw_lightTex, ivec2(u, v), int(flw_fragLight[1]*15));
+        //lightColor = vec4((fetchedLight & 0xFF) / 255.0, 0.0, 0.0, 1.0);
+        //lightColor = (fetchedLight & 0xFF) > 0 ? vec4(0.0, 1.0, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0);
         //lightColor = texture(flw_lightTex, clamp(flw_vertexLight, 0.5 / 16.0, 15.5 / 16.0));
         color *= lightColor;
     }

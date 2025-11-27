@@ -11,7 +11,9 @@
     "render.LevelRendererMixin",
     "render.AmbientOcclusionFaceMixin",
     "render.EntityRendererMixin",
-    "render.BrightnessCombinerMixin"
+    "render.BrightnessCombinerMixin",
+    "flywheel.LightBuffersMixin",
+    "flywheel.LightStorageMixin"
   ],
   "injectors": {
     "defaultRequire": 1

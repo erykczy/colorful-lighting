@@ -26,6 +26,9 @@ public class ClientEventListener {
                 pos.z + renderDistance
         );
         ColoredLightEngine.getInstance().updateViewArea(viewArea);
+        var debugPlayer = Minecraft.getInstance().player;
+        var debugLight = ColoredLightEngine.getInstance().sampleLightColor(debugPlayer.blockPosition());
+        debugPlayer.displayClientMessage(Component.literal("[ " + debugLight.red4 + ", " + debugLight.green4 + ", " + debugLight.blue4 + " ]"), true);
     }
 
     @SubscribeEvent

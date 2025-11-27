@@ -14,6 +14,8 @@ void flw_instanceVertex(in FlwInstance i) {
     flw_vertexOverlay = i.overlay;
 
     // START colorful lighting
+    //int green8 = (floatBitsToInt(i.light[0]) >> 8) & 0xFF;
+    //flw_vertexLight = vec2(i.light[0], 0);//max(vec2(i.light) / 256.0, flw_vertexLight);
     flw_vertexLight = transformLight(ivec2(i.light));
     //flw_vertexLight = max(vec2(i.light) / 256.0, flw_vertexLight);
     // END colorful lighting
