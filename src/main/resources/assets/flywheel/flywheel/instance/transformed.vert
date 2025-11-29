@@ -19,6 +19,6 @@ void flw_instanceVertex(in FlwInstance i) {
     #ifdef FLW_EMBEDDED
     vertexPos = modelMatrix * vertexPos;
     #endif
-    v_lightColor.data = vertexLightColor(ivec2(i.light), ivec3(floor(vertexPos.xyz)) + flw_renderOrigin);
+    v_lightColor.data = vertexLightColor(ivec2(i.light), vertexPos.xyz + flw_renderOrigin.xyz);
     // END colorful lighting
 }

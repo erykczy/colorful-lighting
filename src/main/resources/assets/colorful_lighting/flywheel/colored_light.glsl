@@ -23,7 +23,7 @@ vec4 minecraft_sample_vanilla_lightmap(sampler2D lightMap, ivec2 uv) {
 }
 
 int ivec2ToInt(ivec2 data) {
-    return data.y << 16 | (data.x & 0xFFFF);//int((uint(data.y) << 16) | uint(data.x));
+    return data.y << 16 | (data.x & 0xFFFF);
 }
 
 ColoredLightIntegerData unpackColoredLightData(int packedData) {
@@ -35,15 +35,9 @@ ColoredLightIntegerData unpackColoredLightData(int packedData) {
         (packedData >> 28) & 0xF // alpha 4
     );
 }
-ColoredLightIntegerData unpackColoredLightData(ivec2 packedData) {
-    return unpackColoredLightData(ivec2ToInt(packedData));
-}
 
 bool isPackedDataColored(int packedData) {
     return ((packedData >> 28) & 0xF) == 0xF;
-}
-bool isPackedDataColored(ivec2 packedData) {
-    return isPackedDataColored(ivec2ToInt(packedData));
 }
 
 ColoredLightFloatData coloredLightData_integerToFloat(ColoredLightIntegerData data) {
@@ -63,7 +57,8 @@ vec4 mixColoredLightWithLightMap(sampler2D lightMap, ColoredLightFloatData data)
     return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
 }
 
-int fetchColoredLight(ivec3 blockPos) {
+// get packed colored light from uniform buffer object
+int getColoredLightFromBuffer(ivec3 blockPos) {
     uint lightSectionIndex;
     if (_flw_chunkCoordToSectionIndex(blockPos >> 4, lightSectionIndex)) {
         return -1;
@@ -73,10 +68,61 @@ int fetchColoredLight(ivec3 blockPos) {
     return coloredLightSections[lightSectionIndex * 18 * 18 * 18 + index];
 }
 
-ColoredLightFloatData vertexLightColor(ivec2 instanceLight, ivec3 blockPos) {
-    int fetchedLight = fetchColoredLight(blockPos);
+// sample ColoredLightFloatData at a given blockPos
+ColoredLightFloatData sampleLightColor(ivec3 blockPos, ivec2 instanceLight) {
+    int fetchedLight = getColoredLightFromBuffer(blockPos);
     ColoredLightIntegerData data = unpackColoredLightData(
     fetchedLight == -1 ? ivec2ToInt(instanceLight) : fetchedLight
     );
     return coloredLightData_integerToFloat(data);
+}
+
+// linear ColoredLightFloatData interpolation
+ColoredLightFloatData mixLight(ColoredLightFloatData a, ColoredLightFloatData b, float t) {
+    return ColoredLightFloatData(
+        mix(a.lightColor, b.lightColor, t),
+        mix(a.skyLight, b.skyLight, t),
+        a.alpha
+    );
+}
+
+// trilinear ColoredLightFloatData interpolation
+ColoredLightFloatData sampleTrilinearLightColor(vec3 pos, ivec2 instanceLight) {
+    int cornerX = int(round(pos.x)) - 1;
+    int cornerY = int(round(pos.y)) - 1;
+    int cornerZ = int(round(pos.z)) - 1;
+    ColoredLightFloatData c000 = sampleLightColor(ivec3(cornerX + 0, cornerY + 0, cornerZ + 0), instanceLight);
+    ColoredLightFloatData c100 = sampleLightColor(ivec3(cornerX + 1, cornerY + 0, cornerZ + 0), instanceLight);
+    ColoredLightFloatData c101 = sampleLightColor(ivec3(cornerX + 1, cornerY + 0, cornerZ + 1), instanceLight);
+    ColoredLightFloatData c001 = sampleLightColor(ivec3(cornerX + 0, cornerY + 0, cornerZ + 1), instanceLight);
+    ColoredLightFloatData c010 = sampleLightColor(ivec3(cornerX + 0, cornerY + 1, cornerZ + 0), instanceLight);
+    ColoredLightFloatData c110 = sampleLightColor(ivec3(cornerX + 1, cornerY + 1, cornerZ + 0), instanceLight);
+    ColoredLightFloatData c111 = sampleLightColor(ivec3(cornerX + 1, cornerY + 1, cornerZ + 1), instanceLight);
+    ColoredLightFloatData c011 = sampleLightColor(ivec3(cornerX + 0, cornerY + 1, cornerZ + 1), instanceLight);
+
+    float x = (pos.x - cornerX) / 2.0;
+    float y = (pos.y - cornerY) / 2.0;
+    float z = (pos.z - cornerZ) / 2.0;
+
+    ColoredLightFloatData c00 = mixLight(c000, c100, x);
+    ColoredLightFloatData c01 = mixLight(c001, c101, x);
+    ColoredLightFloatData c11 = mixLight(c011, c111, x);
+    ColoredLightFloatData c10 = mixLight(c010, c110, x);
+
+    ColoredLightFloatData c0 = mixLight(c00, c10, y);
+    ColoredLightFloatData c1 = mixLight(c01, c11, y);
+
+    return mixLight(c0, c1, z);
+}
+
+ColoredLightFloatData vertexLightColor(ivec2 instanceLight, vec3 vertexPos) {
+    ivec3 blockPos = ivec3(floor(vertexPos));
+    if (getColoredLightFromBuffer(blockPos) == -1) {
+        // light provided by instance
+        return sampleLightColor(blockPos, instanceLight);
+    }
+    else {
+        // light provided by uniform buffer object (so we can sample multiple positions and do trilinear interpolation)
+        return sampleTrilinearLightColor(vertexPos, instanceLight);
+    }
 }

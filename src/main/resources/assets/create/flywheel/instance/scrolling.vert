@@ -15,6 +15,6 @@ void flw_instanceVertex(in FlwInstance instance) {
 
     // START colorful lighting
     // rotating instance stores instance.light components in short so conversion is needed
-    v_lightColor.data = vertexLightColor(instance.light, ivec3(floor(flw_vertexPos.xyz)) + flw_renderOrigin);
+    v_lightColor.data = vertexLightColor(instance.light, flw_vertexPos.xyz + flw_renderOrigin.xyz);
     // END colorful lighting
 }
