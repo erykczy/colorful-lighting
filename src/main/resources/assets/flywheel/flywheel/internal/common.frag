@@ -122,19 +122,16 @@ void _flw_main() {
 
     vec4 lightColor = vec4(1.);
     if (flw_material.useLight) {
+        lightColor = texture(flw_lightTex, clamp(flw_fragLight, 0.5 / 16.0, 15.5 / 16.0));
+
+        // START colorful lighting
         ColoredLightFloatData data = v_lightColor.data;
         if(data.alpha > 0) {
             data.skyLight = flw_fragLight[1];
             lightColor = mixColoredLightWithLightMap(flw_lightTex, data);
         }
-        else {
-            lightColor = texture(flw_lightTex, clamp(flw_fragLight, 0.5 / 16.0, 15.5 / 16.0));
-        }
+        // END colorful lighting
         color *= lightColor;
-        //color = vec4(data.lightColor, 1.0);
-        //int fetchedLight = fetchColoredLight(ivec3(floor(myPos.xyz)) + flw_renderOrigin);
-        //ColoredLightFloatData oldData = coloredLightData_integerToFloat(unpackColoredLightData(fetchedLight));
-        //color = vec4(oldData.lightColor, 1.0); //vec4(vec3(distance(myPos.xyz, flw_vertexPos.xyz)), 1.0);//
     }
 
     #ifdef _FLW_DEBUG

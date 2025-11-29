@@ -1,21 +1,8 @@
 #include "flywheel:internal/light_lut.glsl"
+#include "colorful_lighting:colored_light_types.glsl"
 
 layout(std430, binding = 8) restrict readonly buffer ColoredLightSections {
     int coloredLightSections[];
-};
-
-struct ColoredLightIntegerData {
-    int red8;
-    int green8;
-    int blue8;
-    int skyLight4;
-    int alpha4;
-};
-
-struct ColoredLightFloatData {
-    vec3 lightColor;
-    float skyLight;
-    float alpha;
 };
 
 vec4 minecraft_sample_vanilla_lightmap(sampler2D lightMap, ivec2 uv) {

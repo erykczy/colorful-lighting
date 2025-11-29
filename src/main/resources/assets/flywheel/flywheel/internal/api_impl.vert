@@ -11,15 +11,13 @@ out vec3 flw_vertexNormal;
 
 out float flw_distance;
 
-struct ColoredLightFloatData {
-    vec3 lightColor;
-    float skyLight;
-    float alpha;
-};
+// START colorful lighting
+#include "colorful_lighting:colored_light_types.glsl"
 
 out VertexLightData {
     ColoredLightFloatData data;
 } v_lightColor;
+// END colorful lighting
 
 FlwMaterial flw_material;
 

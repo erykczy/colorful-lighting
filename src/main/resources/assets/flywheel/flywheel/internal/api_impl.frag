@@ -11,15 +11,13 @@ in vec3 flw_vertexNormal;
 
 in float flw_distance;
 
-struct ColoredLightFloatData {
-    vec3 lightColor;
-    float skyLight;
-    float alpha;
-};
+// START colorful lighting
+#include "colorful_lighting:colored_light_types.glsl"
 
 in VertexLightData {
     ColoredLightFloatData data;
 } v_lightColor;
+// END colorful lighting
 
 vec4 flw_sampleColor;
 

@@ -1,5 +1,7 @@
 #include "flywheel:util/quaternion.glsl"
+// START colorful lighting
 #include "colorful_lighting:colored_light.glsl"
+// END colorful lighting
 
 void flw_instanceVertex(in FlwInstance i) {
     flw_vertexPos = vec4(rotateByQuaternion(flw_vertexPos.xyz - i.pivot, i.rotation) + i.pivot + i.position, 1.0);
