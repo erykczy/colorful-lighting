@@ -126,7 +126,7 @@ void _flw_main() {
 
         // START colorful lighting
         ColoredLightFloatData data = v_lightColor.data;
-        if(data.alpha > 0) {
+        if(data.alpha > 0.0) {
             lightColor = mixColoredLightWithLightMap(flw_lightTex, data);
         }
         // END colorful lighting

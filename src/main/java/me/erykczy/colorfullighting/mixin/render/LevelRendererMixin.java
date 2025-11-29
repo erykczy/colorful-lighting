@@ -10,6 +10,7 @@ import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
+import net.createmod.ponder.api.level.PonderLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -24,7 +25,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if(level instanceof VirtualRenderWorld virtualRenderWorld) {
+        if(level instanceof PonderLevel) {
+            cir.setReturnValue(PackedLightData.packData(15, 0, 0, 0));
+            return;
+        }
+        if(level instanceof VirtualRenderWorld) {
             cir.setReturnValue(0);
             return;
         }

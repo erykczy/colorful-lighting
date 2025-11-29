@@ -1,5 +1,7 @@
 package me.erykczy.colorfullighting.common.util;
 
+import net.minecraft.client.renderer.LightTexture;
+
 public class PackedLightData {
     public int skyLight4;
     public int red8;
@@ -68,6 +70,18 @@ public class PackedLightData {
     public static int max(int lightColor0, int lightColor1) {
         var firstData = unpackData(lightColor0);
         var secondData = unpackData(lightColor1);
+        if(firstData.alpha4 == 0 || secondData.alpha4 == 0) {
+            if(firstData.alpha4 == secondData.alpha4) {
+                int blockLight0 = LightTexture.block(lightColor0);
+                int skyLight0 = LightTexture.sky(lightColor0);
+                int blockLight1 = LightTexture.block(lightColor1);
+                int skyLight1 = LightTexture.sky(lightColor1);
+                return LightTexture.pack(Math.max(blockLight0, blockLight1), Math.max(skyLight0, skyLight1));
+            }
+            else {
+                return firstData.alpha4 == 0 ? lightColor1 : lightColor0;
+            }
+        }
 
         return packData(
                 Math.max(firstData.skyLight4, secondData.skyLight4),
