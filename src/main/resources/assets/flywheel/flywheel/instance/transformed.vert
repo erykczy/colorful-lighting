@@ -1,10 +1,9 @@
+#include "colorful_lighting:colored_light.glsl"
+
 // START colorful lighting
-vec2 transformLight(ivec2 light) {
-    return vec2(
-    intBitsToFloat(light[0]),
-    intBitsToFloat(light[1])
-    );
-}
+#ifdef FLW_EMBEDDED
+mat4 modelMatrix;
+#endif
 // END colorful lighting
 
 void flw_instanceVertex(in FlwInstance i) {
@@ -12,11 +11,14 @@ void flw_instanceVertex(in FlwInstance i) {
     flw_vertexNormal = mat3(transpose(inverse(i.pose))) * flw_vertexNormal;
     flw_vertexColor *= i.color;
     flw_vertexOverlay = i.overlay;
+    // Some drivers have a bug where uint over float division is invalid, so use an explicit cast.
+    flw_vertexLight = max(vec2(i.light) / 256.0, flw_vertexLight);
 
     // START colorful lighting
-    //int green8 = (floatBitsToInt(i.light[0]) >> 8) & 0xFF;
-    //flw_vertexLight = vec2(i.light[0], 0);//max(vec2(i.light) / 256.0, flw_vertexLight);
-    flw_vertexLight = transformLight(ivec2(i.light));
-    //flw_vertexLight = max(vec2(i.light) / 256.0, flw_vertexLight);
+    vec4 vertexPos = flw_vertexPos;
+    #ifdef FLW_EMBEDDED
+    vertexPos = modelMatrix * vertexPos;
+    #endif
+    v_lightColor.data = vertexLightColor(ivec2(i.light), ivec3(floor(vertexPos.xyz)) + flw_renderOrigin);
     // END colorful lighting
 }

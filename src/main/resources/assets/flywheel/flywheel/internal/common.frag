@@ -122,30 +122,19 @@ void _flw_main() {
 
     vec4 lightColor = vec4(1.);
     if (flw_material.useLight) {
-        ivec3 blockPos = ivec3(floor(flw_vertexPos.xyz)) + flw_renderOrigin;
-        int fetchedLight = fetchLightDEBUG(blockPos);
-
-        int u,v;
-        int overrideSky = -1;
-        if(fetchedLight == 0) {
-            u = floatBitsToInt(flw_vertexLight[0]);
-            v = floatBitsToInt(flw_vertexLight[1]);
+        ColoredLightFloatData data = v_lightColor.data;
+        if(data.alpha > 0) {
+            data.skyLight = flw_fragLight[1];
+            lightColor = mixColoredLightWithLightMap(flw_lightTex, data);
         }
         else {
-            u = fetchedLight & 0xFFFF;
-            v = (fetchedLight >> 16) & 0xFFFF;
-            overrideSky = int(flw_fragLight[1]*15);
+            lightColor = texture(flw_lightTex, clamp(flw_fragLight, 0.5 / 16.0, 15.5 / 16.0));
         }
-        //if(u == 13) lightColor = vec4(0.0, 1.0, 0.0, 1.0);
-        //else lightColor = vec4(1.0, 0.0, 0.0, 1.0);
-        //lightColor = vec4(u/16.0, 0.0, 0.0, 1.0);
-
-
-        lightColor = sample_lightmap_colored(flw_lightTex, ivec2(u, v), overrideSky);
-        //lightColor = vec4((fetchedLight & 0xFF) / 255.0, 0.0, 0.0, 1.0);
-        //lightColor = (fetchedLight & 0xFF) > 0 ? vec4(0.0, 1.0, 0.0, 1.0) : vec4(1.0, 0.0, 0.0, 1.0);
-        //lightColor = texture(flw_lightTex, clamp(flw_vertexLight, 0.5 / 16.0, 15.5 / 16.0));
         color *= lightColor;
+        //color = vec4(data.lightColor, 1.0);
+        //int fetchedLight = fetchColoredLight(ivec3(floor(myPos.xyz)) + flw_renderOrigin);
+        //ColoredLightFloatData oldData = coloredLightData_integerToFloat(unpackColoredLightData(fetchedLight));
+        //color = vec4(oldData.lightColor, 1.0); //vec4(vec3(distance(myPos.xyz, flw_vertexPos.xyz)), 1.0);//
     }
 
     #ifdef _FLW_DEBUG

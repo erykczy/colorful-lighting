@@ -11,6 +11,16 @@ in vec3 flw_vertexNormal;
 
 in float flw_distance;
 
+struct ColoredLightFloatData {
+    vec3 lightColor;
+    float skyLight;
+    float alpha;
+};
+
+in VertexLightData {
+    ColoredLightFloatData data;
+} v_lightColor;
+
 vec4 flw_sampleColor;
 
 FlwMaterial flw_material;

@@ -13,7 +13,8 @@
     "render.EntityRendererMixin",
     "render.BrightnessCombinerMixin",
     "flywheel.LightBuffersMixin",
-    "flywheel.LightStorageMixin"
+    "flywheel.LightStorageMixin",
+    "create.ShadeSeparatingSuperByteBufferMixin"
   ],
   "injectors": {
     "defaultRequire": 1

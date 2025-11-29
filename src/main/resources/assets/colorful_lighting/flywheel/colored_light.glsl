@@ -4,44 +4,79 @@ layout(std430, binding = 8) restrict readonly buffer ColoredLightSections {
     int coloredLightSections[];
 };
 
+struct ColoredLightIntegerData {
+    int red8;
+    int green8;
+    int blue8;
+    int skyLight4;
+    int alpha4;
+};
+
+struct ColoredLightFloatData {
+    vec3 lightColor;
+    float skyLight;
+    float alpha;
+};
+
 vec4 minecraft_sample_vanilla_lightmap(sampler2D lightMap, ivec2 uv) {
     return texture(lightMap, clamp(uv / 256.0, vec2(0.5 / 16.0), vec2(15.5 / 16.0)));
 }
 
-vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv, int overrideSky) {
-    int leastSignificantShort = uv.x;
-    int mostSignificantShort = uv.y;
-    int red8 = (leastSignificantShort >> 0) & 0xFF;
-    int green8 = (leastSignificantShort >> 8) & 0xFF;
-    int skyLight4 = (mostSignificantShort >> 0) & 0xF;
-    if(overrideSky != -1) skyLight4 = overrideSky;
-    int blue8 = (mostSignificantShort >> 4) & 0xFF;
-    int alpha4 = (mostSignificantShort >> 12) & 0xF;
-    if(alpha4 != 0xF) {
-        return minecraft_sample_vanilla_lightmap(lightMap, uv);
-    }
-    const float divideBy255 = 0.003921;
-    vec3 blockLightColor = vec3(red8*divideBy255, green8*divideBy255, blue8*divideBy255);
+int ivec2ToInt(ivec2 data) {
+    return data.y << 16 | (data.x & 0xFFFF);//int((uint(data.y) << 16) | uint(data.x));
+}
 
-    vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, skyLight4 << 4)).xyz;
-    vec3 block = pow(blockLightColor, vec3(1.3));
+ColoredLightIntegerData unpackColoredLightData(int packedData) {
+    return ColoredLightIntegerData(
+        packedData & 0xFF, // red
+        (packedData >> 8) & 0xFF, // green
+        (packedData >> 20) & 0xFF, // blue
+        (packedData >> 16) & 0xF, // sky 4
+        (packedData >> 28) & 0xF // alpha 4
+    );
+}
+ColoredLightIntegerData unpackColoredLightData(ivec2 packedData) {
+    return unpackColoredLightData(ivec2ToInt(packedData));
+}
+
+bool isPackedDataColored(int packedData) {
+    return ((packedData >> 28) & 0xF) == 0xF;
+}
+bool isPackedDataColored(ivec2 packedData) {
+    return isPackedDataColored(ivec2ToInt(packedData));
+}
+
+ColoredLightFloatData coloredLightData_integerToFloat(ColoredLightIntegerData data) {
+    return ColoredLightFloatData(
+        vec3(data.red8 / 255.0,
+            data.green8 / 255.0,
+            data.blue8 / 255.0
+        ),
+        data.skyLight4 / 15.0,
+        data.alpha4 / 15.0
+    );
+}
+
+vec4 mixColoredLightWithLightMap(sampler2D lightMap, ColoredLightFloatData data) {
+    vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, int(data.skyLight * 15) << 4)).xyz;
+    vec3 block = pow(data.lightColor, vec3(1.3));
     return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
 }
 
-vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
-    return sample_lightmap_colored(lightMap, uv, -1);
-}
-
-
-int fetchLightDEBUG(ivec3 blockPos) {
-    /*block += ivec3(1);
-    int index = (block.x + block.z * 18 + block.y * 18 * 18);
-    return coloredLightSections[index];*/
+int fetchColoredLight(ivec3 blockPos) {
     uint lightSectionIndex;
     if (_flw_chunkCoordToSectionIndex(blockPos >> 4, lightSectionIndex)) {
-        return 0;
+        return -1;
     }
     ivec3 blockPosRelative = ivec3((blockPos & 0xF) + 1);
     int index = (blockPosRelative.x + blockPosRelative.z * 18 + blockPosRelative.y * 18 * 18);
     return coloredLightSections[lightSectionIndex * 18 * 18 * 18 + index];
+}
+
+ColoredLightFloatData vertexLightColor(ivec2 instanceLight, ivec3 blockPos) {
+    int fetchedLight = fetchColoredLight(blockPos);
+    ColoredLightIntegerData data = unpackColoredLightData(
+    fetchedLight == -1 ? ivec2ToInt(instanceLight) : fetchedLight
+    );
+    return coloredLightData_integerToFloat(data);
 }
