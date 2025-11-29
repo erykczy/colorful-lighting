@@ -6,7 +6,7 @@ in vec4 flw_vertexPos;
 in vec4 flw_vertexColor;
 in vec2 flw_vertexTexCoord;
 flat in ivec2 flw_vertexOverlay;
-flat in vec2 flw_vertexLight;
+in vec2 flw_vertexLight;
 in vec3 flw_vertexNormal;
 
 in float flw_distance;

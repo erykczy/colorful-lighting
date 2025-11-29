@@ -74,42 +74,40 @@ ColoredLightFloatData mixLight(ColoredLightFloatData a, ColoredLightFloatData b,
 }
 
 // trilinear ColoredLightFloatData interpolation
-ColoredLightFloatData sampleTrilinearLightColor(vec3 pos, ivec2 instanceLight) {
-    int cornerX = int(round(pos.x)) - 1;
-    int cornerY = int(round(pos.y)) - 1;
-    int cornerZ = int(round(pos.z)) - 1;
-    ColoredLightFloatData c000 = sampleLightColor(ivec3(cornerX + 0, cornerY + 0, cornerZ + 0), instanceLight);
-    ColoredLightFloatData c100 = sampleLightColor(ivec3(cornerX + 1, cornerY + 0, cornerZ + 0), instanceLight);
-    ColoredLightFloatData c101 = sampleLightColor(ivec3(cornerX + 1, cornerY + 0, cornerZ + 1), instanceLight);
-    ColoredLightFloatData c001 = sampleLightColor(ivec3(cornerX + 0, cornerY + 0, cornerZ + 1), instanceLight);
-    ColoredLightFloatData c010 = sampleLightColor(ivec3(cornerX + 0, cornerY + 1, cornerZ + 0), instanceLight);
-    ColoredLightFloatData c110 = sampleLightColor(ivec3(cornerX + 1, cornerY + 1, cornerZ + 0), instanceLight);
-    ColoredLightFloatData c111 = sampleLightColor(ivec3(cornerX + 1, cornerY + 1, cornerZ + 1), instanceLight);
-    ColoredLightFloatData c011 = sampleLightColor(ivec3(cornerX + 0, cornerY + 1, cornerZ + 1), instanceLight);
+/*ColoredLightFloatData sampleTrilinearLightColor(vec3 pos, ivec2 instanceLight) {
+    ivec3 corner = ivec3(round(pos))-ivec3(1);
+    ColoredLightFloatData c000 = sampleLightColor(ivec3(corner.x + 0, corner.y + 0, corner.z + 0), instanceLight);
+    ColoredLightFloatData c100 = sampleLightColor(ivec3(corner.x + 1, corner.y + 0, corner.z + 0), instanceLight);
+    ColoredLightFloatData c101 = sampleLightColor(ivec3(corner.x + 1, corner.y + 0, corner.z + 1), instanceLight);
+    ColoredLightFloatData c001 = sampleLightColor(ivec3(corner.x + 0, corner.y + 0, corner.z + 1), instanceLight);
+    ColoredLightFloatData c010 = sampleLightColor(ivec3(corner.x + 0, corner.y + 1, corner.z + 0), instanceLight);
+    ColoredLightFloatData c110 = sampleLightColor(ivec3(corner.x + 1, corner.y + 1, corner.z + 0), instanceLight);
+    ColoredLightFloatData c111 = sampleLightColor(ivec3(corner.x + 1, corner.y + 1, corner.z + 1), instanceLight);
+    ColoredLightFloatData c011 = sampleLightColor(ivec3(corner.x + 0, corner.y + 1, corner.z + 1), instanceLight);
 
-    float x = (pos.x - cornerX) / 2.0;
-    float y = (pos.y - cornerY) / 2.0;
-    float z = (pos.z - cornerZ) / 2.0;
+    vec3 xyz = pos - (corner + vec3(0.5));
+    xyz = mix(xyz, pos - (floor(pos) + vec3(0.5)), vec3(1.0));
 
-    ColoredLightFloatData c00 = mixLight(c000, c100, x);
-    ColoredLightFloatData c01 = mixLight(c001, c101, x);
-    ColoredLightFloatData c11 = mixLight(c011, c111, x);
-    ColoredLightFloatData c10 = mixLight(c010, c110, x);
+    ColoredLightFloatData c00 = mixLight(c000, c100, xyz.x);
+    ColoredLightFloatData c10 = mixLight(c010, c110, xyz.x);
+    ColoredLightFloatData c01 = mixLight(c001, c101, xyz.x);
+    ColoredLightFloatData c11 = mixLight(c011, c111, xyz.x);
 
-    ColoredLightFloatData c0 = mixLight(c00, c10, y);
-    ColoredLightFloatData c1 = mixLight(c01, c11, y);
+    ColoredLightFloatData c0 = mixLight(c00, c10, xyz.y);
+    ColoredLightFloatData c1 = mixLight(c01, c11, xyz.y);
 
-    return mixLight(c0, c1, z);
-}
+    return mixLight(c0, c1, xyz.z);
+}*/
 
 ColoredLightFloatData vertexLightColor(ivec2 instanceLight, vec3 vertexPos) {
     ivec3 blockPos = ivec3(floor(vertexPos));
-    if (getColoredLightFromBuffer(blockPos) == -1) {
+    return sampleLightColor(blockPos, instanceLight);
+    /*if (getColoredLightFromBuffer(blockPos) == -1) {
         // light provided by instance
         return sampleLightColor(blockPos, instanceLight);
     }
     else {
         // light provided by uniform buffer object (so we can sample multiple positions and do trilinear interpolation)
         return sampleTrilinearLightColor(vertexPos, instanceLight);
-    }
+    }*/
 }
