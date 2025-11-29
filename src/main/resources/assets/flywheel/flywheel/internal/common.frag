@@ -127,7 +127,6 @@ void _flw_main() {
         // START colorful lighting
         ColoredLightFloatData data = v_lightColor.data;
         if(data.alpha > 0) {
-            data.skyLight = flw_fragLight[1];
             lightColor = mixColoredLightWithLightMap(flw_lightTex, data);
         }
         // END colorful lighting

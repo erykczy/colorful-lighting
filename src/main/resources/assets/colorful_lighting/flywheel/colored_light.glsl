@@ -58,10 +58,16 @@ int getColoredLightFromBuffer(ivec3 blockPos) {
 // sample ColoredLightFloatData at a given blockPos
 ColoredLightFloatData sampleLightColor(ivec3 blockPos, ivec2 instanceLight) {
     int fetchedLight = getColoredLightFromBuffer(blockPos);
-    ColoredLightIntegerData data = unpackColoredLightData(
-    fetchedLight == -1 ? ivec2ToInt(instanceLight) : fetchedLight
-    );
-    return coloredLightData_integerToFloat(data);
+    if(fetchedLight == -1) { // no light in buffer for this section
+        return coloredLightData_integerToFloat(unpackColoredLightData(ivec2ToInt(instanceLight)));
+    }
+    else {
+        ColoredLightFloatData data = coloredLightData_integerToFloat(unpackColoredLightData(fetchedLight));
+        vec2 light;
+        flw_lightFetch(blockPos, light);
+        data.skyLight = light.y;
+        return data;
+    }
 }
 
 // linear ColoredLightFloatData interpolation
