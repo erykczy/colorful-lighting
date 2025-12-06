@@ -8,11 +8,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ShadeSeparatingSuperByteBuffer.class)
 public class ShadeSeparatingSuperByteBufferMixin {
-    /*@Inject(method = "maxLight", at = @At("HEAD"), cancellable = true)
-    private static void maxLight(int packedLight1, int packedLight2, CallbackInfoReturnable<Integer> cir) {
-        cir.setReturnValue(PackedLightData.max(packedLight1, packedLight2));
-    }*/
-
     @Redirect(method = "renderInto", at = @At(value = "INVOKE", target = "Lnet/createmod/catnip/render/SuperByteBuffer;maxLight(II)I", ordinal = 0))
     private int colorfullighting$maxLight0(int packedLight1, int packedLight2) {
         return packedLight2;
