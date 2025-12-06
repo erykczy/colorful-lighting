@@ -1,7 +1,6 @@
 package me.erykczy.colorfullighting.flywheel;
 
 import dev.engine_room.flywheel.backend.engine.CpuArena;
-import dev.engine_room.flywheel.backend.engine.LightDataCollector;
 import dev.engine_room.flywheel.backend.engine.indirect.ResizableStorageArray;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
 import it.unimi.dsi.fastutil.longs.Long2IntMap;

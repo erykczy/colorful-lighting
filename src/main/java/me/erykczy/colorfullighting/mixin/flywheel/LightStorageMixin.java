@@ -4,6 +4,7 @@ import dev.engine_room.flywheel.backend.engine.LightStorage;
 import dev.engine_room.flywheel.backend.engine.indirect.StagingBuffer;
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.flywheel.ColoredLightFlywheelStorage;
+import me.erykczy.colorfullighting.flywheel.FlywheelCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,26 +14,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class LightStorageMixin {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void colorfullighting$init(CallbackInfo ci) {
-        ColorfulLighting.flywheelColoredLightStorage = new ColoredLightFlywheelStorage();
+        FlywheelCompat.getInstance().flywheelColoredLightStorage = new ColoredLightFlywheelStorage();
     }
 
     @Inject(method = "delete", at = @At("TAIL"))
     private void colorfullighting$delete(CallbackInfo ci) {
-        ColorfulLighting.flywheelColoredLightStorage.delete();
+        FlywheelCompat.getInstance().flywheelColoredLightStorage.delete();
     }
 
     @Inject(method = "collectSection", at = @At("TAIL"))
     private void colorfullighting$collectSection(long section, CallbackInfo ci) {
-        ColorfulLighting.flywheelColoredLightStorage.collectSection(section);
+        FlywheelCompat.getInstance().flywheelColoredLightStorage.collectSection(section);
     }
 
     @Inject(method = "uploadChangedSections", at = @At("TAIL"))
     private void colorfullighting$uploadChangedSections(StagingBuffer staging, int dstVbo, CallbackInfo ci) {
-        ColorfulLighting.flywheelColoredLightStorage.uploadChangedSections(staging);
+        FlywheelCompat.getInstance().flywheelColoredLightStorage.uploadChangedSections(staging);
     }
 
     @Inject(method = "endTrackingSection", at = @At("TAIL"))
     private void colorfullighting$endTrackingSection(long section, CallbackInfo ci) {
-        ColorfulLighting.flywheelColoredLightStorage.removeSection(section);
+        FlywheelCompat.getInstance().flywheelColoredLightStorage.removeSection(section);
     }
 }

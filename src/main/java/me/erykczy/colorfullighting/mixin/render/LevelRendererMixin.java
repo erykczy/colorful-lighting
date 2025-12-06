@@ -1,6 +1,5 @@
 package me.erykczy.colorfullighting.mixin.render;
 
-import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.accessors.BlockStateWrapper;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
@@ -10,7 +9,7 @@ import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
-import net.createmod.ponder.api.level.PonderLevel;
+import me.erykczy.colorfullighting.flywheel.FlywheelCompat;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -25,14 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if(level instanceof PonderLevel) {
-            cir.setReturnValue(PackedLightData.packData(15, 0, 0, 0));
+        if(FlywheelCompat.isAvailable() && FlywheelCompat.getInstance().colorfullighting$getLightColor(level, state, pos, cir))
             return;
-        }
-        if(level instanceof VirtualRenderWorld) {
-            cir.setReturnValue(0);
-            return;
-        }
 
         int skyLight = level.getBrightness(LightLayer.SKY, pos);
         if(state.emissiveRendering(level, pos)) {
