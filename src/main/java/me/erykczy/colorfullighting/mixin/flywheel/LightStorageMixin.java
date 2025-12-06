@@ -30,4 +30,9 @@ public class LightStorageMixin {
     private void colorfullighting$uploadChangedSections(StagingBuffer staging, int dstVbo, CallbackInfo ci) {
         ColorfulLighting.flywheelColoredLightStorage.uploadChangedSections(staging);
     }
+
+    @Inject(method = "endTrackingSection", at = @At("TAIL"))
+    private void colorfullighting$endTrackingSection(long section, CallbackInfo ci) {
+        ColorfulLighting.flywheelColoredLightStorage.removeSection(section);
+    }
 }
