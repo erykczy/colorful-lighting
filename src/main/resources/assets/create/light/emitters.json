@@ -1,0 +1,21 @@
+{
+  "$require": "create",
+  "create:blaze_burner": "#ff894d",
+  "create:nixie_tube": "orange",
+  "create:white_nixie_tube": "white",
+  "create:light_gray_nixie_tube": "light_gray",
+  "create:gray_nixie_tube": "gray",
+  "create:black_nixie_tube": "black",
+  "create:brown_nixie_tube": "brown",
+  "create:red_nixie_tube": "red",
+  "create:yellow_nixie_tube": "yellow",
+  "create:lime_nixie_tube": "lime",
+  "create:green_nixie_tube": "green",
+  "create:cyan_nixie_tube": "cyan",
+  "create:light_blue_nixie_tube": "light_blue",
+  "create:blue_nixie_tube": "blue",
+  "create:purple_nixie_tube": "purple",
+  "create:magenta_nixie_tube": "magenta",
+  "create:pink_nixie_tube": "pink",
+  "create:rose_quartz_lamp": "red"
+}

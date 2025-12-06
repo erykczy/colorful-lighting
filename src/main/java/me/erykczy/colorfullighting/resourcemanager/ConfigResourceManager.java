@@ -13,6 +13,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.neoforged.fml.ModList;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -28,10 +29,18 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
         resourceManager.listPacks().forEach((pack) -> {
             for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
+                // emitters.json
                 for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/emitters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
+                        // for each entry
                         for(var entry : object.entrySet()) {
+                            if(entry.getKey().equals("$require")) {
+                                if(!ModList.get().isLoaded(entry.getValue().getAsString())) {
+                                    break;
+                                }
+                                continue;
+                            }
                             try {
                                 var key = ResourceLocation.parse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
@@ -47,10 +56,18 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                     }
                 }
 
+                // filters.json
                 for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/filters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
+                        // for each entry
                         for(var entry : object.entrySet()) {
+                            if(entry.getKey().equals("$require")) {
+                                if(!ModList.get().isLoaded(entry.getValue().getAsString())) {
+                                    break;
+                                }
+                                continue;
+                            }
                             try {
                                 var key = ResourceLocation.parse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
