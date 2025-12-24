@@ -42,7 +42,7 @@ public class EntityRendererMixin {
             EntityType.DRAGON_FIREBALL,
             EntityType.EXPERIENCE_ORB,
             EntityType.GLOW_SQUID,
-            EntityType.ITEM_FRAME,
+            EntityType.GLOW_ITEM_FRAME,
             EntityType.SHULKER_BULLET,
             EntityType.EYE_OF_ENDER,
             EntityType.FIREBALL,
