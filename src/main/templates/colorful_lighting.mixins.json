@@ -15,7 +15,8 @@
     "flywheel.LightBuffersMixin",
     "flywheel.LightStorageMixin",
     "create.ShadeSeparatingSuperByteBufferMixin",
-    "create.AnimatedSceneElementBaseMixin"
+    "create.AnimatedSceneElementBaseMixin",
+    "create.ChainConveyorRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
