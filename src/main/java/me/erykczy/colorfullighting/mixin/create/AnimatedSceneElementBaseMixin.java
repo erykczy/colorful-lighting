@@ -12,10 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class AnimatedSceneElementBaseMixin {
     @Inject(method = "lightCoordsFromFade", at = @At("HEAD"), cancellable = true)
     protected void lightCoordsFromFade(float fade, CallbackInfoReturnable<Integer> cir) {
-        int value4 = (int)Mth.lerp(fade, 5, 15);
-        //int value8 = (int)Mth.lerp(fade, 5*15, 15*15);
+        int value4 = 0;//(int)Mth.lerp(fade, 5, 15);
+        int value8 = (int)Mth.lerp(fade, 5*15, 15*15);
         cir.setReturnValue(PackedLightData.packData(
-            value4, 0, 0, 0
+            value4, value8, value8, value8
         ));
     }
 }

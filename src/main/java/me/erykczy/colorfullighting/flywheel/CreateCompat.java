@@ -25,7 +25,7 @@ public class CreateCompat {
 
     public boolean colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         if(level instanceof PonderLevel) {
-            cir.setReturnValue(PackedLightData.packData(15, 0, 0, 0));
+            cir.setReturnValue(PackedLightData.packData(0, 15*15, 15*15, 15*15));
             return true;
         }
         if(level instanceof VirtualRenderWorld) {
