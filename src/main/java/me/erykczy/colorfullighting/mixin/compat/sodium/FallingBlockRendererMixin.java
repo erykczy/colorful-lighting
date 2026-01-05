@@ -49,7 +49,7 @@ public abstract class FallingBlockRendererMixin {
         float k = m * (1.0f / 255.0f);
 
         // Adjust k based on time of day
-        k *= MathExt.getTimeOfDayFalloff(e.level().getDayTime()) * 255.0f;
+        k *= 0.7f;
 
         float mr = 1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f);
         float mg = 1.0f + k * ((g * (1.0f / 255.0f)) - 1.0f);

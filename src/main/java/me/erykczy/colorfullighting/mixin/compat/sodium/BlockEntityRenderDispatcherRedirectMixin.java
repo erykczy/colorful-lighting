@@ -91,8 +91,7 @@ public abstract class BlockEntityRenderDispatcherRedirectMixin {
         if (max8 > 0) {
             float k = max8 * (1.0f / 255.0f);
 
-            // Adjust k based on time of day
-            k *= MathExt.getTimeOfDayFalloff(be.getLevel().getDayTime()) * 255.0f;
+            k *= 0.7f;
 
             float mr = 1.0f + k * ((r8 * (1.0f / 255.0f)) - 1.0f);
             float mg = 1.0f + k * ((g8 * (1.0f / 255.0f)) - 1.0f);

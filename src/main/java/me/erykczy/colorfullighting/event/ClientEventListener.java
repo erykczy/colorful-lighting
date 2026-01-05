@@ -10,22 +10,11 @@ import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class ClientEventListener {
-    private float lastFalloff = -1f;
-
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase == TickEvent.Phase.START) return;
         var player = ColorfulLighting.clientAccessor.getPlayer();
         if(player == null) return;
-
-        var level = ColorfulLighting.clientAccessor.getLevel();
-        if (level != null) {
-            float currentFalloff = MathExt.getTimeOfDayFalloff(level.getDayTime());
-            if (lastFalloff != -1f && currentFalloff != lastFalloff) {
-                ColoredLightEngine.getInstance().refreshLevel();
-            }
-            lastFalloff = currentFalloff;
-        }
 
         ChunkPos pos = player.getChunkPos();
         int renderDistance = ColorfulLighting.clientAccessor.getRenderDistance();
@@ -42,6 +31,5 @@ public class ClientEventListener {
     public void onLevelUnload(LevelEvent.Unload event) {
         if(!event.getLevel().isClientSide()) return;
         ColoredLightEngine.getInstance().reset();
-        lastFalloff = -1f;
     }
 }

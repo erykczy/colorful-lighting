@@ -110,7 +110,7 @@ public abstract class SodiumLevelRenderCompatMixin {
                 float bN = COLOR_POW_LUT[bc * 255 / maxc];
                 
                 if (Minecraft.getInstance().level != null) {
-                    intensity *= a * MathExt.getTimeOfDayFalloff(Minecraft.getInstance().level.getDayTime());
+                    intensity *= a * (0.7f / 255f);
                 }
 
                 float mr = 1.0f + intensity * (rN - 1.0f);

@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ItemInHandRenderer.class)
+@Mixin(value = ItemInHandRenderer.class, priority = 10000)
 public abstract class SodiumCompatFirstPersonHandItemsMixin {
 
     @Unique
@@ -38,7 +38,7 @@ public abstract class SodiumCompatFirstPersonHandItemsMixin {
 
         // Adjust k based on time of day
         if (eng.clientAccessor != null && eng.clientAccessor.getLevel() != null) {
-            k *= MathExt.getTimeOfDayFalloff(eng.clientAccessor.getLevel().getDayTime()) * 255.0f;
+            k *= 0.7f;
         }
 
         float mr = 1.0f + k * ((rc * (1.0f / 255.0f)) - 1.0f);

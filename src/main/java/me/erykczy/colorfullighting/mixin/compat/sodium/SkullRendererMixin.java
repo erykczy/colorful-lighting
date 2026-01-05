@@ -30,7 +30,7 @@ public abstract class SkullRendererMixin {
 
         // Adjust k based on time of day
         if (eng.clientAccessor != null && eng.clientAccessor.getLevel() != null) {
-            k *= MathExt.getTimeOfDayFalloff(eng.clientAccessor.getLevel().getDayTime()) * 255.0f;
+            k *= 0.7f;
         }
 
         float mr = 1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f);

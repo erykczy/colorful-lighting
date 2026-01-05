@@ -33,7 +33,7 @@ public abstract class PaintingRendererMixin {
         float k = m * (1.0f / 255.0f);
 
         // Adjust k based on time of day
-        k *= MathExt.getTimeOfDayFalloff(e.level().getDayTime()) * 255.0f;
+        k *= 0.7f;
 
         return new float[]{
             1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f),

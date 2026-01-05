@@ -38,23 +38,4 @@ public class LevelRendererMixin {
             cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(emission)));
         }
     }
-
-    @Unique
-    private static int colorful_lighting$attenuateSky(int sky4, ColorRGB4 c) {
-        float r = (c.red4 & 0xF);
-        float g = (c.green4 & 0xF);
-        float b = (c.blue4 & 0xF);
-        float max = Math.max(r, Math.max(g, b));
-        float min = Math.min(r, Math.min(g, b));
-        if (max <= 0.0f) return sky4;
-
-        float strength = max / 15.0f;
-        float sat = (max - min) / max;
-        float k = 1f * strength * (0.6f + 0.4f*sat);
-
-        int atten = Math.round(sky4 * (1.0f - k));
-        if (atten < 0) atten = 0;
-        if (atten > 15) atten = 15;
-        return atten;
-    }
 }
