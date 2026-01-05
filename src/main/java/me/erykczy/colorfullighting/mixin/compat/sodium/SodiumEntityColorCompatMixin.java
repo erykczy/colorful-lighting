@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.TintingBufferSource;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -17,24 +18,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(EntityRenderDispatcher.class)
 public abstract class SodiumEntityColorCompatMixin {
-
-    private static float[] cl$mul(Entity e, float pt) {
-        var eng = ColoredLightEngine.getInstance();
-        if (eng == null || e == null) return null;
-
-        Vec3 p = e.getLightProbePosition(pt);
-        ColorRGB8 c = eng.sampleTrilinearLightColor(p);
-        int r = c.red & 255, g = c.green & 255, b = c.blue & 255;
-        int m = Math.max(r, Math.max(g, b));
-        if (m == 0) return null;
-
-        float k = m / 255f;
-        return new float[] {
-                1f + k * ((r / 255f) - 1f),
-                1f + k * ((g / 255f) - 1f),
-                1f + k * ((b / 255f) - 1f)
-        };
-    }
 
     @Redirect(
             method = "render",
@@ -54,12 +37,32 @@ public abstract class SodiumEntityColorCompatMixin {
                 return;
             }
 
-            float[] m = cl$mul(entity, tickDelta);
-            MultiBufferSource out = (m != null)
-                    ? new TintingBufferSource(buffers, m[0], m[1], m[2])
-                    : buffers;
+            var eng = ColoredLightEngine.getInstance();
+            if (eng == null) {
+                renderer.render(entity, yaw, tickDelta, pose, buffers, packedLight);
+                return;
+            }
 
-            renderer.render(entity, yaw, tickDelta, pose, out, packedLight);
+            Vec3 p = entity.getLightProbePosition(tickDelta);
+            ColorRGB8 c = eng.sampleTrilinearLightColor(p.x, p.y, p.z);
+            int r = c.red & 255, g = c.green & 255, b = c.blue & 255;
+            int max = r > g ? (r > b ? r : b) : (g > b ? g : b);
+
+            if (max > 0) {
+                float k = max * (1.0f / 255.0f);
+
+                // Adjust k based on time of day
+                k *= MathExt.getTimeOfDayFalloff(entity.level().getDayTime()) * 255.0f;
+
+                float mr = 1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f);
+                float mg = 1.0f + k * ((g * (1.0f / 255.0f)) - 1.0f);
+                float mb = 1.0f + k * ((b * (1.0f / 255.0f)) - 1.0f);
+
+                MultiBufferSource out = new TintingBufferSource(buffers, mr, mg, mb);
+                renderer.render(entity, yaw, tickDelta, pose, out, packedLight);
+            } else {
+                renderer.render(entity, yaw, tickDelta, pose, buffers, packedLight);
+            }
         } else {
             renderer.render(entity, yaw, tickDelta, pose, buffers, packedLight);
         }

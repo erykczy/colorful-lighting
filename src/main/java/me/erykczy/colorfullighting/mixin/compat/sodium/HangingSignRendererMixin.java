@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.TintingBufferSource;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.HangingSignRenderer;
 import net.minecraft.client.renderer.blockentity.SignRenderer;
@@ -20,17 +21,23 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class HangingSignRendererMixin {
 
     @Unique
-    private static float[] cl$mulFromPos(BlockPos pos) {
+    private static float[] cl$mulFromPos(BlockPos pos, int packedLight) {
         var eng = ColoredLightEngine.getInstance();
         if (eng == null || pos == null) return null;
-        ColorRGB8 c = eng.sampleTrilinearLightColor(Vec3.atCenterOf(pos));
+        ColorRGB8 c = eng.sampleTrilinearLightColor(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         int r = c.red & 255, g = c.green & 255, b = c.blue & 255;
-        int m = Math.max(r, Math.max(g, b));
+        int m = r > g ? (r > b ? r : b) : (g > b ? g : b);
         if (m == 0) return null;
-        float k  = m / 255f;
-        float mr = 1f + k * ((r / 255f) - 1f);
-        float mg = 1f + k * ((g / 255f) - 1f);
-        float mb = 1f + k * ((b / 255f) - 1f);
+        float k = m * (1.0f / 255.0f);
+
+        // Adjust k based on time of day
+        if (eng.clientAccessor != null && eng.clientAccessor.getLevel() != null) {
+            k *= MathExt.getTimeOfDayFalloff(eng.clientAccessor.getLevel().getDayTime()) * 255.0f;
+        }
+
+        float mr = 1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f);
+        float mg = 1.0f + k * ((g * (1.0f / 255.0f)) - 1.0f);
+        float mb = 1.0f + k * ((b * (1.0f / 255.0f)) - 1.0f);
         return new float[]{mr, mg, mb};
     }
 
@@ -40,8 +47,8 @@ public abstract class HangingSignRendererMixin {
             argsOnly = true,
             index = 4
     )
-    private MultiBufferSource cl$wrapBuffers_render_i3(MultiBufferSource original, SignBlockEntity be, float pt, PoseStack pose) {
-        float[] m = (be != null) ? cl$mulFromPos(be.getBlockPos()) : null;
+    private MultiBufferSource cl$wrapBuffers_render_i3(MultiBufferSource original, SignBlockEntity be, float pt, PoseStack pose, MultiBufferSource buffers, int packedLight) {
+        float[] m = (be != null) ? cl$mulFromPos(be.getBlockPos(), packedLight) : null;
         return m != null ? new TintingBufferSource(original, m[0], m[1], m[2]) : original;
     }
 
@@ -51,8 +58,8 @@ public abstract class HangingSignRendererMixin {
             argsOnly = true,
             index = 4
     )
-    private MultiBufferSource cl$wrapBuffers_render_i4(MultiBufferSource original, SignBlockEntity be, float pt, PoseStack pose) {
-        float[] m = (be != null) ? cl$mulFromPos(be.getBlockPos()) : null;
+    private MultiBufferSource cl$wrapBuffers_render_i4(MultiBufferSource original, SignBlockEntity be, float pt, PoseStack pose, MultiBufferSource buffers, int packedLight) {
+        float[] m = (be != null) ? cl$mulFromPos(be.getBlockPos(), packedLight) : null;
         return m != null ? new TintingBufferSource(original, m[0], m[1], m[2]) : original;
     }
 }

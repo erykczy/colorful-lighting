@@ -3,11 +3,15 @@ package me.erykczy.colorfullighting.mixin.compat.sodium;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 
+import me.erykczy.colorfullighting.common.util.MathExt;
 import me.jellysquid.mods.sodium.client.model.color.ColorProvider;
 import me.jellysquid.mods.sodium.client.model.quad.BakedQuadView;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,6 +23,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = BlockRenderer.class, remap = false)
 public abstract class SodiumLevelRenderCompatMixin {
+
+    @Unique
+    private static final float[] COLOR_INTENSITY_LUT = new float[256];
+    @Unique
+    private static final float[] COLOR_POW_LUT = new float[256];
+
+    static {
+        for (int i = 0; i < 256; i++) {
+            COLOR_INTENSITY_LUT[i] = (float) Math.pow(i / 255.0f, 1.25f);
+            COLOR_POW_LUT[i] = (float) Math.pow(i / 255.0f, 0.75f);
+        }
+    }
 
     @Inject(
             method = "getVertexColors",
@@ -47,18 +63,37 @@ public abstract class SodiumLevelRenderCompatMixin {
         var eng = ColoredLightEngine.getInstance();
 
         if (eng != null && ctx != null && quad != null) {
-            for (int i = 0; i < 4; i++) {
-                double wx = ctx.pos().getX() + quad.getX(i);
-                double wy = ctx.pos().getY() + quad.getY(i);
-                double wz = ctx.pos().getZ() + quad.getZ(i);
+            float ox = ctx.pos().getX();
+            float oy = ctx.pos().getY();
+            float oz = ctx.pos().getZ();
 
-                ColorRGB8 c = eng.sampleTrilinearLightColor(new Vec3(wx, wy, wz));
+            var face = quad.getLightFace();
+            double dx = face.getStepX() * 0.45;
+            double dy = face.getStepY() * 0.45;
+            double dz = face.getStepZ() * 0.45;
+
+            for (int i = 0; i < 4; i++) {
+                double vqx = quad.getX(i);
+                double vqy = quad.getY(i);
+                double vqz = quad.getZ(i);
+
+                // Pull sampling point slightly away from the quad edges towards the center of the block face
+                // to avoid "bleeding" from dark adjacent blocks due to trilinear interpolation.
+                double bx = (0.5 - vqx) * 0.15;
+                double by = (0.5 - vqy) * 0.15;
+                double bz = (0.5 - vqz) * 0.15;
+
+                double wx = ox + vqx + dx + (face.getStepX() == 0 ? bx : 0);
+                double wy = oy + vqy + dy + (face.getStepY() == 0 ? by : 0);
+                double wz = oz + vqz + dz + (face.getStepZ() == 0 ? bz : 0);
+
+                ColorRGB8 c = eng.sampleTrilinearLightColor(wx, wy, wz);
 
                 int rc = c.red   & 0xFF;
                 int gc = c.green & 0xFF;
                 int bc = c.blue  & 0xFF;
 
-                int maxc = Math.max(rc, Math.max(gc, bc));
+                int maxc = rc > gc ? (rc > bc ? rc : bc) : (gc > bc ? gc : bc);
                 if (maxc == 0) {
                     continue;
                 }
@@ -69,26 +104,22 @@ public abstract class SodiumLevelRenderCompatMixin {
                 int g = (abgr >>> 8)  & 0xFF;
                 int r = (abgr)        & 0xFF;
 
-                float intensity = (float) Math.pow(maxc / 255.0f, 1.25f);
-                float rN = rc / (float) maxc;
-                float gN = gc / (float) maxc;
-                float bN = bc / (float) maxc;
-
-                rN = (float) Math.pow(rN, 0.75f);
-                gN = (float) Math.pow(gN, 0.75f);
-                bN = (float) Math.pow(bN, 0.75f);
-
-                float falloff = a / 255.0f;
-                falloff *= falloff; // smoother taper
-                intensity *= falloff;
+                float intensity = COLOR_INTENSITY_LUT[maxc];
+                float rN = COLOR_POW_LUT[rc * 255 / maxc];
+                float gN = COLOR_POW_LUT[gc * 255 / maxc];
+                float bN = COLOR_POW_LUT[bc * 255 / maxc];
+                
+                if (Minecraft.getInstance().level != null) {
+                    intensity *= a * MathExt.getTimeOfDayFalloff(Minecraft.getInstance().level.getDayTime());
+                }
 
                 float mr = 1.0f + intensity * (rN - 1.0f);
                 float mg = 1.0f + intensity * (gN - 1.0f);
                 float mb = 1.0f + intensity * (bN - 1.0f);
 
-                int nr = colorfullighting$clamp255(Math.round(r * mr));
-                int ng = colorfullighting$clamp255(Math.round(g * mg));
-                int nb = colorfullighting$clamp255(Math.round(b * mb));
+                int nr = colorfullighting$clamp255((int)(r * mr + 0.5f));
+                int ng = colorfullighting$clamp255((int)(g * mg + 0.5f));
+                int nb = colorfullighting$clamp255((int)(b * mb + 0.5f));
 
                 colors[i] = (a << 24) | (nb << 16) | (ng << 8) | nr;
             }

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.TintingBufferSource;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.FallingBlockRenderer;
 import net.minecraft.world.entity.item.FallingBlockEntity;
@@ -40,20 +41,19 @@ public abstract class FallingBlockRendererMixin {
         var eng = ColoredLightEngine.getInstance();
         if (eng == null) { CL_mul.remove(); return; }
 
-        var bx = (int)Math.floor(e.getX());
-        var by = (int)Math.floor(e.getY());
-        var bz = (int)Math.floor(e.getZ());
-        Vec3 sample = Vec3.atCenterOf(new net.minecraft.core.BlockPos(bx, by, bz));
-
-        ColorRGB8 c = eng.sampleTrilinearLightColor(sample);
+        ColorRGB8 c = eng.sampleTrilinearLightColor(e.getX(), e.getY() + 0.5, e.getZ());
         int r = c.red & 255, g = c.green & 255, b = c.blue & 255;
-        int m = Math.max(r, Math.max(g, b));
+        int m = r > g ? (r > b ? r : b) : (g > b ? g : b);
         if (m == 0) { CL_mul.remove(); return; }
 
-        float k = m / 255f;
-        float mr = 1f + k * ((r / 255f) - 1f);
-        float mg = 1f + k * ((g / 255f) - 1f);
-        float mb = 1f + k * ((b / 255f) - 1f);
+        float k = m * (1.0f / 255.0f);
+
+        // Adjust k based on time of day
+        k *= MathExt.getTimeOfDayFalloff(e.level().getDayTime()) * 255.0f;
+
+        float mr = 1.0f + k * ((r * (1.0f / 255.0f)) - 1.0f);
+        float mg = 1.0f + k * ((g * (1.0f / 255.0f)) - 1.0f);
+        float mb = 1.0f + k * ((b * (1.0f / 255.0f)) - 1.0f);
         CL_mul.set(new float[]{mr, mg, mb});
     }
 

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ItemInHandRenderer;
@@ -25,18 +26,24 @@ public abstract class SodiumCompatFirstPersonHandItemsMixin {
     private static final ThreadLocal<float[]> colorfullighting$prevShaderColor = new ThreadLocal<>();
 
     @Unique
-    private static void colorfullighting$begin(AbstractClientPlayer player, float partialTick) {
+    private static void colorfullighting$begin(AbstractClientPlayer player, float partialTick, int packedLight) {
         var eng = ColoredLightEngine.getInstance();
         if (eng == null || player == null) return;
         Vec3 eye = player.getEyePosition(partialTick);
-        ColorRGB8 c = eng.sampleTrilinearLightColor(new Vec3(eye.x, eye.y, eye.z));
+        ColorRGB8 c = eng.sampleTrilinearLightColor(eye.x, eye.y, eye.z);
         int rc = c.red & 0xFF, gc = c.green & 0xFF, bc = c.blue & 0xFF;
-        int maxc = Math.max(rc, Math.max(gc, bc));
+        int maxc = rc > gc ? (rc > bc ? rc : bc) : (gc > bc ? gc : bc);
         if (maxc == 0) return;
-        float k  = maxc / 255.0f;
-        float mr = 1.0f + k * ((rc / 255.0f) - 1.0f);
-        float mg = 1.0f + k * ((gc / 255.0f) - 1.0f);
-        float mb = 1.0f + k * ((bc / 255.0f) - 1.0f);
+        float k = maxc * (1.0f / 255.0f);
+
+        // Adjust k based on time of day
+        if (eng.clientAccessor != null && eng.clientAccessor.getLevel() != null) {
+            k *= MathExt.getTimeOfDayFalloff(eng.clientAccessor.getLevel().getDayTime()) * 255.0f;
+        }
+
+        float mr = 1.0f + k * ((rc * (1.0f / 255.0f)) - 1.0f);
+        float mg = 1.0f + k * ((gc * (1.0f / 255.0f)) - 1.0f);
+        float mb = 1.0f + k * ((bc * (1.0f / 255.0f)) - 1.0f);
         float[] prev = RenderSystem.getShaderColor().clone();
         colorfullighting$prevShaderColor.set(prev);
         RenderSystem.setShaderColor(prev[0] * mr, prev[1] * mg, prev[2] * mb, prev[3]);
@@ -61,7 +68,7 @@ public abstract class SodiumCompatFirstPersonHandItemsMixin {
             float partialTick, PoseStack poseStack, MultiBufferSource.BufferSource buffers, LocalPlayer player, int packedLight,
             CallbackInfo ci
     ) {
-        colorfullighting$begin(player, partialTick);
+        colorfullighting$begin(player, partialTick, packedLight);
     }
 
     @Inject(
@@ -85,7 +92,7 @@ public abstract class SodiumCompatFirstPersonHandItemsMixin {
             PoseStack poseStack, MultiBufferSource buffers, int packedLight,
             CallbackInfo ci
     ) {
-        colorfullighting$begin(player, partialTick);
+        colorfullighting$begin(player, partialTick, packedLight);
     }
 
     @Inject(
@@ -109,7 +116,7 @@ public abstract class SodiumCompatFirstPersonHandItemsMixin {
             PoseStack poseStack, MultiBufferSource buffers, int packedLight,
             float partialTick, float swing, HumanoidArm arm, CallbackInfo ci
     ) {
-        colorfullighting$begin(null, partialTick);
+        colorfullighting$begin(null, partialTick, packedLight);
     }
 
     @Inject(

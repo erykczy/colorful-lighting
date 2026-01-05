@@ -11,12 +11,15 @@ public class ColorRGB4 {
         return fromRGB4(r / 17, g / 17, b / 17); // 0..255 range to 0..15 range
     }
 
+    public static final ColorRGB4 BLACK = new ColorRGB4(0, 0, 0);
+
     public static ColorRGB4 fromRGB4(int r, int g, int b) {
+        if (r == 0 && g == 0 && b == 0) return BLACK;
         return new ColorRGB4(r, g, b);
     }
 
     public static ColorRGB4 fromRGBFloat(float r, float g, float b) {
-        return new ColorRGB4((int)(r * 15), (int)(g * 15), (int)(b * 15));
+        return fromRGB4((int)(r * 15), (int)(g * 15), (int)(b * 15));
     }
 
     private ColorRGB4(int r4, int g4, int b4) {
@@ -25,6 +28,10 @@ public class ColorRGB4 {
         blue4 = b4;
     }
 
+    public int getRed4() { return red4; }
+    public int getGreen4() { return green4; }
+    public int getBlue4() { return blue4; }
+
     public boolean isInValidState() {
         return  red4 >= 0 && red4 < 16 &&
                 green4 >= 0 && green4 < 16 &&
@@ -32,7 +39,7 @@ public class ColorRGB4 {
     }
 
     public ColorRGB4 mul(float scalar) {
-        return new ColorRGB4((int)(red4 * scalar), (int)(green4 * scalar), (int)(blue4 * scalar));
+        return fromRGB4((int)(red4 * scalar), (int)(green4 * scalar), (int)(blue4 * scalar));
     }
 
     @Override

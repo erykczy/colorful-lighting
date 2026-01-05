@@ -31,8 +31,7 @@ public interface BlockEntityRendererMixin extends CLRendererExtension {
         BlockPos pos = be.getBlockPos();
         int sky = level.getBrightness(LightLayer.SKY, pos);
 
-        var sampleAt = pos.getCenter();
-        ColorRGB8 rgb = ColoredLightEngine.getInstance().sampleTrilinearLightColor(sampleAt);
+        ColorRGB8 rgb = ColoredLightEngine.getInstance().sampleTrilinearLightColor(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
 
         int coloredPacked = PackedLightData.packData(sky, rgb);
 

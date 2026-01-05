@@ -10,6 +10,7 @@ import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
 import me.erykczy.colorfullighting.common.util.TintingBufferSource;
+import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderDispatcher;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -63,13 +64,12 @@ public abstract class BlockEntityRenderDispatcherRedirectMixin {
         int sky = be.getLevel().getBrightness(LightLayer.SKY, pos);
 
         ColorRGB8 rgb;
-        int skyAtt = sky;
+        int skyAtt;
 
         if (state.emissiveRendering(be.getLevel(), pos)) {
             LevelAccessor levelAccessor = engine.clientAccessor.getLevel();
-            BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
             if (levelAccessor != null) {
-                ColorRGB4 emission = Config.getLightColor(stateAccessor);
+                ColorRGB4 emission = Config.getLightColor(new BlockStateWrapper(state));
                 skyAtt = colorful_lighting$attenuateSky(sky, emission);
                 rgb = ColorRGB8.fromRGB4(emission);
             } else {
@@ -77,31 +77,32 @@ public abstract class BlockEntityRenderDispatcherRedirectMixin {
                 rgb = ColorRGB8.fromRGB8(255, 255, 255);
             }
         } else {
-            rgb = engine.sampleTrilinearLightColor(Vec3.atCenterOf(pos));
-            ColorRGB4 color4 = ColorRGB4.fromRGB4((rgb.red >> 4), (rgb.green >> 4), (rgb.blue >> 4));
-            skyAtt = colorful_lighting$attenuateSky(sky, color4);
+            rgb = engine.sampleTrilinearLightColor(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+            int r4 = rgb.red >> 4;
+            int g4 = rgb.green >> 4;
+            int b4 = rgb.blue >> 4;
+            int max4 = r4 > g4 ? (r4 > b4 ? r4 : b4) : (g4 > b4 ? g4 : b4);
+            skyAtt = (15 - max4) * sky / 15;
         }
 
         int r8 = rgb.red & 0xFF, g8 = rgb.green & 0xFF, b8 = rgb.blue & 0xFF;
-        int max = Math.max(r8, Math.max(g8, b8));
-        float[] mul = null;
-        if (max > 0) {
-            float k  = max / 255f;
-            float mr = 1f + k * ((r8 / 255f) - 1f);
-            float mg = 1f + k * ((g8 / 255f) - 1f);
-            float mb = 1f + k * ((b8 / 255f) - 1f);
-            mul = new float[]{mr, mg, mb};
-        }
+        int max8 = r8 > g8 ? (r8 > b8 ? r8 : b8) : (g8 > b8 ? g8 : b8);
 
-        if (mul == null) {
+        if (max8 > 0) {
+            float k = max8 * (1.0f / 255.0f);
+
+            // Adjust k based on time of day
+            k *= MathExt.getTimeOfDayFalloff(be.getLevel().getDayTime()) * 255.0f;
+
+            float mr = 1.0f + k * ((r8 * (1.0f / 255.0f)) - 1.0f);
+            float mg = 1.0f + k * ((g8 * (1.0f / 255.0f)) - 1.0f);
+            float mb = 1.0f + k * ((b8 * (1.0f / 255.0f)) - 1.0f);
+
+            MultiBufferSource tinted = new TintingBufferSource(buffers, mr, mg, mb);
+            int lightOut = PackedLightData.packData(skyAtt, rgb);
+            renderer.render(be, pt, pose, tinted, lightOut, overlay);
+        } else {
             renderer.render(be, pt, pose, buffers, packedLight, overlay);
-            return;
         }
-
-        MultiBufferSource tinted = new TintingBufferSource(buffers, mul[0], mul[1], mul[2]);
-        int coloredPacked = PackedLightData.packData(skyAtt, rgb);
-        int lightOut = coloredPacked;
-
-        renderer.render(be, pt, pose, tinted, lightOut, overlay);
     }
 }

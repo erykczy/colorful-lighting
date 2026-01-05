@@ -21,9 +21,15 @@ public class ColoredLightSection {
             return ColorRGB4.fromRGB4(0, 0, 0);
         else  {
             int startBit = colorIndex * 12;
-            int bitOffset = (startBit & 0x7);
             int byteIndex = startBit >> 3;
-            int rawData = ((data[byteIndex] << 8) & 0xFFFF) | (data[byteIndex + 1] & 0xFF);
+            int bitOffset = (startBit & 0x7);
+            
+            // Optimization: Avoid multiple array accesses and manual bit shifting if possible
+            // But we have 12-bit values spanning across bytes.
+            int b0 = data[byteIndex] & 0xFF;
+            int b1 = data[byteIndex + 1] & 0xFF;
+            
+            int rawData = (b0 << 8) | b1;
             int offsetData = (rawData << bitOffset);
 
             int red = (offsetData >>> 12) & 0x0F;
