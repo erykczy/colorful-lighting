@@ -26,4 +26,9 @@ public class MinecraftWrapper implements ClientAccessor {
         if(minecraft.player == null) return null;
         return new PlayerWrapper(minecraft.player);
     }
+
+    @Override
+    public int getRenderDistance() {
+        return minecraft.options.getEffectiveRenderDistance();
+    }
 }

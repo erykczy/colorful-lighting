@@ -2,6 +2,7 @@ package me.erykczy.colorfullighting.accessors;
 
 import me.erykczy.colorfullighting.common.accessors.PlayerAccessor;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,12 @@ public class PlayerWrapper implements PlayerAccessor {
     }
 
     @Override
-    public ChunkPos getPlayerChunkPos() {
+    public ChunkPos getChunkPos() {
         return player.chunkPosition();
+    }
+
+    @Override
+    public BlockPos getBlockPos() {
+        return player.blockPosition();
     }
 }

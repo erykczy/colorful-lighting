@@ -1,5 +1,8 @@
 package me.erykczy.colorfullighting.common;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -27,10 +30,23 @@ public class ColoredLightStorage {
         );
     }
 
-    public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
+    /*public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
     public void setEntry(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        ColoredLightSection layer = getSection(sectionPos);
+        map.computeIfPresent(sectionPos, (pos, layer) -> {
+            layer.set(
+                    SectionPos.sectionRelative(x),
+                    SectionPos.sectionRelative(y),
+                    SectionPos.sectionRelative(z),
+                    value
+            );
+            return layer;
+        });
+    }*/
+    public void setEntryUnsafe(BlockPos blockPos, ColorRGB4 value) { setEntryUnsafe(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
+    public void setEntryUnsafe(int x, int y, int z, ColorRGB4 value) {
+        long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
+        var layer = map.get(sectionPos);
         if(layer == null) return;
         layer.set(
                 SectionPos.sectionRelative(x),

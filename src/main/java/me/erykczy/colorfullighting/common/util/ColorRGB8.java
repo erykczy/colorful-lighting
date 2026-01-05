@@ -57,4 +57,9 @@ public class ColorRGB8 {
     public ColorRGB8 mul(double scalar) {
         return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
     }
+    public static ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
+        if(a.isZero()) return b;
+        if(b.isZero()) return a;
+        return a.mul(1.0 - x).add(b.mul(x));
+    }
 }

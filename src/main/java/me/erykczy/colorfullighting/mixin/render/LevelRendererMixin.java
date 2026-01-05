@@ -1,5 +1,6 @@
 package me.erykczy.colorfullighting.mixin.render;
 
+import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.accessors.BlockStateWrapper;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.Config;
@@ -25,35 +26,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LevelRendererMixin {
     @Inject(method = "getLightColor(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true)
     private static void colorfullighting$getLightColor(BlockAndTintGetter level, BlockState state, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (ModList.get().isLoaded("embeddium")) {
-            int sky = level.getBrightness(LightLayer.SKY, pos);
-            int block = level.getBrightness(LightLayer.BLOCK, pos);
-            int emission = state.getLightEmission(level, pos);
-            block = Math.max(block, emission);
-            if (state.emissiveRendering(level, pos)) {
-                block = 15;
-                sky = 15;
-            }
-            cir.setReturnValue(LightTexture.pack(block, sky));
-        } else {
-            int skyLight = level.getBrightness(LightLayer.SKY, pos);
-
-            if (state.emissiveRendering(level, pos)) {
-                LevelAccessor levelAccessor = ColoredLightEngine.getInstance().clientAccessor.getLevel();
-                BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
-                if (levelAccessor != null) {
-                    var emission = Config.getLightColor(stateAccessor);
-                    int skyAtt = colorful_lighting$attenuateSky(skyLight, emission);
-                    cir.setReturnValue(PackedLightData.packData(skyAtt, ColorRGB8.fromRGB4(emission)));
-                    return;
-                }
+        int skyLight = level.getBrightness(LightLayer.SKY, pos);
+        if(state.emissiveRendering(level, pos)) {
+            LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
+            if(levelAccessor == null) {
                 cir.setReturnValue(PackedLightData.packData(15, 255, 255, 255));
                 return;
             }
-
-            ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
-            int skyAtt = colorful_lighting$attenuateSky(skyLight, color);
-            cir.setReturnValue(PackedLightData.packData(skyAtt, ColorRGB8.fromRGB4(color)));
+            BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
+            var emission = Config.getLightColor(stateAccessor);
+            cir.setReturnValue(PackedLightData.packData(skyLight, ColorRGB8.fromRGB4(emission)));
         }
     }
 

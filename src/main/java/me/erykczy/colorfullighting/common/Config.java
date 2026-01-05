@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -40,17 +41,21 @@ public class Config {
         return defaultColor.mul(lightEmission);
     }
     public static ColorRGB4 getLightColor(@NotNull BlockStateAccessor blockState) {
-        ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
-
-        if(blockResourceKey != null) {
-            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+        return getLightColor(blockState.getBlockKey());
+    }
+    public static ColorRGB4 getLightColor(@Nullable ResourceKey<Block> blockLocation) {
+        if(blockLocation != null) {
+            ColorEmitter config = colorEmitters.get(blockLocation.location());
             if(config != null)
                 return config.color();
         }
         return defaultColor;
     }
 
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos) { return getColoredLightTransmittance(level, pos, level.getBlockState(pos)); }
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, ColorRGB4 defaultValue) {
+        var blockState = level.getBlockState(pos);
+        return blockState == null ? defaultValue : getColoredLightTransmittance(level, pos, blockState);
+    }
     public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
@@ -59,7 +64,10 @@ public class Config {
         return config.transmittance;
     }
 
-    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos) { return getEmissionBrightness(level, pos, level.getBlockState(pos)); }
+    public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos, int defaultValue) {
+        var blockState = level.getBlockState(pos);
+        return blockState == null ? defaultValue : getEmissionBrightness(level, pos, blockState);
+    }
     public static int getEmissionBrightness(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
