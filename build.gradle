@@ -128,12 +128,22 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        name "createmod maven"
+        url "https://maven.createmod.net/"
+    }
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     implementation fg.deobf("curse.maven:embeddium-908741:5681725")
+    implementation fg.deobf("curse.maven:starlight-forge-526854:4631193")
+    implementation fg.deobf("curse.maven:oculus-581495:6020952")
+    implementation fg.deobf("curse.maven:valkyrien-skies-258371:7418457")
+    implementation fg.deobf("curse.maven:kotlin-for-forge-351264:7291067")
+    compileOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
 }
 
 tasks.named('processResources', ProcessResources).configure {

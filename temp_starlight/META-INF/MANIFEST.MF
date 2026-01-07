@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Specification-Title: starlight
+Specification-Vendor: Spottedleaf
+Specification-Version: 1
+Implementation-Title: Starlight-Forge
+Implementation-Version: 1.1.2+forge.1cda73c
+Implementation-Vendor: Spottedleaf
+MixinConfigs: starlight.mixins.json
+MixinConnector: ca.spottedleaf.starlight.mixin.MixinConnector
+

@@ -9,13 +9,11 @@ public class PackedLightData {
 
     public static int packData(int skyLight4, ColorRGB8 color) { return packData(skyLight4, color.red, color.green, color.blue); }
     public static int packData(int skyLight4, int red8, int green8, int blue8) {
-        //blockLight = Math.clamp(blockLight, 0, 15);
         skyLight4 = MathExt.clamp(skyLight4, 0, 15);
         red8 = MathExt.clamp(red8, 0, 255);
         green8 = MathExt.clamp(green8, 0, 255);
         blue8 = MathExt.clamp(blue8, 0, 255);
         int alpha4 = 15;
-        // TODO: big-endian
         return red8 | green8 << 8 | skyLight4 << 16 | blue8 << 20 | alpha4 << 28;
     }
 

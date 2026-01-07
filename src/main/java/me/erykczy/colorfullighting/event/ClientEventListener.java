@@ -3,7 +3,6 @@ package me.erykczy.colorfullighting.event;
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.ViewArea;
-import me.erykczy.colorfullighting.common.util.MathExt;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
