@@ -20,7 +20,5 @@ vec4 sample_lightmap_colored(sampler2D lightMap, ivec2 uv) {
 
     vec3 sky = minecraft_sample_vanilla_lightmap(lightMap, ivec2(0, skyLight4 << 4)).xyz;
     vec3 block = pow(blockLightColor, vec3(1.3));
-    float skyScale = 1.0 - sky.r;
-    skyScale = pow(skyScale, 4.0);
-    return vec4(sky + block * skyScale, 1.0);
+    return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
 }

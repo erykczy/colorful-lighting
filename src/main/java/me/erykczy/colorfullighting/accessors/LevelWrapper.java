@@ -8,7 +8,6 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,25 +89,5 @@ public class LevelWrapper implements LevelAccessor {
     @Override
     public void setSectionDirty(int x, int y, int z) {
         levelRenderer.setSectionDirty(x, y, z);
-    }
-
-    @Override
-    public float getSkyDarken() {
-        return level.getSkyDarken();
-    }
-    
-    @Override
-    public long getDayTime() {
-        return level.getDayTime();
-    }
-
-    @Override
-    public int getBrightness(LightLayer layer, BlockPos pos) {
-        return level.getBrightness(layer, pos);
-    }
-
-    @Override
-    public void refreshLevel() {
-        levelRenderer.allChanged();
     }
 }

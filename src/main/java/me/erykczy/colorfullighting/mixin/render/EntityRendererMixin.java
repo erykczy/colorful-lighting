@@ -42,7 +42,7 @@ public class EntityRendererMixin {
             EntityType.DRAGON_FIREBALL,
             EntityType.EXPERIENCE_ORB,
             EntityType.GLOW_SQUID,
-            EntityType.ITEM_FRAME,
+            // EntityType.ITEM_FRAME, // Removed to allow colored lighting on Item Frames
             EntityType.SHULKER_BULLET,
             EntityType.EYE_OF_ENDER,
             EntityType.FIREBALL,

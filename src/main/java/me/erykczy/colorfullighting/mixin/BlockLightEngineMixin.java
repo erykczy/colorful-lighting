@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class BlockLightEngineMixin {
     @Inject(method = "checkNode", at = @At("TAIL"))
     private void colorfullighting$checkNode(long packedPos, CallbackInfo ci) {
-        if(!Minecraft.getInstance().isSameThread()) return; // only client side
+        if(ColoredLightEngine.getInstance() == null) return;
         ColoredLightEngine.getInstance().onBlockLightPropertiesChanged(BlockPos.of(packedPos));
     }
 }

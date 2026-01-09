@@ -30,19 +30,17 @@ public class ColoredLightStorage {
         );
     }
 
-    /*public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
-    public void setEntry(int x, int y, int z, ColorRGB4 value) {
+    public int getEntryPacked(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        map.computeIfPresent(sectionPos, (pos, layer) -> {
-            layer.set(
-                    SectionPos.sectionRelative(x),
-                    SectionPos.sectionRelative(y),
-                    SectionPos.sectionRelative(z),
-                    value
-            );
-            return layer;
-        });
-    }*/
+        ColoredLightSection layer = getSection(sectionPos);
+        if(layer == null) return 0;
+        return layer.getPacked(
+                SectionPos.sectionRelative(x),
+                SectionPos.sectionRelative(y),
+                SectionPos.sectionRelative(z)
+        );
+    }
+
     public void setEntryUnsafe(BlockPos blockPos, ColorRGB4 value) { setEntryUnsafe(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
     public void setEntryUnsafe(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
