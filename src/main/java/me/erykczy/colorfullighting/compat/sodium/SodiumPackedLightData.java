@@ -36,33 +36,6 @@ public class SodiumPackedLightData {
         return packedData == 0xF0000000 || packedData == 0;
     }
 
-    public static int blend(int c0, int c1, int c2, int c3) {
-        int r = blendChannel(c0 & 0xFF, c1 & 0xFF, c2 & 0xFF, c3 & 0xFF);
-        int g = blendChannel((c0 >>> 8) & 0xFF, (c1 >>> 8) & 0xFF, (c2 >>> 8) & 0xFF, (c3 >>> 8) & 0xFF);
-        int s = blendChannel((c0 >>> 16) & 0xF, (c1 >>> 16) & 0xF, (c2 >>> 16) & 0xF, (c3 >>> 16) & 0xF);
-        int b = blendChannel((c0 >>> 20) & 0xFF, (c1 >>> 20) & 0xFF, (c2 >>> 20) & 0xFF, (c3 >>> 20) & 0xFF);
-
-        return r | (g << 8) | (s << 16) | (b << 20) | (15 << 28);
-    }
-
-    private static int blendChannel(int a, int b, int c, int d) {
-        if (a == 0 || b == 0 || c == 0 || d == 0) {
-            if ((a | b | c | d) == 0) return 0;
-
-            int min = 255;
-            if (a != 0 && a < min) min = a;
-            if (b != 0 && b < min) min = b;
-            if (c != 0 && c < min) min = c;
-            if (d != 0 && d < min) min = d;
-
-            if (a == 0) a = min;
-            if (b == 0) b = min;
-            if (c == 0) c = min;
-            if (d == 0) d = min;
-        }
-        return (a + b + c + d) >> 2;
-    }
-
     public static int blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3, float weight0, float weight1, float weight2, float weight3) {
         int r0 = lightColor0 & 0xFF;
         int g0 = (lightColor0 >>> 8) & 0xFF;

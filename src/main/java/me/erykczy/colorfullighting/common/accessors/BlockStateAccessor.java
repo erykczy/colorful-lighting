@@ -10,4 +10,5 @@ public interface BlockStateAccessor {
     int getLightBlock();
     int getLightEmission(LevelAccessor level, BlockPos pos);
     int getLightBlock(LevelAccessor level, BlockPos pos);
+    boolean isAir();
 }

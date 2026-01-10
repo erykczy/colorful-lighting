@@ -44,4 +44,9 @@ public class BlockStateWrapper implements BlockStateAccessor {
             return blockState.getLightBlock(levelWrapper.getWrappedLevel(), pos);
         return getLightBlock();
     }
+
+    @Override
+    public boolean isAir() {
+        return blockState.isAir();
+    }
 }
