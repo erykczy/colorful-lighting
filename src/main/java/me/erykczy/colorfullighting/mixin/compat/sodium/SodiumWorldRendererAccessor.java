@@ -7,4 +7,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Pseudo
 @Mixin(targets = "me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer", remap = false)
 public interface SodiumWorldRendererAccessor {
+    @Invoker("scheduleRebuildForChunk")
+    void scheduleRebuild(int x, int y, int z, boolean important);
 }

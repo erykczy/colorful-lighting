@@ -21,6 +21,12 @@ public class ColorRGB8 {
         this.blue = blue;
     }
 
+    public boolean isInValidState() {
+        return  red >= 0 && red < 256 &&
+                green >= 0 && green < 256 &&
+                blue >= 0 && blue < 256;
+    }
+
     public ColorRGB8 clamp() {
         return new ColorRGB8(
             MathExt.clamp(red, 0, 255),
@@ -29,14 +35,31 @@ public class ColorRGB8 {
         );
     }
 
+    public boolean isZero() {
+        return red == 0 && green == 0 && blue == 0;
+    }
+
     public ColorRGB8 add(ColorRGB8 other) {
         return new ColorRGB8(red + other.red, green + other.green, blue + other.blue);
     }
 
+    public ColorRGB8 sub(ColorRGB8 other) {
+        return new ColorRGB8(red - other.red, green - other.green, blue - other.blue);
+    }
+
+    public ColorRGB8 intDivide(int scalar) {
+        return new ColorRGB8(red / scalar, green / scalar, blue / scalar);
+    }
+
+    public ColorRGB8 mul(float scalar) {
+        return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
+    }
     public ColorRGB8 mul(double scalar) {
         return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
     }
     public static ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
+        if(a.isZero()) return b;
+        if(b.isZero()) return a;
         return a.mul(1.0 - x).add(b.mul(x));
     }
 }

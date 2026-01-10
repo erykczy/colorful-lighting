@@ -54,12 +54,6 @@ public abstract class SodiumLightDataAccessMixin {
         boolean fc = state.isCollisionShapeFullBlock(world, pos);
 
         int lu = state.getLightEmission(world, pos);
-        
-        // Check custom emission
-        if (ColorfulLighting.clientAccessor != null && ColorfulLighting.clientAccessor.getLevel() != null) {
-             int customLu = Config.getEmissionBrightness(ColorfulLighting.clientAccessor.getLevel(), pos, new BlockStateWrapper(state));
-             if (customLu > lu) lu = customLu;
-        }
 
         int bl;
         int sl;

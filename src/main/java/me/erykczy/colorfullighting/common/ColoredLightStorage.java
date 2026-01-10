@@ -17,15 +17,12 @@ public class ColoredLightStorage {
     private ConcurrentHashMap<Long, ColoredLightSection> map = new ConcurrentHashMap<>();
 
     @Nullable
-    public ColorRGB4 getEntry(BlockPos blockPos) {
-        return getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-    }
-
+    public ColorRGB4 getEntry(BlockPos blockPos) { return getEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ()); }
     @Nullable
     public ColorRGB4 getEntry(int x, int y, int z) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
         ColoredLightSection layer = getSection(sectionPos);
-        if (layer == null) return null;
+        if(layer == null) return null;
         return layer.get(
                 SectionPos.sectionRelative(x),
                 SectionPos.sectionRelative(y),
@@ -33,17 +30,19 @@ public class ColoredLightStorage {
         );
     }
 
-    public int getEntryPacked(int x, int y, int z) {
+    /*public void setEntry(BlockPos blockPos, ColorRGB4 value) { setEntry(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
+    public void setEntry(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
-        ColoredLightSection layer = getSection(sectionPos);
-        if (layer == null) return 0;
-        return layer.getPacked(
-                SectionPos.sectionRelative(x),
-                SectionPos.sectionRelative(y),
-                SectionPos.sectionRelative(z)
-        );
-    }
-
+        map.computeIfPresent(sectionPos, (pos, layer) -> {
+            layer.set(
+                    SectionPos.sectionRelative(x),
+                    SectionPos.sectionRelative(y),
+                    SectionPos.sectionRelative(z),
+                    value
+            );
+            return layer;
+        });
+    }*/
     public void setEntryUnsafe(BlockPos blockPos, ColorRGB4 value) { setEntryUnsafe(blockPos.getX(), blockPos.getY(), blockPos.getZ(), value); }
     public void setEntryUnsafe(int x, int y, int z, ColorRGB4 value) {
         long sectionPos = SectionPos.blockToSection(BlockPos.asLong(x, y, z));
