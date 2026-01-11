@@ -3,17 +3,26 @@ package me.erykczy.colorfullighting;
 import com.mojang.logging.LogUtils;
 import me.erykczy.colorfullighting.accessors.MinecraftWrapper;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
+import me.erykczy.colorfullighting.common.accessors.BlockStateAccessor;
 import me.erykczy.colorfullighting.common.accessors.ClientAccessor;
+import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
+import me.erykczy.colorfullighting.compat.sodium.SodiumCompat;
 import me.erykczy.colorfullighting.event.ClientEventListener;
 import me.erykczy.colorfullighting.resourcemanager.ModResourceManagers;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.level.ExplosionEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
+
+import java.util.List;
 
 @Mod(value = ColorfulLighting.MOD_ID)
 public class ColorfulLighting
@@ -32,9 +41,14 @@ public class ColorfulLighting
                 context.getModEventBus().addListener(ColorfulLighting::onLoadingComplete);
             }
         });
+
+
     }
 
     public static void onLoadingComplete(FMLLoadCompleteEvent event) {
+        if (SodiumCompat.isSodiumLoaded()) {
+            LOGGER.info("Embeddium/Sodium detected!");
+        }
         clientAccessor = new MinecraftWrapper(Minecraft.getInstance());
         ColoredLightEngine.create(clientAccessor);
     }

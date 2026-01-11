@@ -2,6 +2,9 @@ package me.erykczy.colorfullighting.common.util;
 
 public class ColorRGB4 {
     public static final int SIZE = 12;
+    public static final ColorRGB4 BLACK = new ColorRGB4(0, 0, 0);
+    public static final ColorRGB4 WHITE = new ColorRGB4(15, 15, 15);
+
     public int red4, green4, blue4;
 
     public static ColorRGB4 fromRGB8(ColorRGB8 other) {
@@ -33,6 +36,22 @@ public class ColorRGB4 {
 
     public ColorRGB4 mul(float scalar) {
         return new ColorRGB4((int)(red4 * scalar), (int)(green4 * scalar), (int)(blue4 * scalar));
+    }
+
+    public boolean isBlack() {
+        return red4 == 0 && green4 == 0 && blue4 == 0;
+    }
+
+    public boolean isLessThan(ColorRGB4 other) {
+        return red4 < other.red4 && green4 < other.green4 && blue4 < other.blue4;
+    }
+
+    public static ColorRGB4 max(ColorRGB4 a, ColorRGB4 b) {
+        return new ColorRGB4(
+                Math.max(a.red4, b.red4),
+                Math.max(a.green4, b.green4),
+                Math.max(a.blue4, b.blue4)
+        );
     }
 
     @Override

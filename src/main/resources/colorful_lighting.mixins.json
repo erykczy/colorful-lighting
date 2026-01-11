@@ -11,7 +11,18 @@
     "render.LevelRendererMixin",
     "render.AmbientOcclusionFaceMixin",
     "render.EntityRendererMixin",
-    "render.BrightnessCombinerMixin"
+    "render.BrightnessCombinerMixin",
+    "compat.sodium.SodiumWorldSliceMixin",
+    "compat.sodium.SodiumBlockOcclusionCacheMixin",
+    "compat.sodium.SodiumFluidRendererMixin",
+    "compat.sodium.SodiumFlatLightPipelineMixin",
+    "compat.sodium.SodiumSmoothLightPipelineMixin",
+    "compat.sodium.SodiumQuadLighterMixin",
+    "compat.sodium.SodiumLightDataAccessMixin",
+    "compat.sodium.SodiumAoFaceDataMixin",
+    "compat.sodium.SodiumWorldRendererAccessor",
+    "compat.starlight.StarlightInterfaceMixin",
+    "compat.starlight.StarlightLevelLightEngineMixin"
   ],
   "injectors": {
     "defaultRequire": 1
