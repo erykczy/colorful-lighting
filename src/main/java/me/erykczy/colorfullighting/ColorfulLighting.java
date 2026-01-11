@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import java.util.List;
 
 @Mod(value = ColorfulLighting.MOD_ID)
-@Mod.EventBusSubscriber(modid = ColorfulLighting.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ColorfulLighting
 {
     public static final String MOD_ID = "colorful_lighting";
@@ -52,10 +51,5 @@ public class ColorfulLighting
         }
         clientAccessor = new MinecraftWrapper(Minecraft.getInstance());
         ColoredLightEngine.create(clientAccessor);
-    }
-
-    @SubscribeEvent
-    public static void onExplosion(ExplosionEvent.Detonate event) {
-        ColoredLightEngine.getInstance().reset();
     }
 }
