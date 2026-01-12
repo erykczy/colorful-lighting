@@ -39,6 +39,14 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
 
     @Unique
     private int getBaseColoredLight(LightDataAccess cache, int x, int y, int z) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            int word = cache.get(x, y, z);
+            if (LightDataAccess.unpackEM(word)) {
+                return 0xF000F0;
+            }
+            return LightDataAccess.getLightmap(word);
+        }
+
         BlockPos pos = new BlockPos(x, y, z);
         ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
         int word = cache.get(x, y, z);
@@ -59,6 +67,15 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
 
     @Unique
     private int getFilteredNeighborLight(LightDataAccess cache, int x, int y, int z, BlockState centerState, int centerLight) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Replicate vanilla/Sodium logic
+            int word = cache.get(x, y, z);
+            if (LightDataAccess.unpackEM(word)) {
+                return 0xF000F0;
+            }
+            return LightDataAccess.getLightmap(word);
+        }
+
         BlockPos neighborPos = new BlockPos(x, y, z);
         BlockState neighborState = cache.getWorld().getBlockState(neighborPos);
 
@@ -84,6 +101,11 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
 
     @Unique
     private static int blend(int a, int b, int c, int d) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Vanilla blending logic
+            return ((a + b + c + d) >> 2) & 0xFF00FF;
+        }
+
         var da = SodiumPackedLightData.unpackData(a);
         var db = SodiumPackedLightData.unpackData(b);
         var dc = SodiumPackedLightData.unpackData(c);
@@ -117,6 +139,10 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
     }
 
     private static int clampLightmap(int val, int max) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            return val;
+        }
+
         int vR =  val         & 0xFF;
         int vG = (val >>> 8)  & 0xFF;
         int vS = (val >>> 16) & 0xF;
@@ -297,6 +323,20 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
     public void unpackLightData() {
         int[] lm = this.lm;
 
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Replicate vanilla/Sodium logic
+            float[] bl = this.bl;
+            float[] sl = this.sl;
+            
+            for(int i=0; i<4; i++) {
+                int l = lm[i];
+                bl[i] = (float)(l & 0xFF) / 255.0F;
+                sl[i] = (float)((l >> 16) & 0xFF) / 255.0F;
+            }
+            this.flags |= 2;
+            return;
+        }
+
         float[] bl = this.bl;
         float[] sl = this.sl;
         float[] gl = this.gl;
@@ -323,6 +363,15 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
     @Override
     public int getBlendedLightMap(float[] w) {
         ensureUnpacked();
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Replicate vanilla/Sodium logic
+            float r = weightedSum(this.bl, w);
+            float s = weightedSum(this.sl, w);
+            int ir = (int)(r * 255.0F);
+            int is = (int)(s * 255.0F);
+            return ir | (is << 16);
+        }
+
         float r = weightedSum(this.bl, w);
         float g = weightedSum(this.gl, w);
         float b = weightedSum(this.bll, w);

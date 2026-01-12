@@ -68,14 +68,20 @@ public abstract class SodiumLightDataAccessMixin {
             } else {
                 int packedCoords = LevelRenderer.getLightColor(world, state, pos);
                 
-                // Check if it is our packed format (alpha bits set to 0xF)
-                if ((packedCoords >>> 28) == 0xF) {
-                     var data = SodiumPackedLightData.unpackData(packedCoords);
-                     sl = data.skyLight4;
-                     bl = 0; // We don't use cached BL anymore as we fetch color separately
+                if (ColoredLightEngine.getInstance().isEnabled()) {
+                    // Check if it is our packed format (alpha bits set to 0xF)
+                    if ((packedCoords >>> 28) == 0xF) {
+                         var data = SodiumPackedLightData.unpackData(packedCoords);
+                         sl = data.skyLight4;
+                         bl = 0; // We don't use cached BL anymore as we fetch color separately
+                    } else {
+                         bl = LightTexture.block(packedCoords);
+                         sl = LightTexture.sky(packedCoords);
+                    }
                 } else {
-                     bl = LightTexture.block(packedCoords);
-                     sl = LightTexture.sky(packedCoords);
+                    // Vanilla behavior
+                    bl = LightTexture.block(packedCoords);
+                    sl = LightTexture.sky(packedCoords);
                 }
             }
         }

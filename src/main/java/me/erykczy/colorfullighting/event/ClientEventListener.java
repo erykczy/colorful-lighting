@@ -3,6 +3,7 @@ package me.erykczy.colorfullighting.event;
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.ViewArea;
+import me.erykczy.colorfullighting.compat.oculus.OculusCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
@@ -15,9 +16,30 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 
 public class ClientEventListener {
+    private boolean wasShaderPackInUse = false;
+
     @SubscribeEvent
     public void onTick(TickEvent.ClientTickEvent event) {
         if(event.phase == TickEvent.Phase.START) return;
+        
+        // Check for Oculus shader state changes
+        if (OculusCompat.isOculusLoaded()) {
+            boolean isShaderPackInUse = OculusCompat.isShaderPackInUse();
+            if (isShaderPackInUse != wasShaderPackInUse) {
+                wasShaderPackInUse = isShaderPackInUse;
+                if (isShaderPackInUse) {
+                    ColoredLightEngine.getInstance().setEnabled(false);
+                    ColorfulLighting.LOGGER.info("Oculus shader enabled, disabling colored lighting");
+                } else {
+                    ColoredLightEngine.getInstance().setEnabled(true);
+                    ColorfulLighting.LOGGER.info("Oculus shader disabled, enabling colored lighting");
+                }
+                if (Minecraft.getInstance().levelRenderer != null) {
+                    Minecraft.getInstance().levelRenderer.allChanged();
+                }
+            }
+        }
+
         if(ColorfulLighting.clientAccessor == null) return;
         var player = ColorfulLighting.clientAccessor.getPlayer();
         if(player == null) return;

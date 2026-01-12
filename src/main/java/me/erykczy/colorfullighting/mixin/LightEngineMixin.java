@@ -2,6 +2,7 @@ package me.erykczy.colorfullighting.mixin;
 
 import me.erykczy.colorfullighting.ColorfulLighting;
 import me.erykczy.colorfullighting.accessors.BlockStateWrapper;
+import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.Config;
 import me.erykczy.colorfullighting.common.accessors.BlockStateAccessor;
 import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
@@ -20,6 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LightEngineMixin {
     @Inject(method = "hasDifferentLightProperties", at = @At("HEAD"), cancellable = true, require = 0)
     private static void colorfullighting$hasDifferentLightProperties(BlockGetter level, BlockPos pos, BlockState state1, BlockState state2, CallbackInfoReturnable<Boolean> cir) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            return;
+        }
         if(!Minecraft.getInstance().isSameThread()) return; // only client side
         LevelAccessor clientLevel = ColorfulLighting.clientAccessor.getLevel();
         BlockStateAccessor blockState1 = new BlockStateWrapper(state1);

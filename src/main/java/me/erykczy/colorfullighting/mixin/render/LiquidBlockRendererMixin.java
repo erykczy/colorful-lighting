@@ -1,5 +1,6 @@
 package me.erykczy.colorfullighting.mixin.render;
 
+import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
@@ -14,6 +15,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LiquidBlockRendererMixin {
     @Inject(method = "getLightColor", at = @At("HEAD"), cancellable = true, require = 0)
     private void colorfullighting$getLightColor(BlockAndTintGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            return;
+        }
         int lightColor = LevelRenderer.getLightColor(level, pos);
         int lightColorAbove = LevelRenderer.getLightColor(level, pos.above());
 

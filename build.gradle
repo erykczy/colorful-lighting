@@ -159,7 +159,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     implementation fg.deobf("curse.maven:embeddium-908741:5681725")
     runtimeOnly fg.deobf("curse.maven:starlight-forge-526854:4631193")
-    runtimeOnly fg.deobf("curse.maven:oculus-581495:6020952")
+    implementation fg.deobf("curse.maven:oculus-581495:6020952")
     compileOnly fg.deobf("maven.modrinth:distanthorizonsapi:j15Y57xi")
     runtimeOnly fg.deobf("curse.maven:distant-horizons-508933:7375280")
 }
