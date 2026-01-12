@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BrightnessCombiner.class)
 public class BrightnessCombinerMixin {
-    @Inject(method = "acceptDouble(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lit/unimi/dsi/fastutil/ints/Int2IntFunction;", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "acceptDouble(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lit/unimi/dsi/fastutil/ints/Int2IntFunction;", at = @At("HEAD"), cancellable = true, require = 0)
     private <S extends BlockEntity> void colorfullighting$acceptDouble(S first, S second, CallbackInfoReturnable<Int2IntFunction> cir) {
         cir.setReturnValue(value -> {
             int firstLight = LevelRenderer.getLightColor(first.getLevel(), first.getBlockPos());
