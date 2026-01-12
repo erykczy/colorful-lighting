@@ -35,6 +35,8 @@ logoFile="${mod_icon}" #optional
 credits="${mod_credits}" #optional
 # A text field displayed in the mod UI
 authors="${mod_authors}" #optional
+# The description text for the mod (multi line!) (#mandatory)
+description='''${mod_description}'''
 # Display Test controls the display for your mod in the server connection screen
 # MATCH_VERSION means that your mod will cause a red X if the versions on client and server differ. This is the default behaviour and should be what you choose if you have server and client elements to your mod.
 # IGNORE_SERVER_VERSION means that your mod will not cause a red X if it's present on the server but not on the client. This is what you should use if you're a server only mod.
@@ -46,8 +48,6 @@ displayTest="IGNORE_ALL_VERSION" # if nothing is specified, MATCH_VERSION is the
 [[mixins]]
 config="${mod_id}.mixins.json"
 
-# The description text for the mod (multi line!) (#mandatory)
-description='''${mod_description}'''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.${mod_id}]] #optional
     # the modid of the dependency
