@@ -44,15 +44,15 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         int word = cache.get(x, y, z);
         int skyLight = LightDataAccess.unpackSL(word);
         if (LightDataAccess.unpackEM(word)) {
-             BlockAndTintGetter level = cache.getWorld();
-             BlockState state = level.getBlockState(pos);
-             LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
-             if(levelAccessor != null) {
+            BlockAndTintGetter level = cache.getWorld();
+            BlockState state = level.getBlockState(pos);
+            LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
+            if(levelAccessor != null) {
                 BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
                 var emission = Config.getLightColor(stateAccessor);
                 return SodiumPackedLightData.packData(15, ColorRGB8.fromRGB4(emission));
-             }
-             return SodiumPackedLightData.packData(15, 255, 255, 255);
+            }
+            return SodiumPackedLightData.packData(15, 255, 255, 255);
         }
         return SodiumPackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color));
     }
@@ -88,12 +88,12 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         var db = SodiumPackedLightData.unpackData(b);
         var dc = SodiumPackedLightData.unpackData(c);
         var dd = SodiumPackedLightData.unpackData(d);
-        
+
         int sky = blendChannel(da.skyLight4, db.skyLight4, dc.skyLight4, dd.skyLight4);
         int red = blendChannel(da.red8, db.red8, dc.red8, dd.red8);
         int green = blendChannel(da.green8, db.green8, dc.green8, dd.green8);
         int blue = blendChannel(da.blue8, db.blue8, dc.blue8, dd.blue8);
-        
+
         return SodiumPackedLightData.packData(sky, red, green, blue);
     }
 
@@ -108,7 +108,7 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         }
         return (a + b + c + d) >> 2;
     }
-    
+
     @Unique
     private static int minNonZero(int a, int b) {
         if (a == 0) return b;
@@ -312,14 +312,14 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
 
         this.flags |= 2;
     }
-    
+
     @Override
     public void ensureUnpacked() {
         if (!this.hasUnpackedLightData()) {
             this.unpackLightData();
         }
     }
-    
+
     @Override
     public int getBlendedLightMap(float[] w) {
         ensureUnpacked();
@@ -327,40 +327,40 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         float g = weightedSum(this.gl, w);
         float b = weightedSum(this.bll, w);
         float s = weightedSum(this.sl, w);
-        
+
         return SodiumPackedLightData.packData((int)s, (int)r, (int)g, (int)b);
     }
-    
+
     @Override
     public float getBlendedShade(float[] w) {
         ensureUnpacked();
         return weightedSum(this.ao, w);
     }
-    
+
     @Override
     public float getBlendedRed(float[] w) {
         ensureUnpacked();
         return weightedSum(this.bl, w);
     }
-    
+
     @Override
     public float getBlendedGreen(float[] w) {
         ensureUnpacked();
         return weightedSum(this.gl, w);
     }
-    
+
     @Override
     public float getBlendedBlue(float[] w) {
         ensureUnpacked();
         return weightedSum(this.bll, w);
     }
-    
+
     @Override
     public float getBlendedSky(float[] w) {
         ensureUnpacked();
         return weightedSum(this.sl, w);
     }
-    
+
     @Unique
     private static float weightedSum(float[] v, float[] w) {
         float t0 = v[0] * w[0];

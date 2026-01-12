@@ -5,14 +5,21 @@ import me.erykczy.colorfullighting.common.accessors.LevelAccessor;
 import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.JsonHelper;
 import com.google.gson.JsonElement;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class Config {
     public static final ColorRGB4 defaultColor = ColorRGB4.fromRGB4(15, 15, 15);
@@ -34,12 +41,48 @@ public class Config {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
         if(blockResourceKey != null) {
+            // Dynamic Lighting Integration
+            if (blockResourceKey.location().equals(ForgeRegistries.BLOCKS.getKey(Blocks.LIGHT))) {
+                ColorRGB4 dynamicColor = getDynamicColorFromNearbyEntities(pos);
+                if (dynamicColor != null) {
+                    return dynamicColor.mul(lightEmission);
+                }
+            }
+
             ColorEmitter config = colorEmitters.get(blockResourceKey.location());
             if(config != null)
                 return config.color().mul(config.overriddenBrightness4 < 0 ? lightEmission : config.overriddenBrightness4 /15.0f);
         }
         return defaultColor.mul(lightEmission);
     }
+    
+    private static ColorRGB4 getDynamicColorFromNearbyEntities(BlockPos lightBlockPos) {
+        if (Minecraft.getInstance().level == null) return null;
+        
+        // Search for entities within a small radius
+        AABB searchBox = new AABB(lightBlockPos).inflate(2.0);
+        List<Player> nearbyPlayers = Minecraft.getInstance().level.getEntitiesOfClass(Player.class, searchBox);
+
+        for (Player player : nearbyPlayers) {
+            // Check Main Hand
+            ItemStack mainHand = player.getMainHandItem();
+            ResourceLocation mainHandKey = ForgeRegistries.ITEMS.getKey(mainHand.getItem());
+            if (mainHandKey != null) {
+                ColorEmitter config = colorEmitters.get(mainHandKey);
+                if (config != null) return config.color();
+            }
+            
+            // Check Off Hand
+            ItemStack offHand = player.getOffhandItem();
+            ResourceLocation offHandKey = ForgeRegistries.ITEMS.getKey(offHand.getItem());
+            if (offHandKey != null) {
+                ColorEmitter config = colorEmitters.get(offHandKey);
+                if (config != null) return config.color();
+            }
+        }
+        return null;
+    }
+
     public static ColorRGB4 getLightColor(@NotNull BlockStateAccessor blockState) {
         return getLightColor(blockState.getBlockKey());
     }

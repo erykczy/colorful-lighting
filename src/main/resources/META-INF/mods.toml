@@ -32,7 +32,7 @@ displayURL="${mod_home_page}"
 logoFile="${mod_icon}" #optional
 
 # A text field displayed in the mod UI
-#credits="" #optional
+credits="${mod_credits}" #optional
 # A text field displayed in the mod UI
 authors="${mod_authors}" #optional
 # Display Test controls the display for your mod in the server connection screen

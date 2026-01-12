@@ -127,6 +127,11 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
 }
 
 dependencies {
@@ -154,7 +159,9 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
     implementation fg.deobf("curse.maven:embeddium-908741:5681725")
     runtimeOnly fg.deobf("curse.maven:starlight-forge-526854:4631193")
-    implementation fg.deobf("curse.maven:oculus-581495:6020952")
+    runtimeOnly fg.deobf("curse.maven:oculus-581495:6020952")
+    compileOnly fg.deobf("maven.modrinth:distanthorizonsapi:j15Y57xi")
+    runtimeOnly fg.deobf("curse.maven:distant-horizons-508933:7375280")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
@@ -173,6 +180,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_license            : mod_license,
             mod_version            : mod_version,
             mod_authors            : mod_authors,
+            mod_credits            : mod_credits,
             mod_description        : mod_description,
             mod_icon               : mod_icon,
             mod_home_page          : mod_home_page

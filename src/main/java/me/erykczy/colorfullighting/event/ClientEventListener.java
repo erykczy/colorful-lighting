@@ -12,6 +12,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 
 public class ClientEventListener {
     @SubscribeEvent
@@ -42,11 +43,53 @@ public class ClientEventListener {
         event.getDispatcher().register(
             Commands.literal("cl")
                 .then(Commands.literal("purge")
+                    .then(Commands.literal("chunk")
+                        .executes(context -> {
+                            var player = Minecraft.getInstance().player;
+                            if (player != null) {
+                                ColoredLightEngine.getInstance().rebuildChunk(player.chunkPosition());
+                                context.getSource().sendSuccess(() -> Component.literal("Reloading colored light in 3x3 chunk radius..."), false);
+                            }
+                            return 1;
+                        })
+                    )
+                    .then(Commands.literal("all")
+                        .executes(context -> {
+                            ColoredLightEngine.getInstance().reset();
+                            if (Minecraft.getInstance().levelRenderer != null) {
+                                Minecraft.getInstance().levelRenderer.allChanged();
+                            }
+                            context.getSource().sendSuccess(() -> Component.literal("Reloading all colored lights..."), false);
+                            return 1;
+                        })
+                    )
                     .executes(context -> {
+                        // Default behavior (same as 'all') for backward compatibility
                         ColoredLightEngine.getInstance().reset();
                         if (Minecraft.getInstance().levelRenderer != null) {
                             Minecraft.getInstance().levelRenderer.allChanged();
                         }
+                        context.getSource().sendSuccess(() -> Component.literal("Reloading all colored lights..."), false);
+                        return 1;
+                    })
+                )
+                .then(Commands.literal("on")
+                    .executes(context -> {
+                        ColoredLightEngine.getInstance().setEnabled(true);
+                        if (Minecraft.getInstance().levelRenderer != null) {
+                            Minecraft.getInstance().levelRenderer.allChanged();
+                        }
+                        context.getSource().sendSuccess(() -> Component.literal("Colored lighting enabled"), false);
+                        return 1;
+                    })
+                )
+                .then(Commands.literal("off")
+                    .executes(context -> {
+                        ColoredLightEngine.getInstance().setEnabled(false);
+                        if (Minecraft.getInstance().levelRenderer != null) {
+                            Minecraft.getInstance().levelRenderer.allChanged();
+                        }
+                        context.getSource().sendSuccess(() -> Component.literal("Colored lighting disabled"), false);
                         return 1;
                     })
                 )

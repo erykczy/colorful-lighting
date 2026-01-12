@@ -22,7 +22,6 @@ import net.minecraft.world.entity.projectile.EyeOfEnder;
 import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraftforge.fml.ModList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -53,9 +52,8 @@ public class EntityRendererMixin {
             EntityType.WITHER_SKULL
     ));
 
-    @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true, require = 0)
+    @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
     private <T extends Entity>void colorfullighting$getPackedLightCoords(T entity, float partialTicks, CallbackInfoReturnable<Integer> cir) {
-        if(ModList.get().isLoaded("embeddium") || ModList.get().isLoaded("oculus")) return;
         BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
         int skyLight = entity.level().getBrightness(LightLayer.SKY, blockpos);
         ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(entity.getLightProbePosition(partialTicks));

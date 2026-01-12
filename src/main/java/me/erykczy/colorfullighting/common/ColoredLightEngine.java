@@ -43,6 +43,8 @@ public class ColoredLightEngine {
 
     private LightPropagator lightPropagator;
     private Thread lightPropagatorThread;
+    
+    private boolean enabled = true;
 
     private static ColoredLightEngine instance;
     public static ColoredLightEngine getInstance() {
@@ -56,9 +58,21 @@ public class ColoredLightEngine {
         this.clientAccessor = clientAccessor;
         reset();
     }
+    
+    public void setEnabled(boolean enabled) {
+        if (this.enabled != enabled) {
+            this.enabled = enabled;
+            reset();
+        }
+    }
+    
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     public ColorRGB4 sampleLightColor(BlockPos pos) { return sampleLightColor(pos.getX(), pos.getY(), pos.getZ()); }
     public ColorRGB4 sampleLightColor(int x, int y, int z) {
+        if (!enabled) return ColorRGB4.fromRGB4(0, 0, 0);
         synchronized (storageLock) {
             var entry = storage.getEntry(x, y, z);
             if(entry == null) return ColorRGB4.fromRGB4(0, 0, 0);
@@ -69,6 +83,7 @@ public class ColoredLightEngine {
      * Mixes light color from blocks neighbouring given position using trilinear interpolation.
      */
     public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
+        if (!enabled) return ColorRGB8.fromRGB4(ColorRGB4.BLACK);
         int cornerX = (int)Math.round(pos.x) - 1;
         int cornerY = (int)Math.round(pos.y) - 1;
         int cornerZ = (int)Math.round(pos.z) - 1;
@@ -99,6 +114,7 @@ public class ColoredLightEngine {
 
 
     public void updateViewArea(ViewArea newArea) {
+        if (!enabled) return;
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
         if(viewArea.equals(newArea)) return;
@@ -142,6 +158,7 @@ public class ColoredLightEngine {
     }
 
     public void onBlockLightPropertiesChanged(BlockPos blockPos) {
+        if (!enabled) return;
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
 
@@ -165,19 +182,23 @@ public class ColoredLightEngine {
             // We use force=true because we are about to clear the storage, so the propagator's check against current storage would fail otherwise.
             blockUpdateDecreaseRequests.add(new LightUpdateRequest(blockPos, oldLightColor, true));
 
-            // 2. IMMEDIATELY clear the storage for this block.
+            // 2. Remove any pending increase requests for this block to prevent race conditions (Fast Place/Break bug)
+            blockUpdateIncreaseRequests.removeIf(req -> req.blockPos.equals(blockPos));
+
+            // 3. IMMEDIATELY clear the storage for this block.
             // This ensures that any immediate chunk rebuilds (which happen fast with explosions) see the block as dark.
             synchronized (storageLock) {
                 storage.setEntryUnsafe(blockPos, ColorRGB4.fromRGB4(0, 0, 0));
             }
 
-            // 3. Mark section for later rebuild to ensure any race conditions are cleaned up
+            // 4. Mark section for later rebuild to ensure any race conditions are cleaned up
             sectionsToRebuildLater.add(sectionPos.asLong());
 
-            // 4. Schedule a full re-check of the chunk to clean up any lingering light artifacts
+            // 5. Schedule a full region re-check (3x3 chunks) to clean up any lingering light artifacts
             ChunkPos chunkPos = new ChunkPos(blockPos);
+            long time = System.currentTimeMillis() + 500;
             if (pendingDelayedUpdates.add(chunkPos)) {
-                delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, System.currentTimeMillis() + 500));
+                delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, time));
             }
             return;
         }
@@ -217,6 +238,7 @@ public class ColoredLightEngine {
     }
 
     public void onLightUpdate() {
+        if (!enabled) return;
         LevelAccessor level = clientAccessor.getLevel();
         if(level == null) return;
 
@@ -234,7 +256,7 @@ public class ColoredLightEngine {
         for (Long dirtySection : sectionsToUpdate) {
             SectionPos sectionPos = SectionPos.of(dirtySection);
             level.setSectionDirty(sectionPos.x(), sectionPos.y(), sectionPos.z());
-
+            
             // Force Sodium rebuild if present
             if (SodiumCompat.isSodiumLoaded()) {
                 var renderer = Minecraft.getInstance().levelRenderer;
@@ -243,6 +265,11 @@ public class ColoredLightEngine {
                 }
             }
         }
+    }
+    
+    public void rebuildChunk(ChunkPos chunkPos) {
+        if (!enabled) return;
+        delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, System.currentTimeMillis()));
     }
 
     public void reset() {
@@ -262,10 +289,15 @@ public class ColoredLightEngine {
         chunksWaitingForPropagation.clear();
         delayedChunkUpdates.clear();
         pendingDelayedUpdates.clear();
-        lightPropagator = new LightPropagator();
-        lightPropagatorThread = new Thread(lightPropagator);
-        lightPropagatorThread.start();
-        ColorfulLighting.LOGGER.info("Colored light engine reset");
+        
+        if (enabled) {
+            lightPropagator = new LightPropagator();
+            lightPropagatorThread = new Thread(lightPropagator);
+            lightPropagatorThread.start();
+            ColorfulLighting.LOGGER.info("Colored light engine reset");
+        } else {
+            ColorfulLighting.LOGGER.info("Colored light engine disabled");
+        }
     }
 
     /**
@@ -289,21 +321,20 @@ public class ColoredLightEngine {
         public boolean hasReadyLightChanges() {
             return !this.lightChangesReady.isEmpty();
         }
-
+        
         @Override
         public void run() {
             running = true;
             while (running) {
                 // Process delayed chunk updates
                 long now = System.currentTimeMillis();
-                while (!delayedChunkUpdates.isEmpty()) {
-                    DelayedChunkUpdate update = delayedChunkUpdates.peek();
+                Iterator<DelayedChunkUpdate> it = delayedChunkUpdates.iterator();
+                while (it.hasNext()) {
+                    DelayedChunkUpdate update = it.next();
                     if (now >= update.executeTime) {
-                        delayedChunkUpdates.poll();
+                        it.remove();
                         pendingDelayedUpdates.remove(update.chunkPos);
-                        performChunkRebuild(update.chunkPos);
-                    } else {
-                        break; // Queue is ordered by time
+                        performRegionRebuild(update.chunkPos);
                     }
                 }
 
@@ -346,53 +377,86 @@ public class ColoredLightEngine {
         public ColorRGB4 getLatestLightColor(BlockPos blockPos) {
             ColorRGB4 inProgress = lightChangesInProgress.get(blockPos);
             if (inProgress != null) return inProgress;
-
+            
             ColorRGB4 ready = lightChangesReady.get(blockPos);
             if (ready != null) return ready;
-
+            
             synchronized (storageLock) {
                 return storage.getEntry(blockPos);
             }
         }
 
-        private void performChunkRebuild(ChunkPos chunkPos) {
+        private void performRegionRebuild(ChunkPos centerChunk) {
             LevelAccessor level = clientAccessor.getLevel();
             if (level == null) return;
 
-            // 1. Clear storage for the chunk
+            int radius = 1; // 3x3 area
+            int minChunkX = centerChunk.x - radius;
+            int maxChunkX = centerChunk.x + radius;
+            int minChunkZ = centerChunk.z - radius;
+            int maxChunkZ = centerChunk.z + radius;
+
+            // 0. Clear pending changes for the region to avoid contaminating the rebuild with stale data
+            lightChangesInProgress.entrySet().removeIf(entry -> {
+                ChunkPos pos = new ChunkPos(entry.getKey());
+                return pos.x >= minChunkX && pos.x <= maxChunkX && pos.z >= minChunkZ && pos.z <= maxChunkZ;
+            });
+            
+            lightChangesReadyLock.lock();
+            try {
+                lightChangesReady.entrySet().removeIf(entry -> {
+                    ChunkPos pos = new ChunkPos(entry.getKey());
+                    return pos.x >= minChunkX && pos.x <= maxChunkX && pos.z >= minChunkZ && pos.z <= maxChunkZ;
+                });
+            } finally {
+                lightChangesReadyLock.unlock();
+            }
+
+            // 1. Clear storage for the 3x3 region and mark dirty
             synchronized (storageLock) {
-                for(int y = level.getMinSectionY(); y <= level.getMaxSectionY(); y++) {
-                    long pos = SectionPos.asLong(chunkPos.x, y, chunkPos.z);
-                    storage.removeSection(pos);
-                    storage.addSection(pos);
+                synchronized (dirtySections) {
+                    for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+                        for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                            for(int y = level.getMinSectionY(); y <= level.getMaxSectionY(); y++) {
+                                long pos = SectionPos.asLong(cx, y, cz);
+                                storage.removeSection(pos);
+                                storage.addSection(pos);
+                                dirtySections.add(pos); // Mark as dirty so renderer updates even if no new light is found
+                            }
+                        }
+                    }
                 }
             }
 
             Queue<LightUpdateRequest> increaseRequests = new LinkedList<>();
 
-            // 2. Find internal sources
-            level.findLightSources(chunkPos, (blockPos -> {
-                increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
-            }));
+            // 2. Find internal sources for all chunks in region
+            for (int cx = minChunkX; cx <= maxChunkX; cx++) {
+                for (int cz = minChunkZ; cz <= maxChunkZ; cz++) {
+                    level.findLightSources(new ChunkPos(cx, cz), (blockPos -> {
+                        increaseRequests.add(new LightUpdateRequest(blockPos, Config.getColorEmission(level, blockPos), false));
+                    }));
+                }
+            }
 
-            // 3. Pull from neighbors
+            // 3. Pull from neighbors OUTSIDE the region
             int minBlockY = level.getMinSectionY() * 16;
             int maxBlockY = (level.getMaxSectionY() + 1) * 16 - 1;
 
-            int startX = chunkPos.getMinBlockX();
-            int startZ = chunkPos.getMinBlockZ();
-            int endX = startX + 15;
-            int endZ = startZ + 15;
+            int regionMinBlockX = minChunkX * 16;
+            int regionMaxBlockX = (maxChunkX * 16) + 15;
+            int regionMinBlockZ = minChunkZ * 16;
+            int regionMaxBlockZ = (maxChunkZ * 16) + 15;
 
             for (int y = minBlockY; y <= maxBlockY; y++) {
-                // North border (check z-1)
-                checkNeighborAndAdd(increaseRequests, startX, endX, y, startZ - 1, true);
-                // South border (check z+16)
-                checkNeighborAndAdd(increaseRequests, startX, endX, y, endZ + 1, true);
+                // North border of the whole region (check z-1)
+                checkNeighborAndAdd(increaseRequests, regionMinBlockX, regionMaxBlockX, y, regionMinBlockZ - 1, true);
+                // South border (check z+1)
+                checkNeighborAndAdd(increaseRequests, regionMinBlockX, regionMaxBlockX, y, regionMaxBlockZ + 1, true);
                 // West border (check x-1)
-                checkNeighborAndAdd(increaseRequests, startZ, endZ, y, startX - 1, false);
-                // East border (check x+16)
-                checkNeighborAndAdd(increaseRequests, startZ, endZ, y, endX + 1, false);
+                checkNeighborAndAdd(increaseRequests, regionMinBlockZ, regionMaxBlockZ, y, regionMinBlockX - 1, false);
+                // East border (check x+1)
+                checkNeighborAndAdd(increaseRequests, regionMinBlockZ, regionMaxBlockZ, y, regionMaxBlockX + 1, false);
             }
 
             propagateIncreases(level, increaseRequests);
@@ -518,7 +582,7 @@ public class ColoredLightEngine {
 
                 markLightChangesReady();
             }
-
+            
             var nearestChunkResult = getNearestWaitingChunk(level, player);
             var nearestBlockRequests = getNearestBlockRequests(player);
 
@@ -554,10 +618,10 @@ public class ColoredLightEngine {
 
         private boolean propagateIncrease(Queue<LightUpdateRequest> increaseRequests, LightUpdateRequest request, LevelAccessor level) {
             if (request.checkSource) {
-                BlockStateAccessor blockState = level.getBlockState(request.blockPos);
-                if (blockState == null || Config.getEmissionBrightness(level, request.blockPos, blockState) == 0) {
-                    return false;
-                }
+                 BlockStateAccessor blockState = level.getBlockState(request.blockPos);
+                 if (blockState == null || Config.getEmissionBrightness(level, request.blockPos, blockState) == 0) {
+                     return false;
+                 }
             }
 
             ColorRGB4 oldLightColor = getLatestLightColor(request.blockPos);

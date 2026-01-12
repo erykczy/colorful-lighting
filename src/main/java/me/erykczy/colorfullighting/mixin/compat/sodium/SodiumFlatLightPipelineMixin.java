@@ -38,6 +38,16 @@ public abstract class SodiumFlatLightPipelineMixin {
      */
     @Overwrite
     private int getOffsetLightmap(BlockPos pos, Direction face) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Replicate vanilla/Sodium logic
+            int word = this.lightCache.get(pos);
+            if (LightDataAccess.unpackEM(word)) {
+                return 0xF000F0;
+            }
+            int adjWord = this.lightCache.get(pos, face);
+            return LightDataAccess.getLightmap(adjWord);
+        }
+
         int word = this.lightCache.get(pos);
 
         if (LightDataAccess.unpackEM(word)) {
@@ -68,6 +78,28 @@ public abstract class SodiumFlatLightPipelineMixin {
      */
     @Overwrite
     public void calculate(ModelQuadView quad, BlockPos pos, QuadLightData out, Direction cullFace, Direction lightFace, boolean shade) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            // Replicate vanilla/Sodium logic
+            int lightmap;
+            if (cullFace != null) {
+                lightmap = getOffsetLightmap(pos, cullFace);
+            } else {
+                int flags = quad.getFlags();
+                if ((flags & ModelQuadFlags.IS_ALIGNED) != 0 || ((flags & ModelQuadFlags.IS_PARALLEL) != 0 && LightDataAccess.unpackFC(this.lightCache.get(pos)))) {
+                    lightmap = getOffsetLightmap(pos, lightFace);
+                } else {
+                    lightmap = LightDataAccess.getLightmap(this.lightCache.get(pos));
+                }
+            }
+            Arrays.fill(out.lm, lightmap);
+            if((quad.getFlags() & ModelQuadFlags.IS_VANILLA_SHADED) != 0 || !this.useQuadNormalsForShading) {
+                Arrays.fill(out.br, this.lightCache.getWorld().getShade(lightFace, shade));
+            } else {
+                this.applySidedBrightnessFromNormals(quad, out, shade);
+            }
+            return;
+        }
+
         int lightmap;
 
         if (cullFace != null) {
