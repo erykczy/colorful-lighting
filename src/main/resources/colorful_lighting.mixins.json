@@ -2,27 +2,29 @@
   "required": true,
   "package": "me.erykczy.colorfullighting.mixin",
   "compatibilityLevel": "JAVA_17",
-  "mixins": [],
+  "mixins": [
+    "compat.oculus.SodiumTransformerMixin"
+  ],
   "client": [
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
-    "render.LiquidBlockRendererMixin",
-    "render.LevelRendererMixin",
-    "render.AmbientOcclusionFaceMixin",
-    "render.EntityRendererMixin",
-    "render.BrightnessCombinerMixin",
-    "compat.sodium.SodiumWorldSliceMixin",
-    "compat.sodium.SodiumBlockOcclusionCacheMixin",
-    "compat.sodium.SodiumFluidRendererMixin",
-    "compat.sodium.SodiumFlatLightPipelineMixin",
-    "compat.sodium.SodiumSmoothLightPipelineMixin",
-    "compat.sodium.SodiumQuadLighterMixin",
-    "compat.sodium.SodiumLightDataAccessMixin",
     "compat.sodium.SodiumAoFaceDataMixin",
+    "compat.sodium.SodiumBlockOcclusionCacheMixin",
+    "compat.sodium.SodiumFlatLightPipelineMixin",
+    "compat.sodium.SodiumFluidRendererMixin",
+    "compat.sodium.SodiumLightDataAccessMixin",
+    "compat.sodium.SodiumQuadLighterMixin",
+    "compat.sodium.SodiumSmoothLightPipelineMixin",
     "compat.sodium.SodiumWorldRendererAccessor",
+    "compat.sodium.SodiumWorldSliceMixin",
     "compat.starlight.StarlightInterfaceMixin",
-    "compat.starlight.StarlightLevelLightEngineMixin"
+    "compat.starlight.StarlightLevelLightEngineMixin",
+    "render.AmbientOcclusionFaceMixin",
+    "render.BrightnessCombinerMixin",
+    "render.EntityRendererMixin",
+    "render.LevelRendererMixin",
+    "render.LiquidBlockRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
