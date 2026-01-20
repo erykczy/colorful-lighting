@@ -16,10 +16,12 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "me.jellysquid.mods.sodium.client.model.light.smooth.AoFaceData", remap = false, priority = 10000)
@@ -38,6 +40,7 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
 
     @Shadow public abstract boolean hasUnpackedLightData();
     @Shadow public abstract boolean hasLightData();
+    @Shadow public abstract void unpackLightData();
 
     @Unique
     private int getBaseColoredLight(LightDataAccess cache, int x, int y, int z) {
@@ -140,6 +143,7 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         return Math.min(a, b);
     }
 
+    @Unique
     private static int clampLightmap(int val, int max) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
             return val;
@@ -208,8 +212,13 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
      * @author Erykczy
      * @reason Inject colored lighting logic into AO calculation
      */
-    @Overwrite
-    public void initLightData(LightDataAccess cache, BlockPos pos, Direction direction, boolean offset) {
+    @Inject(method = "initLightData", at = @At("HEAD"), cancellable = true)
+    public void initLightData(LightDataAccess cache, BlockPos pos, Direction direction, boolean offset, CallbackInfo ci) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            return;
+        }
+        ci.cancel();
+
         final int x = pos.getX();
         final int y = pos.getY();
         final int z = pos.getZ();
@@ -294,15 +303,11 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         int[] cb = this.lm;
 
         final int calm;
-        final boolean caem;
 
         if (offset && LightDataAccess.unpackFO(adjWord)) {
-            final int originWord = cache.get(x, y, z);
             calm = getFilteredNeighborLight(cache, x, y, z, centerState, centerLight, pos);
-            caem = LightDataAccess.unpackEM(originWord);
         } else {
             calm = getFilteredNeighborLight(cache, adjX, adjY, adjZ, centerState, centerLight, pos);
-            caem = LightDataAccess.unpackEM(adjWord);
         }
 
         cb[0] = blend(e3lm, e0lm, c1lm, calm);
@@ -321,24 +326,14 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
      * @author Erykczy
      * @reason Unpack colored light data
      */
-    @Overwrite
-    public void unpackLightData() {
-        int[] lm = this.lm;
-
+    @Inject(method = "unpackLightData", at = @At("HEAD"), cancellable = true)
+    public void unpackLightData_inject(CallbackInfo ci) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
-            // Replicate vanilla/Sodium logic
-            float[] bl = this.bl;
-            float[] sl = this.sl;
-
-            for(int i=0; i<4; i++) {
-                int l = lm[i];
-                bl[i] = (float)(l & 0xFF) / 255.0F;
-                sl[i] = (float)((l >> 16) & 0xFF) / 255.0F;
-            }
-            this.flags |= 2;
             return;
         }
+        ci.cancel();
 
+        int[] lm = this.lm;
         float[] bl = this.bl;
         float[] sl = this.sl;
         float[] gl = this.gl;

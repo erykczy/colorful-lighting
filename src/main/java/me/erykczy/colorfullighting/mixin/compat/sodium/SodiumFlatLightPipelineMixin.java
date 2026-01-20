@@ -19,8 +19,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
 
@@ -32,20 +37,19 @@ public abstract class SodiumFlatLightPipelineMixin {
 
     @Shadow private void applySidedBrightnessFromNormals(ModelQuadView quad, QuadLightData out, boolean shade) {}
 
+    @Unique private ModelQuadView capturedQuad;
+    @Unique private BlockPos capturedPos;
+    @Unique private Direction capturedCullFace;
+    @Unique private Direction capturedLightFace;
+
     /**
      * @author Erykczy
      * @reason Inject colored lighting logic
      */
-    @Overwrite
-    private int getOffsetLightmap(BlockPos pos, Direction face) {
+    @Inject(method = "getOffsetLightmap", at = @At("HEAD"), cancellable = true)
+    private void getOffsetLightmap(BlockPos pos, Direction face, CallbackInfoReturnable<Integer> cir) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
-            // Replicate vanilla/Sodium logic
-            int word = this.lightCache.get(pos);
-            if (LightDataAccess.unpackEM(word)) {
-                return 0xF000F0;
-            }
-            int adjWord = this.lightCache.get(pos, face);
-            return LightDataAccess.getLightmap(adjWord);
+            return;
         }
 
         int word = this.lightCache.get(pos);
@@ -58,9 +62,11 @@ public abstract class SodiumFlatLightPipelineMixin {
              if(levelAccessor != null) {
                 BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
                 var emission = Config.getLightColor(stateAccessor);
-                return SodiumPackedLightData.packData(15, ColorRGB8.fromRGB4(emission));
+                cir.setReturnValue(SodiumPackedLightData.packData(15, ColorRGB8.fromRGB4(emission)));
+                return;
              }
-             return 0xF000F0;
+             cir.setReturnValue(0xF000F0);
+             return;
         }
 
         BlockPos offsetPos = pos.relative(face);
@@ -69,76 +75,54 @@ public abstract class SodiumFlatLightPipelineMixin {
         int adjWord = this.lightCache.get(pos, face);
         int skyLight = LightDataAccess.unpackSL(adjWord);
         
-        return SodiumPackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color));
+        cir.setReturnValue(SodiumPackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color)));
     }
 
-    /**
-     * @author Erykczy
-     * @reason Ensure colored lighting is used even for non-offset faces (plants, etc.)
-     */
-    @Overwrite
-    public void calculate(ModelQuadView quad, BlockPos pos, QuadLightData out, Direction cullFace, Direction lightFace, boolean shade) {
+    @Inject(method = "calculate", at = @At("HEAD"))
+    private void captureArgs(ModelQuadView quad, BlockPos pos, QuadLightData out, Direction cullFace, Direction lightFace, boolean shade, CallbackInfo ci) {
+        this.capturedQuad = quad;
+        this.capturedPos = pos;
+        this.capturedCullFace = cullFace;
+        this.capturedLightFace = lightFace;
+    }
+
+    @ModifyArg(method = "calculate", at = @At(value = "INVOKE", target = "Ljava/util/Arrays;fill([II)V", ordinal = 0), index = 1)
+    private int modifyLightmap(int lightmap) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
-            // Replicate vanilla/Sodium logic
-            int lightmap;
-            if (cullFace != null) {
-                lightmap = getOffsetLightmap(pos, cullFace);
-            } else {
-                int flags = quad.getFlags();
-                if ((flags & ModelQuadFlags.IS_ALIGNED) != 0 || ((flags & ModelQuadFlags.IS_PARALLEL) != 0 && LightDataAccess.unpackFC(this.lightCache.get(pos)))) {
-                    lightmap = getOffsetLightmap(pos, lightFace);
-                } else {
-                    lightmap = LightDataAccess.getLightmap(this.lightCache.get(pos));
-                }
-            }
-            Arrays.fill(out.lm, lightmap);
-            if((quad.getFlags() & ModelQuadFlags.IS_VANILLA_SHADED) != 0 || !this.useQuadNormalsForShading) {
-                Arrays.fill(out.br, this.lightCache.getWorld().getShade(lightFace, shade));
-            } else {
-                this.applySidedBrightnessFromNormals(quad, out, shade);
-            }
-            return;
+            return lightmap;
         }
 
-        int lightmap;
-
-        if (cullFace != null) {
-            lightmap = getOffsetLightmap(pos, cullFace);
+        boolean usedOffset = false;
+        if (capturedCullFace != null) {
+            usedOffset = true;
         } else {
-            int flags = quad.getFlags();
-            if ((flags & ModelQuadFlags.IS_ALIGNED) != 0 || ((flags & ModelQuadFlags.IS_PARALLEL) != 0 && LightDataAccess.unpackFC(this.lightCache.get(pos)))) {
-                lightmap = getOffsetLightmap(pos, lightFace);
-            } else {
-                // Original: lightmap = getEmissiveLightmap(this.lightCache.get(pos));
-                // We need to use our custom logic here too!
-                
-                int word = this.lightCache.get(pos);
-                if (LightDataAccess.unpackEM(word)) {
-                     // Same emission logic
-                     BlockAndTintGetter level = this.lightCache.getWorld();
-                     BlockState state = level.getBlockState(pos);
-                     LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
-                     if(levelAccessor != null) {
-                        BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
-                        var emission = Config.getLightColor(stateAccessor);
-                        lightmap = SodiumPackedLightData.packData(15, ColorRGB8.fromRGB4(emission));
-                     } else {
-                        lightmap = 0xF000F0;
-                     }
-                } else {
-                    // Sample light at pos
-                    ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(pos);
-                    int skyLight = LightDataAccess.unpackSL(word);
-                    lightmap = SodiumPackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color));
-                }
+            int flags = capturedQuad.getFlags();
+            if ((flags & ModelQuadFlags.IS_ALIGNED) != 0 || ((flags & ModelQuadFlags.IS_PARALLEL) != 0 && LightDataAccess.unpackFC(this.lightCache.get(capturedPos)))) {
+                usedOffset = true;
             }
         }
 
-        Arrays.fill(out.lm, lightmap);
-        if((quad.getFlags() & ModelQuadFlags.IS_VANILLA_SHADED) != 0 || !this.useQuadNormalsForShading) {
-            Arrays.fill(out.br, this.lightCache.getWorld().getShade(lightFace, shade));
-        } else {
-            this.applySidedBrightnessFromNormals(quad, out, shade);
+        if (!usedOffset) {
+            // Logic for when getOffsetLightmap was NOT called
+            int word = this.lightCache.get(capturedPos);
+            if (LightDataAccess.unpackEM(word)) {
+                 BlockAndTintGetter level = this.lightCache.getWorld();
+                 BlockState state = level.getBlockState(capturedPos);
+                 LevelAccessor levelAccessor = ColorfulLighting.clientAccessor.getLevel();
+                 if(levelAccessor != null) {
+                    BlockStateAccessor stateAccessor = new BlockStateWrapper(state);
+                    var emission = Config.getLightColor(stateAccessor);
+                    return SodiumPackedLightData.packData(15, ColorRGB8.fromRGB4(emission));
+                 } else {
+                    return 0xF000F0;
+                 }
+            } else {
+                ColorRGB4 color = ColoredLightEngine.getInstance().sampleLightColor(capturedPos);
+                int skyLight = LightDataAccess.unpackSL(word);
+                return SodiumPackedLightData.packData(skyLight, ColorRGB8.fromRGB4(color));
+            }
         }
+
+        return lightmap;
     }
 }

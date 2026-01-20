@@ -72,8 +72,8 @@ public abstract class SodiumSmoothLightPipelineMixin {
      * @author Erykczy
      * @reason Inject colored lighting logic
      */
-    @Overwrite
-    private void applyAlignedPartialFaceVertex(BlockPos pos, Direction dir, float[] w, int i, QuadLightData out, boolean offset) {
+    @Inject(method = "applyAlignedPartialFaceVertex", at = @At("HEAD"), cancellable = true)
+    private void applyAlignedPartialFaceVertex(BlockPos pos, Direction dir, float[] w, int i, QuadLightData out, boolean offset, CallbackInfo ci) {
         Object faceDataObj = this.getCachedFaceData(pos, dir, offset);
         if (faceDataObj == null) return; // Should not happen if init succeeded
         
@@ -84,14 +84,15 @@ public abstract class SodiumSmoothLightPipelineMixin {
 
         out.br[i] = ao;
         out.lm[i] = lightMap;
+        ci.cancel();
     }
     
     /**
      * @author Erykczy
      * @reason Inject colored lighting logic
      */
-    @Overwrite
-    private void applyInsetPartialFaceVertex(BlockPos pos, Direction dir, float n1d, float n2d, float[] w, int i, QuadLightData out) {
+    @Inject(method = "applyInsetPartialFaceVertex", at = @At("HEAD"), cancellable = true)
+    private void applyInsetPartialFaceVertex(BlockPos pos, Direction dir, float n1d, float n2d, float[] w, int i, QuadLightData out, CallbackInfo ci) {
         Object n1Obj = this.getCachedFaceData(pos, dir, false);
         if (n1Obj == null) return;
         SodiumAoFaceDataExtension n1 = (SodiumAoFaceDataExtension) n1Obj;
@@ -119,6 +120,7 @@ public abstract class SodiumSmoothLightPipelineMixin {
             
             out.br[i] = ao;
             out.lm[i] = bl | (sl << 16);
+            ci.cancel();
             return;
         }
 
@@ -129,5 +131,6 @@ public abstract class SodiumSmoothLightPipelineMixin {
 
         out.br[i] = ao;
         out.lm[i] = SodiumPackedLightData.packData((int)s, (int)r, (int)g, (int)b);
+        ci.cancel();
     }
 }

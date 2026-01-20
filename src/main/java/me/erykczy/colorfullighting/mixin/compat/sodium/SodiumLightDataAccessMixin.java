@@ -41,8 +41,8 @@ public abstract class SodiumLightDataAccessMixin {
      * @author Erykczy
      * @reason Inject colored lighting logic into Sodium's light data computation
      */
-    @Overwrite(remap = false)
-    protected int compute(int x, int y, int z) {
+    @Inject(method = "compute", at = @At("HEAD"), cancellable = true, remap = false)
+    protected void compute(int x, int y, int z, CallbackInfoReturnable<Integer> cir) {
         BlockPos pos = new BlockPos(x, y, z);
         BlockAndTintGetter world = this.world;
 
@@ -93,6 +93,6 @@ public abstract class SodiumLightDataAccessMixin {
             ao = 1.0f;
         }
 
-        return packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packAO(ao) | packLU(lu) | packSL(sl) | packBL(bl);
+        cir.setReturnValue(packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packAO(ao) | packLU(lu) | packSL(sl) | packBL(bl));
     }
 }
