@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.lang.reflect.Field;
 
 @Pseudo
-@Mixin(targets = "me.jellysquid.mods.sodium.client.model.light.smooth.SmoothLightPipeline", remap = false)
+@Mixin(targets = "me.jellysquid.mods.sodium.client.model.light.smooth.SmoothLightPipeline", remap = false, priority = 10000)
 public abstract class SodiumSmoothLightPipelineMixin {
 
     @Shadow private LightDataAccess lightCache;

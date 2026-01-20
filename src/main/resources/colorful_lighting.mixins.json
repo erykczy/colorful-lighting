@@ -3,21 +3,16 @@
   "package": "me.erykczy.colorfullighting.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "compat.oculus.SodiumTransformerMixin"
   ],
   "client": [
     "BlockLightEngineMixin",
     "LevelLightEngineMixin",
     "LightEngineMixin",
     "compat.sodium.SodiumAoFaceDataMixin",
-    "compat.sodium.SodiumBlockOcclusionCacheMixin",
     "compat.sodium.SodiumFlatLightPipelineMixin",
-    "compat.sodium.SodiumFluidRendererMixin",
     "compat.sodium.SodiumLightDataAccessMixin",
-    "compat.sodium.SodiumQuadLighterMixin",
     "compat.sodium.SodiumSmoothLightPipelineMixin",
     "compat.sodium.SodiumWorldRendererAccessor",
-    "compat.sodium.SodiumWorldSliceMixin",
     "compat.starlight.StarlightInterfaceMixin",
     "compat.starlight.StarlightLevelLightEngineMixin",
     "render.AmbientOcclusionFaceMixin",

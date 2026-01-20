@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import java.util.Arrays;
 
-@Mixin(targets = "me.jellysquid.mods.sodium.client.model.light.flat.FlatLightPipeline", remap = false, priority = 500)
+@Mixin(targets = "me.jellysquid.mods.sodium.client.model.light.flat.FlatLightPipeline", remap = false, priority = 10000)
 public abstract class SodiumFlatLightPipelineMixin {
 
     @Shadow private LightDataAccess lightCache;

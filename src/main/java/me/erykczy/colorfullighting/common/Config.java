@@ -95,11 +95,12 @@ public class Config {
         return defaultColor;
     }
 
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, ColorRGB4 defaultValue) {
+    public static ColorRGB4 getColoredLightTransmittance(@Nullable LevelAccessor level, @Nullable BlockPos pos, ColorRGB4 defaultValue) {
+        if (level == null || pos == null) return defaultValue;
         var blockState = level.getBlockState(pos);
         return blockState == null ? defaultValue : getColoredLightTransmittance(level, pos, blockState);
     }
-    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
+    public static ColorRGB4 getColoredLightTransmittance(@Nullable LevelAccessor level, @Nullable BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
         ColorFilter config = colorFilters.get(blockResourceKey.location());

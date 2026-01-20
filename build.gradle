@@ -162,6 +162,10 @@ dependencies {
     implementation fg.deobf("curse.maven:oculus-581495:6020952")
     compileOnly fg.deobf("maven.modrinth:distanthorizonsapi:j15Y57xi")
     runtimeOnly fg.deobf("curse.maven:distant-horizons-508933:7375280")
+    implementation fg.deobf("curse.maven:immersive-weathering-forge-592449:6116941")
+    implementation fg.deobf("curse.maven:selene-499980:7469722")
+    implementation fg.deobf("curse.maven:macaws-furniture-359540:7255630")
+    implementation fg.deobf("curse.maven:amendments-896746:7470401")
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

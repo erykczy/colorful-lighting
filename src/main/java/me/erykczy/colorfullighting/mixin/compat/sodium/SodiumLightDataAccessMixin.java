@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(LightDataAccess.class)
+@Mixin(value = LightDataAccess.class, priority = 10000)
 public abstract class SodiumLightDataAccessMixin {
 
     @Shadow protected BlockAndTintGetter world;
