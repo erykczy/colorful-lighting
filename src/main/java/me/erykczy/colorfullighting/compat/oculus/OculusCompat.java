@@ -1,5 +1,7 @@
 package me.erykczy.colorfullighting.compat.oculus;
 
+import net.minecraftforge.fml.ModList;
+
 import java.lang.reflect.Method;
 
 public class OculusCompat {
@@ -21,7 +23,7 @@ public class OculusCompat {
             }
             checked = true;
         }
-        return loaded;
+        return loaded || ModList.get().isLoaded("oculus") || ModList.get().isLoaded("iris");
     }
 
     public static boolean isShaderPackInUse() {
