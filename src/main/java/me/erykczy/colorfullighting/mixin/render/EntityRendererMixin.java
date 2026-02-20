@@ -4,6 +4,8 @@ import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.Config;
 import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
+import me.erykczy.colorfullighting.compat.oculus.OculusCompat;
+import me.erykczy.colorfullighting.compat.sodium.SodiumCompat;
 import net.minecraft.client.renderer.entity.DragonFireballRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
@@ -54,7 +56,7 @@ public class EntityRendererMixin {
 
     @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
     private <T extends Entity>void colorfullighting$getPackedLightCoords(T entity, float partialTicks, CallbackInfoReturnable<Integer> cir) {
-        if (!ColoredLightEngine.getInstance().isEnabled()) {
+        if (!ColoredLightEngine.getInstance().isEnabled() || SodiumCompat.isSodiumLoaded()) {
             return;
         }
         BlockPos blockpos = BlockPos.containing(entity.getLightProbePosition(partialTicks));
