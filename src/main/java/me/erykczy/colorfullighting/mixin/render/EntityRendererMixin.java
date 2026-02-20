@@ -52,7 +52,7 @@ public class EntityRendererMixin {
             EntityType.WITHER_SKULL
     ));
 
-    @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true, require = 0)
+    @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
     private <T extends Entity>void colorfullighting$getPackedLightCoords(T entity, float partialTicks, CallbackInfoReturnable<Integer> cir) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
             return;

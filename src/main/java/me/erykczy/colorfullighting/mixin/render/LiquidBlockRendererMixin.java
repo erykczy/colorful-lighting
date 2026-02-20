@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LiquidBlockRenderer.class)
 public class LiquidBlockRendererMixin {
-    @Inject(method = "getLightColor", at = @At("HEAD"), cancellable = true, require = 0)
+    @Inject(method = "getLightColor", at = @At("HEAD"), cancellable = true)
     private void colorfullighting$getLightColor(BlockAndTintGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
             return;

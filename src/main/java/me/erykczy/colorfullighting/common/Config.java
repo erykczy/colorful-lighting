@@ -9,6 +9,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Blaze;
+import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -61,23 +66,42 @@ public class Config {
         
         // Search for entities within a small radius
         AABB searchBox = new AABB(lightBlockPos).inflate(2.0);
-        List<Player> nearbyPlayers = Minecraft.getInstance().level.getEntitiesOfClass(Player.class, searchBox);
+        List<Entity> nearbyEntities = Minecraft.getInstance().level.getEntitiesOfClass(Entity.class, searchBox);
 
-        for (Player player : nearbyPlayers) {
-            // Check Main Hand
-            ItemStack mainHand = player.getMainHandItem();
-            ResourceLocation mainHandKey = ForgeRegistries.ITEMS.getKey(mainHand.getItem());
-            if (mainHandKey != null) {
-                ColorEmitter config = colorEmitters.get(mainHandKey);
+        for (Entity entity : nearbyEntities) {
+            if (entity instanceof Player player) {
+                // Check Main Hand
+                ItemStack mainHand = player.getMainHandItem();
+                ResourceLocation mainHandKey = ForgeRegistries.ITEMS.getKey(mainHand.getItem());
+                if (mainHandKey != null) {
+                    ColorEmitter config = colorEmitters.get(mainHandKey);
+                    if (config != null) return config.color();
+                }
+                
+                // Check Off Hand
+                ItemStack offHand = player.getOffhandItem();
+                ResourceLocation offHandKey = ForgeRegistries.ITEMS.getKey(offHand.getItem());
+                if (offHandKey != null) {
+                    ColorEmitter config = colorEmitters.get(offHandKey);
+                    if (config != null) return config.color();
+                }
+            } else if (entity instanceof ItemEntity itemEntity) {
+                ItemStack itemStack = itemEntity.getItem();
+                ResourceLocation itemKey = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
+                if (itemKey != null) {
+                    ColorEmitter config = colorEmitters.get(itemKey);
+                    if (config != null) return config.color();
+                }
+            } else if (entity instanceof Creeper creeper) {
+                if (creeper.isPowered()) {
+                    return ColorRGB4.fromRGB4(0, 15, 0); // Bright Green for Charged Creeper
+                } else {
+                    return ColorRGB4.fromRGB4(0, 10, 0); // Dark Green for Normal Creeper
+                }
+            } else if (entity instanceof Blaze) {
+                ColorEmitter config = colorEmitters.get(ForgeRegistries.BLOCKS.getKey(Blocks.FIRE));
                 if (config != null) return config.color();
-            }
-            
-            // Check Off Hand
-            ItemStack offHand = player.getOffhandItem();
-            ResourceLocation offHandKey = ForgeRegistries.ITEMS.getKey(offHand.getItem());
-            if (offHandKey != null) {
-                ColorEmitter config = colorEmitters.get(offHandKey);
-                if (config != null) return config.color();
+                return ColorRGB4.fromRGB4(15, 10, 0); // Fallback Orange
             }
         }
         return null;
@@ -95,12 +119,11 @@ public class Config {
         return defaultColor;
     }
 
-    public static ColorRGB4 getColoredLightTransmittance(@Nullable LevelAccessor level, @Nullable BlockPos pos, ColorRGB4 defaultValue) {
-        if (level == null || pos == null) return defaultValue;
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, ColorRGB4 defaultValue) {
         var blockState = level.getBlockState(pos);
         return blockState == null ? defaultValue : getColoredLightTransmittance(level, pos, blockState);
     }
-    public static ColorRGB4 getColoredLightTransmittance(@Nullable LevelAccessor level, @Nullable BlockPos pos, @NotNull BlockStateAccessor blockState) {
+    public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
         ColorFilter config = colorFilters.get(blockResourceKey.location());

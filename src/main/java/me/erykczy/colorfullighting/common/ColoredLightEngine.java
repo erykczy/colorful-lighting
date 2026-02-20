@@ -160,53 +160,18 @@ public class ColoredLightEngine {
     public void onBlockLightPropertiesChanged(BlockPos blockPos) {
         if (!enabled) return;
         LevelAccessor level = clientAccessor.getLevel();
-        if(level == null) return;
+        if (level == null) return;
 
         SectionPos sectionPos = SectionPos.of(blockPos);
-        // light should be propagated only in inner chunks as
-        // full propagation needs light source's chunk and neighbours
-        if(!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
-
-        BlockStateAccessor newBlockState = level.getBlockState(blockPos);
-        boolean isAir = newBlockState == null || newBlockState.isAir();
-
-        ColorRGB4 oldLightColor;
-        synchronized (storageLock) {
-            oldLightColor = storage.getEntry(blockPos);
-        }
-        if (oldLightColor == null) oldLightColor = ColorRGB4.fromRGB4(0,0,0);
-
-        // If a light source was destroyed (replaced by air), we need to handle it specially to prevent lingering light
-        if (isAir && (oldLightColor.red4 > 0 || oldLightColor.green4 > 0 || oldLightColor.blue4 > 0)) {
-            // 1. Queue the decrease request using the OLD color, so neighbors get updated.
-            // We use force=true because we are about to clear the storage, so the propagator's check against current storage would fail otherwise.
-            blockUpdateDecreaseRequests.add(new LightUpdateRequest(blockPos, oldLightColor, true));
-
-            // 2. Remove any pending increase requests for this block to prevent race conditions (Fast Place/Break bug)
-            blockUpdateIncreaseRequests.removeIf(req -> req.blockPos.equals(blockPos));
-
-            // 3. IMMEDIATELY clear the storage for this block.
-            // This ensures that any immediate chunk rebuilds (which happen fast with explosions) see the block as dark.
-            synchronized (storageLock) {
-                storage.setEntryUnsafe(blockPos, ColorRGB4.fromRGB4(0, 0, 0));
-            }
-
-            // 4. Mark section for later rebuild to ensure any race conditions are cleaned up
-            sectionsToRebuildLater.add(sectionPos.asLong());
-
-            // 5. Schedule a full region re-check (3x3 chunks) to clean up any lingering light artifacts
-            ChunkPos chunkPos = new ChunkPos(blockPos);
-            long time = System.currentTimeMillis() + 500;
-            if (pendingDelayedUpdates.add(chunkPos)) {
-                delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, time));
-            }
-            return;
-        }
+        if (!viewArea.containsInner(sectionPos.x(), sectionPos.z())) return;
 
         BlockRequests increaseRequests = new BlockRequests(blockPos);
         handleBlockUpdate(level, increaseRequests.increaseRequests, blockUpdateDecreaseRequests, blockPos);
-        if(!increaseRequests.increaseRequests.isEmpty()) blockUpdateIncreaseRequests.add(increaseRequests);
+        if (!increaseRequests.increaseRequests.isEmpty()) {
+            blockUpdateIncreaseRequests.add(increaseRequests);
+        }
     }
+
     private void handleBlockUpdate(LevelAccessor level, Queue<LightUpdateRequest> increaseRequests, Queue<LightUpdateRequest> decreaseRequests, BlockPos blockPos) {
         ColorRGB4 lightColor;
         synchronized (storageLock) {
@@ -256,7 +221,7 @@ public class ColoredLightEngine {
         for (Long dirtySection : sectionsToUpdate) {
             SectionPos sectionPos = SectionPos.of(dirtySection);
             level.setSectionDirty(sectionPos.x(), sectionPos.y(), sectionPos.z());
-            
+
             // Force Sodium rebuild if present
             if (SodiumCompat.isSodiumLoaded()) {
                 var renderer = Minecraft.getInstance().levelRenderer;
@@ -268,8 +233,14 @@ public class ColoredLightEngine {
     }
     
     public void rebuildChunk(ChunkPos chunkPos) {
+        rebuildChunk(chunkPos, 0);
+    }
+
+    public void rebuildChunk(ChunkPos chunkPos, long delay) {
         if (!enabled) return;
-        delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, System.currentTimeMillis()));
+        if (pendingDelayedUpdates.add(chunkPos)) {
+            delayedChunkUpdates.add(new DelayedChunkUpdate(chunkPos, System.currentTimeMillis() + delay));
+        }
     }
 
     public void reset() {

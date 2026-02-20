@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = LightDataAccess.class, priority = 10000)
+@Mixin(LightDataAccess.class)
 public abstract class SodiumLightDataAccessMixin {
 
     @Shadow protected BlockAndTintGetter world;
@@ -41,8 +41,8 @@ public abstract class SodiumLightDataAccessMixin {
      * @author Erykczy
      * @reason Inject colored lighting logic into Sodium's light data computation
      */
-    @Inject(method = "compute", at = @At("HEAD"), cancellable = true, remap = false)
-    protected void compute(int x, int y, int z, CallbackInfoReturnable<Integer> cir) {
+    @Overwrite(remap = false)
+    protected int compute(int x, int y, int z) {
         BlockPos pos = new BlockPos(x, y, z);
         BlockAndTintGetter world = this.world;
 
@@ -93,6 +93,6 @@ public abstract class SodiumLightDataAccessMixin {
             ao = 1.0f;
         }
 
-        cir.setReturnValue(packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packAO(ao) | packLU(lu) | packSL(sl) | packBL(bl));
+        return packFC(fc) | packFO(fo) | packOP(op) | packEM(em) | packAO(ao) | packLU(lu) | packSL(sl) | packBL(bl);
     }
 }

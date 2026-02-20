@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BlockLightEngine.class)
 public abstract class BlockLightEngineMixin {
-    @Inject(method = "checkNode", at = @At("TAIL"), require = 0)
+    @Inject(method = "checkNode", at = @At("TAIL"))
     private void colorfullighting$checkNode(long packedPos, CallbackInfo ci) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
             return;
