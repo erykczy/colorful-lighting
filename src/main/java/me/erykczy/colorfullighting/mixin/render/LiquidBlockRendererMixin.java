@@ -2,8 +2,6 @@ package me.erykczy.colorfullighting.mixin.render;
 
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
-import me.erykczy.colorfullighting.compat.oculus.OculusCompat;
-import me.erykczy.colorfullighting.compat.sodium.SodiumCompat;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.LiquidBlockRenderer;
 import net.minecraft.core.BlockPos;
@@ -17,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LiquidBlockRendererMixin {
     @Inject(method = "getLightColor", at = @At("HEAD"), cancellable = true)
     private void colorfullighting$getLightColor(BlockAndTintGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (!ColoredLightEngine.getInstance().isEnabled() || SodiumCompat.isSodiumLoaded()) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
             return;
         }
         int lightColor = LevelRenderer.getLightColor(level, pos);

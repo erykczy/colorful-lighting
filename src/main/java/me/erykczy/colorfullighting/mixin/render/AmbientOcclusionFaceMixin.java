@@ -2,8 +2,6 @@ package me.erykczy.colorfullighting.mixin.render;
 
 import me.erykczy.colorfullighting.common.ColoredLightEngine;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
-import me.erykczy.colorfullighting.compat.oculus.OculusCompat;
-import me.erykczy.colorfullighting.compat.sodium.SodiumCompat;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,7 +13,7 @@ public class AmbientOcclusionFaceMixin {
 
     @Inject(method = "blend(IIII)I", at = @At("HEAD"), cancellable = true)
     private void colorfullighting$blend(int lightColor0, int lightColor1, int lightColor2, int lightColor3, CallbackInfoReturnable<Integer> cir) {
-        if (!ColoredLightEngine.getInstance().isEnabled() || SodiumCompat.isSodiumLoaded()) {
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
             return;
         }
         cir.setReturnValue(PackedLightData.blend(lightColor0, lightColor1, lightColor2, lightColor3));
