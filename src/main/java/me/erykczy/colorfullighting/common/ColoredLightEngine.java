@@ -84,9 +84,9 @@ public class ColoredLightEngine {
      */
     public ColorRGB8 sampleTrilinearLightColor(Vec3 pos) {
         if (!enabled) return ColorRGB8.fromRGB4(ColorRGB4.BLACK);
-        int cornerX = (int)Math.round(pos.x) - 1;
-        int cornerY = (int)Math.round(pos.y) - 1;
-        int cornerZ = (int)Math.round(pos.z) - 1;
+        int cornerX = (int)Math.floor(pos.x);
+        int cornerY = (int)Math.floor(pos.y);
+        int cornerZ = (int)Math.floor(pos.z);
 
         ColorRGB8 c000 = ColorRGB8.fromRGB4(sampleLightColor(cornerX, cornerY, cornerZ));
         ColorRGB8 c100 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY, cornerZ));
@@ -97,9 +97,9 @@ public class ColoredLightEngine {
         ColorRGB8 c111 = ColorRGB8.fromRGB4(sampleLightColor(cornerX + 1, cornerY + 1, cornerZ + 1));
         ColorRGB8 c011 = ColorRGB8.fromRGB4(sampleLightColor(cornerX, cornerY + 1, cornerZ + 1));
 
-        double x = pos.x - (cornerX + 0.5);
-        double y = pos.y - (cornerY + 0.5);
-        double z = pos.z - (cornerZ + 0.5);
+        double x = pos.x - cornerX;
+        double y = pos.y - cornerY;
+        double z = pos.z - cornerZ;
 
         ColorRGB8 c00 = ColorRGB8.linearInterpolation(c000, c100, x);
         ColorRGB8 c10 = ColorRGB8.linearInterpolation(c010, c110, x);
@@ -587,6 +587,18 @@ public class ColoredLightEngine {
             }
         }
 
+        private ColorRGB4 attenuateLight(ColorRGB4 source, int lightBlocked) {
+            int maxComponent = Math.max(source.red4, Math.max(source.green4, source.blue4));
+            int newMaxComponent = maxComponent - lightBlocked;
+
+            if (newMaxComponent <= 0) {
+                return ColorRGB4.BLACK;
+            }
+
+            float factor = (float)newMaxComponent / maxComponent;
+            return source.mul(factor);
+        }
+
         private boolean propagateIncrease(Queue<LightUpdateRequest> increaseRequests, LightUpdateRequest request, LevelAccessor level) {
             if (request.checkSource) {
                  BlockStateAccessor blockState = level.getBlockState(request.blockPos);
@@ -615,11 +627,25 @@ public class ColoredLightEngine {
 
                 // light attenuation
                 int lightBlocked = Math.max(1, neighbourState.getLightBlock(level, neighbourPos)); // vanilla light block
-                ColorRGB4 coloredLightTransmittance = Config.getColoredLightTransmittance(level, neighbourPos, neighbourState); // rgb transmittance (example: red stained glass can let only red light through)
+                
+                // Check for custom absorption
+                int customAbsorption = Config.getLightAbsorption(level, neighbourPos, neighbourState);
+                if (customAbsorption >= 0) {
+                    lightBlocked = customAbsorption;
+                }
+                
+                // Calculate transmittance based on both source exit and destination entry
+                BlockStateAccessor sourceState = level.getBlockState(request.blockPos);
+                ColorRGB4 exitTransmittance = sourceState == null ? ColorRGB4.WHITE : Config.getColoredLightTransmittance(level, request.blockPos, sourceState, direction);
+                ColorRGB4 entryTransmittance = Config.getColoredLightTransmittance(level, neighbourPos, neighbourState, direction.getOpposite());
+                
+                ColorRGB4 coloredLightTransmittance = ColorRGB4.min(exitTransmittance, entryTransmittance);
+                
+                ColorRGB4 attenuated = attenuateLight(request.lightColor, lightBlocked);
                 ColorRGB4 neighbourLightColor = ColorRGB4.fromRGB4(
-                        MathExt.clamp(request.lightColor.red4 - lightBlocked, 0, coloredLightTransmittance.red4),
-                        MathExt.clamp(request.lightColor.green4 - lightBlocked, 0, coloredLightTransmittance.green4),
-                        MathExt.clamp(request.lightColor.blue4 - lightBlocked, 0, coloredLightTransmittance.blue4)
+                        MathExt.clamp(attenuated.red4, 0, coloredLightTransmittance.red4),
+                        MathExt.clamp(attenuated.green4, 0, coloredLightTransmittance.green4),
+                        MathExt.clamp(attenuated.blue4, 0, coloredLightTransmittance.blue4)
                 );
                 // if no more color to propagate
                 if(neighbourLightColor.red4 == 0 && neighbourLightColor.green4 == 0 && neighbourLightColor.blue4 == 0) continue;
@@ -654,11 +680,8 @@ public class ColoredLightEngine {
             }
 
             // attenuation
-            ColorRGB4 neighbourLightDecrease = ColorRGB4.fromRGB4(
-                    Math.max(0, request.lightColor.red4 - 1),
-                    Math.max(0, request.lightColor.green4 - 1),
-                    Math.max(0, request.lightColor.blue4 - 1)
-            );
+            ColorRGB4 neighbourLightDecrease = attenuateLight(request.lightColor, 1);
+
             // whether neighbours' light should be decreased or increased (to repropagate), true on "light edges"
             boolean repropagateNeighbours = neighbourLightDecrease.red4 == 0 && neighbourLightDecrease.green4 == 0 && neighbourLightDecrease.blue4 == 0;
 

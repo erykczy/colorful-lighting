@@ -41,5 +41,10 @@ public class LightEngineMixin {
             cir.setReturnValue(true);
             return;
         }
+        int absorption1 = Config.getLightAbsorption(clientLevel, pos, blockState1);
+        int absorption2 = Config.getLightAbsorption(clientLevel, pos, blockState2);
+        if(absorption1 != absorption2) {
+            cir.setReturnValue(true);
+        }
     }
 }

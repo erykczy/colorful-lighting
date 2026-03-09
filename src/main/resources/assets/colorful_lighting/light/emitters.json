@@ -4,7 +4,15 @@
 	"minecraft:end_gateway": "white",
 	"minecraft:end_portal": "white",
 	"minecraft:fire": "#ff894d",
-	"minecraft:sea_pickle": "white",
+	"minecraft:sea_pickle": {
+		"states": {
+			"pickles=4": "#abccb4;F",
+			"pickles=3": "#abccb4;B",
+			"pickles=2": "#abccb4;9",
+			"pickles=1": "#abccb4;6"
+		},
+		"default": "white;0"
+	},
 	"minecraft:ochre_froglight": "yellow",
 	"minecraft:verdant_froglight": "green",
 	"minecraft:pearlescent_froglight": "magenta",
@@ -13,24 +21,63 @@
 	"minecraft:lantern": "#fff3a7",
 	"minecraft:lava": "orange",
 	"minecraft:lava_cauldron": "orange",
-	"minecraft:campfire": "#ffac4d",
+	"minecraft:campfire": {
+		"states": {
+			"lit=true,signal=false": "#ffac4d",
+			"lit=true,signal=true": "#ff8800",
+			"lit=false": "#ff4400;1"
+		},
+		"default": "#ffac4d"
+	},
 	"minecraft:redstone_lamp": "#fffcea",
-	"minecraft:respawn_anchor": "purple",
+	"minecraft:respawn_anchor": {
+		"states": {
+			"charges=4": "purple;F",
+			"charges=3": "purple;B",
+			"charges=2": "purple;9",
+			"charges=1": "purple;7",
+			"charges=0": "#440044;1"
+		},
+		"default": "purple;0"
+	},
 	"minecraft:sea_lantern": "#e0f7f7",
 	"minecraft:shroomlight": "#ffc080",
 	"minecraft:cave_vines": "#bfff00",
 	"minecraft:cave_vines_plant": "green;7",
-	"minecraft:small_dripleaf": "green;7",
-	"minecraft:big_dripleaf": "green;7",
+	"minecraft:small_dripleaf": "green;5",
+	"minecraft:big_dripleaf": {
+		"states": {
+			"tilt=none": "green;7",
+			"tilt=unstable": "green;7",
+			"tilt=partial": "green;6",
+			"tilt=full": "green;5"
+		},
+		"default": "green;7"
+	},
 	"minecraft:azalea": "green;5",
-	"minecraft:flowering_azalea": "green;5",
+	"minecraft:flowering_azalea": "magenta;5",
 	"minecraft:spore_blossom": "magenta;5",
 	"minecraft:end_rod": "white",
-	"minecraft:torch": "#fff3a7",
-	"minecraft:wall_torch": "#fff3a7",
-	"minecraft:furnace": "#fff3a7",
-	"minecraft:blast_furnace": "#ffe0a6",
-	"minecraft:smoker": "#fff3a7",
+	"minecraft:torch": "vanilla",
+	"minecraft:wall_torch": "vanilla",
+	"minecraft:furnace": {
+		"states": {
+			"lit=true": "#fff3a7"
+		},
+		"default": "#ff4400;1"
+	},
+	"minecraft:blast_furnace": {
+		"states": {
+			"lit=true": "#ffe0a6"
+		},
+		"default": "#ff4400;1"
+	},
+	"minecraft:smoker": {
+		"states": {
+			"lit=true": "#fff3a7"
+		},
+		"default": "#ff4400;1"
+	},
 	"minecraft:candle": "#fff3a7",
 	"minecraft:white_candle": "white",
 	"minecraft:light_gray_candle": "light_gray",
@@ -50,34 +97,151 @@
 	"minecraft:pink_candle": "pink",
 	"minecraft:nether_portal": "purple",
 	"minecraft:crying_obsidian": "purple",
-	"minecraft:soul_campfire": "#90fbff",
+	"minecraft:soul_campfire": {
+		"states": {
+			"lit=true": "#90fbff",
+			"lit=false": "#00aaaa;1"
+		},
+		"default": "#90fbff"
+	},
 	"minecraft:soul_fire": "#90fbff",
 	"minecraft:soul_lantern": "#90fbff",
 	"minecraft:soul_torch": "#90fbff",
 	"minecraft:soul_wall_torch": "#90fbff",
 	"minecraft:deepslate_redstone_ore": "red",
 	"minecraft:redstone_ore": "red",
+
+	"minecraft:repeater": {
+		"states": {
+			"powered=false": "red;0",
+			"powered=true": "red;7"
+		},
+		"default": "red;0"
+	},
+
+	"minecraft:comparator": {
+		"states": {
+			"powered=false": "red;0",
+			"powered=true": "red;7"
+		},
+		"default": "red;0"
+	},
+
+	"minecraft:powered_rail": {
+		"states": {
+			"powered=false": "red;0",
+			"powered=true": "red;7"
+		},
+		"default": "red;0"
+	},
+
+	"minecraft:activator_rail": {
+		"states": {
+			"powered=false": "red;0",
+			"powered=true": "red;7"
+		},
+		"default": "red;0"
+	},
+
 	"minecraft:enchanting_table": "purple",
 	"minecraft:ender_chest": "purple",
-	"minecraft:glow_lichen": "white",
+	"minecraft:glow_lichen": "#b1ebfc;7",
 	"minecraft:redstone_torch": "red",
 	"minecraft:redstone_wall_torch": "red",
-	"minecraft:sculk_catalyst": "blue",
 	"minecraft:amethyst_cluster": "magenta;F",
 	"minecraft:large_amethyst_bud": "magenta;A",
 	"minecraft:medium_amethyst_bud": "magenta;5",
 	"minecraft:small_amethyst_bud": "magenta;3",
 	"minecraft:magma_block": "orange;8",
 	"minecraft:brewing_stand": "yellow",
-	"minecraft:brown_mushroom": "white",
-	"minecraft:calibrated_sculk_sensor": "blue",
+	"minecraft:brown_mushroom": "brown",
+	"minecraft:red_mushroom": "red",
 	"minecraft:dragon_egg": "magenta",
 	"minecraft:end_portal_frame": "white",
-	"minecraft:sculk_sensor": "blue",
+	"minecraft:sculk_catalyst": "#61c3cb",
+	"minecraft:sculk": "#0088AA;9",
+	"minecraft:sculk_vein": "#0088AA;7",
+	"minecraft:sculk_sensor": {
+		"states": {
+			"sculk_sensor_phase=active": "#003344;F",
+			"sculk_sensor_phase=cooldown": "#006688;5",
+			"sculk_sensor_phase=inactive": "#002244;A"
+		},
+		"default": "#002244;A"
+	},
+	"minecraft:calibrated_sculk_sensor": {
+		"states": {
+			"sculk_sensor_phase=active": "#300044;F",
+			"sculk_sensor_phase=cooldown": "#6f0088;5",
+			"sculk_sensor_phase=inactive": "#3d0044;A"
+		},
+		"default": "#3d0044;A"
+	},
 	"minecraft:amethyst_block": "magenta;5",
 	"minecraft:warped_nylium": "cyan;A",
 	"minecraft:warped_fungus": "cyan;A",
 	"minecraft:twisting_vines_plant": "cyan;F",
 	"minecraft:crimson_nylium": "red;A",
-	"minecraft:weeping_vines_plant": "red;F"
+	"minecraft:weeping_vines_plant": "red;F",
+	"minecraft:redstone_wire": {
+		"states": {
+			"power=15": "red;7",
+			"power=14": "red;7",
+			"power=13": "red;6",
+			"power=12": "red;6",
+			"power=11": "red;5",
+			"power=10": "red;5",
+			"power=9": "red;4",
+			"power=8": "red;4",
+			"power=7": "red;3",
+			"power=6": "red;3",
+			"power=5": "red;2",
+			"power=4": "red;2",
+			"power=3": "red;1",
+			"power=2": "red;1",
+			"power=1": "red;0"
+		},
+		"default": "red;0"
+	},
+	"minecraft:tube_coral_block": "blue;A",
+	"minecraft:brain_coral_block": "pink;A",
+	"minecraft:bubble_coral_block": "magenta;A",
+	"minecraft:fire_coral_block": "red;A",
+	"minecraft:horn_coral_block": "yellow;A",
+	"minecraft:tube_coral": "blue;8",
+	"minecraft:brain_coral": "pink;8",
+	"minecraft:bubble_coral": "magenta;8",
+	"minecraft:fire_coral": "red;8",
+	"minecraft:horn_coral": "yellow;8",
+	"minecraft:tube_coral_fan": "blue;6",
+	"minecraft:brain_coral_fan": "pink;6",
+	"minecraft:bubble_coral_fan": "magenta;6",
+	"minecraft:fire_coral_fan": "red;6",
+	"minecraft:horn_coral_fan": "yellow;6",
+	"minecraft:tube_coral_wall_fan": "blue;6",
+	"minecraft:brain_coral_wall_fan": "pink;6",
+	"minecraft:bubble_coral_wall_fan": "magenta;6",
+	"minecraft:fire_coral_wall_fan": "red;6",
+	"minecraft:horn_coral_wall_fan": "yellow;6",
+
+	"arss:pixel_block": {
+		"states": {
+			"power=15": "white;8",
+			"power=14": "pink;8",
+			"power=13": "magenta;8",
+			"power=12": "purple;8",
+			"power=11": "blue;8",
+			"power=10": "light_blue;8",
+			"power=9": "cyan;8",
+			"power=8": "green;8",
+			"power=7": "lime;8",
+			"power=6": "yellow;8",
+			"power=5": "orange;8",
+			"power=4": "red;8",
+			"power=3": "brown;8",
+			"power=2": "gray;8",
+			"power=1": "light_gray;8"
+		},
+		"default": "gray;0"
+	}
 }

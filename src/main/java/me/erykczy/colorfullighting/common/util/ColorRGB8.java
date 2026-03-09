@@ -11,10 +11,6 @@ public class ColorRGB8 {
         return new ColorRGB8(r, g, b);
     }
 
-    public static ColorRGB8 fromRGBFloat(float r, float g, float b) {
-        return new ColorRGB8((int)(r * 255), (int)(g * 255), (int)(b * 255));
-    }
-
     private ColorRGB8(int red, int green, int blue) {
         this.red = red;
         this.green = green;
@@ -43,23 +39,17 @@ public class ColorRGB8 {
         return new ColorRGB8(red + other.red, green + other.green, blue + other.blue);
     }
 
-    public ColorRGB8 sub(ColorRGB8 other) {
-        return new ColorRGB8(red - other.red, green - other.green, blue - other.blue);
-    }
-
-    public ColorRGB8 intDivide(int scalar) {
-        return new ColorRGB8(red / scalar, green / scalar, blue / scalar);
-    }
-
     public ColorRGB8 mul(float scalar) {
         return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
     }
-    public ColorRGB8 mul(double scalar) {
-        return new ColorRGB8((int)(red * scalar), (int)(green * scalar), (int)(blue * scalar));
-    }
+
     public static ColorRGB8 linearInterpolation(ColorRGB8 a, ColorRGB8 b, double x) {
         if(a.isZero()) return b;
         if(b.isZero()) return a;
-        return a.mul(1.0 - x).add(b.mul(x));
+        return a.mul(1.0f - (float)x).add(b.mul((float)x));
+    }
+
+    public ColorRGB4 toRGB4() {
+        return ColorRGB4.fromRGB8(red, green, blue);
     }
 }

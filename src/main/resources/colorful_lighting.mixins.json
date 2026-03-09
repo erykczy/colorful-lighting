@@ -22,9 +22,13 @@
     "compat.sodium.SodiumLightDataAccessMixin",
     "compat.sodium.SodiumAoFaceDataMixin",
     "compat.sodium.SodiumWorldRendererAccessor",
+    "compat.sodium.ChunkShaderInterfaceMixin",
+    "compat.sodium.DefaultChunkRendererMixin",
+    "compat.sodium.ShaderChunkRendererAccessor",
     "compat.starlight.StarlightInterfaceMixin",
     "compat.starlight.StarlightLevelLightEngineMixin",
-    "ClientPacketListenerMixin"
+    "ClientPacketListenerMixin",
+    "compat.wakes.BrickMixin"
   ],
   "injectors": {
     "defaultRequire": 1

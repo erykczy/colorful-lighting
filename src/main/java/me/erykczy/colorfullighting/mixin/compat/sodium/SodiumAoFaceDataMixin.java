@@ -76,15 +76,8 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
             return LightDataAccess.getLightmap(word);
         }
 
-        BlockPos neighborPos = new BlockPos(x, y, z);
-        BlockState neighborState = cache.getWorld().getBlockState(neighborPos);
-
-        // If the center block is a filter and the neighbor is a strong light source,
-        // use the center block's already-filtered light value instead of the neighbor's raw light.
-        if (neighborState.getLightEmission() > 1 && !centerState.canOcclude() && !Config.getColoredLightTransmittance(null, null, new BlockStateWrapper(centerState)).equals(ColorRGB4.fromRGB4(255, 255, 255))) {
-            return centerLight;
-        }
-
+        // Removed aggressive filtering logic to fix sharp lines at block edges.
+        // This allows the corner light to properly blend with neighbors, even if they are bright light sources.
         return getBaseColoredLight(cache, x, y, z);
     }
 
@@ -102,9 +95,26 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
     @Unique
     private static int blend(int a, int b, int c, int d) {
         if (!ColoredLightEngine.getInstance().isEnabled()) {
-            // Vanilla blending logic
-            return ((a + b + c + d) >> 2) & 0xFF00FF;
+            // Use blendChannel logic for vanilla components to avoid dark edges
+            int sl_a = (a >> 16) & 0xFF;
+            int sl_b = (b >> 16) & 0xFF;
+            int sl_c = (c >> 16) & 0xFF;
+            int sl_d = (d >> 16) & 0xFF;
+
+            int bl_a = a & 0xFF;
+            int bl_b = b & 0xFF;
+            int bl_c = c & 0xFF;
+            int bl_d = d & 0xFF;
+
+            int sl_avg = blendChannel(sl_a, sl_b, sl_c, sl_d);
+            int bl_avg = blendChannel(bl_a, bl_b, bl_c, bl_d);
+
+            return (sl_avg << 16) | bl_avg;
         }
+
+        if (SodiumPackedLightData.isBlack(a)) a = d;
+        if (SodiumPackedLightData.isBlack(b)) b = d;
+        if (SodiumPackedLightData.isBlack(c)) c = d;
 
         var da = SodiumPackedLightData.unpackData(a);
         var db = SodiumPackedLightData.unpackData(b);
@@ -112,9 +122,9 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         var dd = SodiumPackedLightData.unpackData(d);
 
         int sky = blendChannel(da.skyLight4, db.skyLight4, dc.skyLight4, dd.skyLight4);
-        int red = blendChannel(da.red8, db.red8, dc.red8, dd.red8);
-        int green = blendChannel(da.green8, db.green8, dc.green8, dd.green8);
-        int blue = blendChannel(da.blue8, db.blue8, dc.blue8, dd.blue8);
+        int red = (da.red8 + db.red8 + dc.red8 + dd.red8) >> 2;
+        int green = (da.green8 + db.green8 + dc.green8 + dd.green8) >> 2;
+        int blue = (da.blue8 + db.blue8 + dc.blue8 + dd.blue8) >> 2;
 
         return SodiumPackedLightData.packData(sky, red, green, blue);
     }
@@ -136,40 +146,6 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         if (a == 0) return b;
         if (b == 0) return a;
         return Math.min(a, b);
-    }
-
-    private static int clampLightmap(int val, int max) {
-        if (!ColoredLightEngine.getInstance().isEnabled()) {
-            return val;
-        }
-
-        int vR =  val         & 0xFF;
-        int vG = (val >>> 8)  & 0xFF;
-        int vS = (val >>> 16) & 0xF;
-        int vB = (val >>> 20) & 0xFF;
-
-        int mR =  max         & 0xFF;
-        int mG = (max >>> 8)  & 0xFF;
-        int mS = (max >>> 16) & 0xF;
-        int mB = (max >>> 20) & 0xFF;
-
-        int r   = compress(vR, mR, 21);
-        int g   = compress(vG, mG, 21);
-        int s   = compress(vS, mS, 2);
-        int b   = compress(vB, mB, 21);
-
-        return r | (g << 8) | (s << 16) | (b << 20) | (15 << 28);
-    }
-
-    @Unique
-    private static int compress(int v, int m, int range) {
-        int d = v - m;
-        int ad = Math.abs(d);
-        if (ad <= range) return v;
-        float t = (ad - range) / (float) range;
-        if (t > 1.0f) t = 1.0f;
-        t = t * t * (3.0f - 2.0f * t);
-        return Math.round(m + d * (1.0f - t));
     }
 
     @Unique
@@ -307,10 +283,6 @@ public abstract class SodiumAoFaceDataMixin implements SodiumAoFaceDataExtension
         cb[1] = blend(e2lm, e0lm, c0lm, calm);
         cb[2] = blend(e2lm, e1lm, c2lm, calm);
         cb[3] = blend(e3lm, e1lm, c3lm, calm);
-
-        for (int i = 0; i < 4; i++) {
-            cb[i] = clampLightmap(cb[i], calm); // use max-safe
-        }
 
         this.flags |= 1;
     }

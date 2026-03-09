@@ -79,11 +79,23 @@ public abstract class SodiumSmoothLightPipelineMixin {
         
         SodiumAoFaceDataExtension faceData = (SodiumAoFaceDataExtension) faceDataObj;
 
-        int lightMap = faceData.getBlendedLightMap(w);
+        if (!ColoredLightEngine.getInstance().isEnabled()) {
+            int lightMap = faceData.getBlendedLightMap(w);
+            float ao = faceData.getBlendedShade(w);
+
+            out.br[i] = ao;
+            out.lm[i] = lightMap;
+            return;
+        }
+        
+        float r = faceData.getBlendedRed(w);
+        float g = faceData.getBlendedGreen(w);
+        float b = faceData.getBlendedBlue(w);
+        float s = faceData.getBlendedSky(w);
         float ao = faceData.getBlendedShade(w);
 
         out.br[i] = ao;
-        out.lm[i] = lightMap;
+        out.lm[i] = SodiumPackedLightData.packData((int)s, (int)r, (int)g, (int)b);
     }
     
     /**

@@ -33,6 +33,22 @@ _assets\\example\\light\\filters.json_
 	"minecraft:glass": [ 0, 255, 255 ]
 }
 ```
+You can also create `entities.json`, where you define what light color entities emit. Example:\
+_assets\\example\\light\\entities.json_
+```json
+{
+	"minecraft:creeper": "#00FF00", // color in hex
+	"minecraft:blaze": "orange" // dye name
+}
+```
+You can also create `items.json`, where you define what light color held items emit. Example:\
+_assets\\example\\light\\items.json_
+```json
+{
+	"minecraft:torch": "#00FF00", // color in hex
+	"minecraft:lava_bucket": "orange" // dye name
+}
+```
 
 # Compatible Resource Packs
 ~~Colorful Candles: [colorful-candles.zip](https://github.com/erykczy/colorful-lighting/raw/e372648afdd442e96340f0d8ee477d6ae8138739/addons/colorful-candles.zip)~~ (colorful candles are now enabled by default)

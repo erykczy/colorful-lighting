@@ -19,6 +19,7 @@ out float v_FragDistance;
 
 uniform int u_FogShape;
 uniform vec3 u_RegionOffset;
+uniform float u_NightVibrancy;
 
 uniform sampler2D u_LightTex; // The light map texture sampler
 
@@ -46,9 +47,26 @@ vec4 _sample_lightmap(sampler2D lightMap, ivec2 uv) {
     vec3 blockLightColor = vec3(float(red8)*divideBy255, float(green8)*divideBy255, float(blue8)*divideBy255);
 
     vec3 sky = _sample_lightmap_vanilla(lightMap, ivec2(0, skyLight4 << 4)).xyz;
-    vec3 block = pow(blockLightColor, vec3(1.0)); // Adjusted gamma for vibrancy
 
-    return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
+    // True Darkness Compat:
+    float maxComponent = max(blockLightColor.r, max(blockLightColor.g, blockLightColor.b));
+    vec3 block;
+
+    if (maxComponent > 0.001) {
+        int level = int(clamp(maxComponent * 15.0 + 0.5, 0.0, 15.0));
+        vec3 lightmapCurve = _sample_lightmap_vanilla(lightMap, ivec2(level << 4, 0)).xyz;
+        float curveBrightness = max(lightmapCurve.r, max(lightmapCurve.g, lightmapCurve.b));
+        block = (blockLightColor / maxComponent) * curveBrightness;
+    } else {
+        block = vec3(0.0);
+    }
+
+    // Calculate effective sky brightness influence based on moon phase.
+    float moonWashoutFactor = mix(3.0, 0.0, u_NightVibrancy);
+    float skyExposure = float(skyLight4) / 15.0;
+    float effectiveSkyBrightness = sky.r * moonWashoutFactor * skyExposure;
+
+    return vec4(sky + block * max(0.3, 1.0 - effectiveSkyBrightness), 1.0);
 }
 // --- COLORFUL LIGHTING END ---
 

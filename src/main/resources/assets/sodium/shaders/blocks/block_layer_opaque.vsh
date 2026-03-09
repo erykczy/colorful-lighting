@@ -19,6 +19,7 @@ out float v_FragDistance;
 
 uniform int u_FogShape;
 uniform vec3 u_RegionOffset;
+uniform float u_NightVibrancy;
 
 uniform sampler2D u_LightTex; // The light map texture sampler
 
@@ -47,13 +48,31 @@ vec4 _sample_lightmap(sampler2D lightMap, ivec2 uv) {
 
     vec3 sky = _sample_lightmap_vanilla(lightMap, ivec2(0, skyLight4 << 4)).xyz;
 
-    // Tweak vibrancy: lower gamma to 1.0 (linear) or 0.6 for more punch
-    vec3 block = pow(blockLightColor, vec3(1.0));
+    // True Darkness Compat:
+    // Sample the vanilla lightmap to apply its brightness curve (and any modded darkening) to our colored light.
+    float maxComponent = max(blockLightColor.r, max(blockLightColor.g, blockLightColor.b));
+    vec3 block;
 
-    // Boost saturation/brightness if needed
-    // block *= 1.2;
+    if (maxComponent > 0.001) {
+        int level = int(clamp(maxComponent * 15.0 + 0.5, 0.0, 15.0));
+        // Sample vanilla lightmap at the corresponding block light level (with 0 sky light)
+        vec3 lightmapCurve = _sample_lightmap_vanilla(lightMap, ivec2(level << 4, 0)).xyz;
 
-    return vec4(sky + block * max(0.3, 1.0 - sky.r), 1.0);
+        // Extract brightness from the curve to avoid tinting our colored light with the vanilla lightmap color (e.g. torch yellow)
+        float curveBrightness = max(lightmapCurve.r, max(lightmapCurve.g, lightmapCurve.b));
+
+        // Apply the curve brightness to our normalized color
+        block = (blockLightColor / maxComponent) * curveBrightness;
+    } else {
+        block = vec3(0.0);
+    }
+
+    // Calculate effective sky brightness influence based on moon phase.
+    float moonWashoutFactor = mix(3.0, 0.0, u_NightVibrancy);
+    float skyExposure = float(skyLight4) / 15.0;
+    float effectiveSkyBrightness = sky.r * moonWashoutFactor * skyExposure;
+
+    return vec4(sky + block * max(0.3, 1.0 - effectiveSkyBrightness), 1.0);
 }
 // --- COLORFUL LIGHTING END ---
 

@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.NotNull;
 
 public class BlockStateWrapper implements BlockStateAccessor {
@@ -48,5 +49,20 @@ public class BlockStateWrapper implements BlockStateAccessor {
     @Override
     public boolean isAir() {
         return blockState.isAir();
+    }
+
+    @Override
+    public String getPropertiesAsString() {
+        return blockState.getValues().toString();
+    }
+
+    @Override
+    public String getPropertyString(String propertyName) {
+        for (Property<?> prop : blockState.getProperties()) {
+            if (prop.getName().equals(propertyName)) {
+                return blockState.getValue(prop).toString();
+            }
+        }
+        return null;
     }
 }

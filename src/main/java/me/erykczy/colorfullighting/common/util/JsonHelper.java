@@ -11,7 +11,17 @@ public abstract class JsonHelper {
         if(color != null) return color;
         color = getColor4FromHexString(string);
         if(color != null) return color;
+        color = getColor4FromVanilla(string);
+        if(color != null) return color;
         return color;
+    }
+
+    public static ColorRGB4 getColor4FromVanilla(String string) {
+        if (string.equals("vanilla")) {
+            return ColorRGB4.fromRGB8(243, 229, 171);
+        } else {
+            return null;
+        }
     }
 
     public static ColorRGB4 getColor4FromDyeName(String dyeName) {
