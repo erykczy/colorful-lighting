@@ -8,7 +8,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.ToNumberPolicy;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -23,17 +23,17 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
 
     @Override
     public void onResourceManagerReload(ResourceManager resourceManager) {
-        HashMap<ResourceLocation, Config.ColorEmitter> emitters = new HashMap<>();
-        HashMap<ResourceLocation, Config.ColorFilter> filters = new HashMap<>();
+        HashMap<Identifier, Config.ColorEmitter> emitters = new HashMap<>();
+        HashMap<Identifier, Config.ColorFilter> filters = new HashMap<>();
 
         resourceManager.listPacks().forEach((pack) -> {
             for(String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/emitters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(Identifier.fromNamespaceAndPath(namespace, "light/emitters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
                             try {
-                                var key = ResourceLocation.parse(entry.getKey());
+                                var key = Identifier.parse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
                                 emitters.put(key, Config.ColorEmitter.fromJsonElement(entry.getValue()));
                             }
@@ -47,12 +47,12 @@ public class ConfigResourceManager implements ResourceManagerReloadListener {
                     }
                 }
 
-                for(Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(namespace, "light/filters.json"))) {
+                for(Resource resource : resourceManager.getResourceStack(Identifier.fromNamespaceAndPath(namespace, "light/filters.json"))) {
                     try {
                         JsonObject object = GSON.fromJson(resource.openAsReader(), JsonObject.class);
                         for(var entry : object.entrySet()) {
                             try {
-                                var key = ResourceLocation.parse(entry.getKey());
+                                var key = Identifier.parse(entry.getKey());
                                 if(!BuiltInRegistries.BLOCK.containsKey(key)) throw new IllegalArgumentException("Couldn't find block "+key);
                                 filters.put(key, Config.ColorFilter.fromJsonElement(entry.getValue()));
                             }

@@ -6,8 +6,8 @@ import me.erykczy.colorfullighting.common.util.ColorRGB4;
 import me.erykczy.colorfullighting.common.util.JsonHelper;
 import com.google.gson.JsonElement;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,14 +16,14 @@ import java.util.HashMap;
 
 public class Config {
     public static final ColorRGB4 defaultColor = ColorRGB4.fromRGB4(15, 15, 15);
-    private static HashMap<ResourceLocation, ColorEmitter> colorEmitters = new HashMap<>();
-    private static HashMap<ResourceLocation, ColorFilter> colorFilters = new HashMap<>();
+    private static HashMap<Identifier, ColorEmitter> colorEmitters = new HashMap<>();
+    private static HashMap<Identifier, ColorFilter> colorFilters = new HashMap<>();
 
-    public static void setColorEmitters(HashMap<ResourceLocation, ColorEmitter> colors) {
+    public static void setColorEmitters(HashMap<Identifier, ColorEmitter> colors) {
         colorEmitters = colors;
     }
 
-    public static void setColorFilters(HashMap<ResourceLocation, ColorFilter> filters) {
+    public static void setColorFilters(HashMap<Identifier, ColorFilter> filters) {
         colorFilters = filters;
     }
 
@@ -34,7 +34,7 @@ public class Config {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
         if(blockResourceKey != null) {
-            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+            ColorEmitter config = colorEmitters.get(blockResourceKey.identifier());
             if(config != null)
                 return config.color().mul(config.overriddenBrightness4 < 0 ? lightEmission : config.overriddenBrightness4 /15.0f);
         }
@@ -45,7 +45,7 @@ public class Config {
     }
     public static ColorRGB4 getLightColor(@Nullable ResourceKey<Block> blockLocation) {
         if(blockLocation != null) {
-            ColorEmitter config = colorEmitters.get(blockLocation.location());
+            ColorEmitter config = colorEmitters.get(blockLocation.identifier());
             if(config != null)
                 return config.color();
         }
@@ -59,7 +59,7 @@ public class Config {
     public static ColorRGB4 getColoredLightTransmittance(@NotNull LevelAccessor level, BlockPos pos, @NotNull BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey == null) return ColorRGB4.fromRGB4(15, 15, 15);
-        ColorFilter config = colorFilters.get(blockResourceKey.location());
+        ColorFilter config = colorFilters.get(blockResourceKey.identifier());
         if(config == null) return ColorRGB4.fromRGB4(15, 15, 15);
         return config.transmittance;
     }
@@ -72,7 +72,7 @@ public class Config {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
 
         if(blockResourceKey != null) {
-            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+            ColorEmitter config = colorEmitters.get(blockResourceKey.identifier());
             if(config != null && config.overriddenBrightness4 >= 0)
                 return config.overriddenBrightness4;
         }
@@ -81,7 +81,7 @@ public class Config {
     public static int getEmissionBrightness(BlockStateAccessor blockState) {
         ResourceKey<Block> blockResourceKey = blockState.getBlockKey();
         if(blockResourceKey != null) {
-            ColorEmitter config = colorEmitters.get(blockResourceKey.location());
+            ColorEmitter config = colorEmitters.get(blockResourceKey.identifier());
             if(config != null && config.overriddenBrightness4 >= 0)
                 return config.overriddenBrightness4;
         }
