@@ -94,7 +94,7 @@ public class ColoredLightEngine {
         // remove propagation requests which are not in newArea's inner area
         blockUpdateIncreaseRequests.removeIf(blockUpdate -> !newArea.containsBlockInner(blockUpdate.blockPos));
         blockUpdateDecreaseRequests.removeIf(blockUpdate -> !newArea.containsBlockInner(blockUpdate.blockPos));
-        chunksWaitingForPropagation.removeIf(chunkPos -> !newArea.containsInner(chunkPos.x, chunkPos.z));
+        chunksWaitingForPropagation.removeIf(chunkPos -> !newArea.containsInner(chunkPos.x(), chunkPos.z()));
         // remove sections from storage
         for(int x = viewArea.minX; x <= viewArea.maxX; ++x) {
             for(int z = viewArea.minZ; z <= viewArea.maxZ; ++z) {

@@ -44,14 +44,14 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public boolean hasChunk(ChunkPos chunkPos) {
-        return level.getChunkSource().hasChunk(chunkPos.x, chunkPos.z);
+        return level.getChunkSource().hasChunk(chunkPos.x(), chunkPos.z());
     }
 
     @Override
     public boolean hasChunkAndNeighbours(ChunkPos chunkPos) {
         for(int ox = -1; ox <= 1; ++ox) {
             for(int oz = -1; oz <= 1; ++oz) {
-                if(!hasChunk(new ChunkPos(chunkPos.x+ox, chunkPos.z+oz))) {
+                if(!hasChunk(new ChunkPos(chunkPos.x()+ox, chunkPos.z()+oz))) {
                     return false;
                 }
             }
@@ -61,7 +61,7 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public void findLightSources(ChunkPos chunkPos, Consumer<BlockPos> consumer) {
-        ChunkAccess chunk = level.getChunk(chunkPos.x, chunkPos.z);
+        ChunkAccess chunk = level.getChunk(chunkPos.x(), chunkPos.z());
         chunk.findBlocks(
                 blockState -> // block state filter
                         blockState.hasDynamicLightEmission() ||

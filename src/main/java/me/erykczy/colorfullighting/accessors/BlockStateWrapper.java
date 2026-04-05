@@ -18,7 +18,7 @@ public class BlockStateWrapper implements BlockStateAccessor {
 
     @Override
     public ResourceKey<Block> getBlockKey() {
-        return blockState.getBlockHolder().getKey();
+        return blockState.typeHolder().getKey();
     }
 
     @Override
@@ -28,7 +28,7 @@ public class BlockStateWrapper implements BlockStateAccessor {
 
     @Override
     public int getLightBlock() {
-        return blockState.getLightBlock();
+        return blockState.getLightDampening();
     }
 
     @Override

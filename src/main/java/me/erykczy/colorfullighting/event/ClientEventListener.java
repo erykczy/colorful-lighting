@@ -20,10 +20,10 @@ public class ClientEventListener {
         ChunkPos pos = player.getChunkPos();
         int renderDistance = ColorfulLighting.clientAccessor.getRenderDistance();
         ViewArea viewArea = new ViewArea(
-                pos.x - renderDistance,
-                pos.z - renderDistance,
-                pos.x + renderDistance,
-                pos.z + renderDistance
+                pos.x() - renderDistance,
+                pos.z() - renderDistance,
+                pos.x() + renderDistance,
+                pos.z() + renderDistance
         );
         ColoredLightEngine.getInstance().updateViewArea(viewArea);
     }
