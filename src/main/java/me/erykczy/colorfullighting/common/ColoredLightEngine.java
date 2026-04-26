@@ -157,7 +157,7 @@ public class ColoredLightEngine {
             if(neighbourLight == null) continue;
 
             if(neighbourLight.red4 == 0 && neighbourLight.green4 == 0 && neighbourLight.blue4 == 0) continue;
-            increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true));
+            increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLight, true, true));
         }
     }
 
@@ -369,6 +369,7 @@ public class ColoredLightEngine {
         private boolean propagateIncrease(Queue<LightUpdateRequest> increaseRequests, LightUpdateRequest request, LevelAccessor level) {
             ColorRGB4 oldLightColor = getLatestLightColor(request.blockPos);
             if(oldLightColor == null) return false; // section might have got unloaded and propagation should stop
+            if(request.fixingPropagation && !oldLightColor.equals(request.lightColor)) return false;
             ColorRGB4 newLightColor = ColorRGB4.fromRGB4(
                     Math.max(oldLightColor.red4, request.lightColor.red4),
                     Math.max(oldLightColor.green4, request.lightColor.green4),
@@ -450,7 +451,7 @@ public class ColoredLightEngine {
                         continue;
 
                     // force neighbour to propagate light to the region that has been just cleared (decreased)
-                    increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, true));
+                    increaseRequests.add(new LightUpdateRequest(neighbourPos, neighbourLightColor, true, true));
                 }
             }
             return true;
@@ -470,11 +471,19 @@ public class ColoredLightEngine {
         BlockPos blockPos;
         ColorRGB4 lightColor;
         boolean force;
+        boolean fixingPropagation;
 
         public LightUpdateRequest(BlockPos blockPos, ColorRGB4 lightColor, boolean force) {
             this.blockPos = blockPos;
             this.lightColor = lightColor;
             this.force = force;
+        }
+
+        public LightUpdateRequest(BlockPos blockPos, ColorRGB4 lightColor, boolean force, boolean fixingPropagation) {
+            this.blockPos = blockPos;
+            this.lightColor = lightColor;
+            this.force = force;
+            this.fixingPropagation = fixingPropagation;
         }
     }
 }
