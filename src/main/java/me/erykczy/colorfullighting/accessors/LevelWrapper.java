@@ -91,6 +91,6 @@ public class LevelWrapper implements LevelAccessor {
 
     @Override
     public void setSectionDirty(int x, int y, int z) {
-        levelRenderer.setSectionDirty(x, y, z);
+        level.setSectionRangeDirty(x, y, z, x, y, z);
     }
 }

@@ -4,6 +4,7 @@ import me.erykczy.colorfullighting.common.util.PackedLightData;
 import it.unimi.dsi.fastutil.ints.Int2IntFunction;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.blockentity.BrightnessCombiner;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,8 +16,8 @@ public class BrightnessCombinerMixin {
     @Inject(method = "acceptDouble(Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/level/block/entity/BlockEntity;)Lit/unimi/dsi/fastutil/ints/Int2IntFunction;", at = @At("HEAD"), cancellable = true)
     private <S extends BlockEntity> void colorfullighting$acceptDouble(S first, S second, CallbackInfoReturnable<Int2IntFunction> cir) {
         cir.setReturnValue(value -> {
-            int firstLight = LevelRenderer.getLightCoords(first.getLevel(), first.getBlockPos());
-            int secondLight = LevelRenderer.getLightCoords(second.getLevel(), second.getBlockPos());
+            int firstLight = LightCoordsUtil.getLightCoords(first.getLevel(), first.getBlockPos());
+            int secondLight = LightCoordsUtil.getLightCoords(second.getLevel(), second.getBlockPos());
             return PackedLightData.max(firstLight, secondLight);
         });
     }

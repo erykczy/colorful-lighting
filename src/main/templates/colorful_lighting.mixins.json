@@ -8,7 +8,7 @@
     "LevelLightEngineMixin",
     "LightEngineMixin",
     "render.LiquidBlockRendererMixin",
-    "render.LevelRendererMixin",
+    "render.LightCoordsUtilMixin",
     "render.AmbientOcclusionFaceMixin",
     "render.EntityRendererMixin",
     "render.BrightnessCombinerMixin",

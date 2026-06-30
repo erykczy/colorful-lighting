@@ -10,11 +10,15 @@ import me.erykczy.colorfullighting.common.util.ColorRGB8;
 import me.erykczy.colorfullighting.common.util.PackedLightData;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.world.entity.EntityTypeIds;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,23 +33,23 @@ import java.util.Set;
 
 @Mixin(EntityRenderer.class)
 public class EntityRendererMixin {
-    private static final Set<EntityType<?>> FIRE_LIT_ENTITIES = new HashSet<>(Arrays.asList(
-            EntityType.BLAZE,
-            EntityType.MAGMA_CUBE
+    private static final Set<ResourceKey<EntityType<?>>> FIRE_LIT_ENTITIES = new HashSet<>(Arrays.asList(
+            EntityTypeIds.BLAZE,
+            EntityTypeIds.MAGMA_CUBE
     ));
-    private static final Set<EntityType<?>> LIT_ENTITIES = new HashSet<>(Arrays.asList(
-            EntityType.ALLAY,
-            EntityType.DRAGON_FIREBALL,
-            EntityType.EXPERIENCE_ORB,
-            EntityType.GLOW_SQUID,
-            EntityType.ITEM_FRAME,
-            EntityType.SHULKER_BULLET,
-            EntityType.EYE_OF_ENDER,
-            EntityType.FIREBALL,
-            EntityType.SMALL_FIREBALL,
-            EntityType.VEX,
-            EntityType.WITHER,
-            EntityType.WITHER_SKULL
+    private static final Set<ResourceKey<EntityType<?>>> LIT_ENTITIES = new HashSet<>(Arrays.asList(
+            EntityTypeIds.ALLAY,
+            EntityTypeIds.DRAGON_FIREBALL,
+            EntityTypeIds.EXPERIENCE_ORB,
+            EntityTypeIds.GLOW_SQUID,
+            EntityTypeIds.ITEM_FRAME,
+            EntityTypeIds.SHULKER_BULLET,
+            EntityTypeIds.EYE_OF_ENDER,
+            EntityTypeIds.FIREBALL,
+            EntityTypeIds.SMALL_FIREBALL,
+            EntityTypeIds.VEX,
+            EntityTypeIds.WITHER,
+            EntityTypeIds.WITHER_SKULL
     ));
 
     @Inject(method = "getPackedLightCoords", at = @At("HEAD"), cancellable = true)
@@ -71,7 +75,7 @@ public class EntityRendererMixin {
     @Redirect(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;getBlockLightLevel(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;)I"))
     private <T extends Entity>int colorfullighting$extractRenderState(EntityRenderer instance, T entity, BlockPos pos) {
         int skyLight = entity.level().getBrightness(LightLayer.SKY, pos);
-        ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor(pos.getCenter());
+        ColorRGB8 color = ColoredLightEngine.getInstance().sampleTrilinearLightColor((new Vec3(pos.getX()+ 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)));
         if(entity.isOnFire() || FIRE_LIT_ENTITIES.contains(entity.getType())) {
             ColorRGB8 fireColor = ColorRGB8.fromRGB4(Config.getLightColor(Blocks.FIRE.builtInRegistryHolder().getKey()));
             color = ColorRGB8.fromRGB8(

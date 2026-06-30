@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.FluidRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.LightCoordsUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,8 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LiquidBlockRendererMixin {
     @Inject(method = "getLightCoords", at = @At("HEAD"), cancellable = true)
     private void colorfullighting$getLightColor(BlockAndTintGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        int lightColor = LevelRenderer.getLightCoords(level, pos);
-        int lightColorAbove = LevelRenderer.getLightCoords(level, pos.above());
+        int lightColor = LightCoordsUtil.getLightCoords(level, pos);
+        int lightColorAbove = LightCoordsUtil.getLightCoords(level, pos.above());
 
         cir.setReturnValue(PackedLightData.max(lightColor, lightColorAbove));
     }
