@@ -1,5 +1,7 @@
 > [!CAUTION]
-> Due to my busy schedule, **the project's development is slowed down**.
+> This repository is archived, see:
+> - https://github.com/Camawama/colorful-lighting-sodium
+> - https://modrinth.com/mod/colorful-lighting
 
 ![a creeper in a cave lit by lava](https://cdn.modrinth.com/data/cached_images/db98e8b5f28311e2c7edcd6e9cd00a82ba62f22b_0.webp)
 The mod adds colored lighting to the game. Other mods that add colored lights can use it as a dependency.\
